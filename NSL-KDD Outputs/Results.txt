@@ -1,0 +1,74 @@
+Results for the training and testing of DLHA:  Double-Layered Hybrid Approach, an Anomaly-Based Intrusion Detection System
+
+Properties of training set and test set for NBC:
+
+Shape of the training data features: (#samples, #features) =(125973, 101)
+Shape of the training data labels: (#samples,) =(125973,)
+Shape of the test data features: (#samples, #features) =(22544, 101)
+Shape of the test data labels: (#samples,) =(22544,)
+
+
+NSL-KDD Outputs for DoS+Probe Naive Bayesian Classifier:
+
+Confusion Matrix: [TP FP / FN TN]
+[[9559 3104]
+ [ 913 8968]]
+Accuracy = 0.8218151171043293
+F1 Score = 0.8170181751924567
+Precision = 0.7428760768721008
+Recall = 0.9076004452990588
+Shape of the train set: (125973, 28)
+
+
+Properties of training set and test set for SVM:
+
+Shape of the training data features: (#samples, #features) =(68390, 51)
+Shape of the training data labels: (#samples,) =(68390,)
+Shape of the test data features: (#samples, #features) =(12663, 51)
+Shape of the test data labels: (#samples,) =(12663,)
+
+
+NSL-KDD Outputs for u2r-r2l Support Vector Machine:
+
+Confusion Matrix: [TP FP / FN TN]
+[[9097  614]
+ [1445 1507]]
+Accuracy = 0.8374003000868673
+F1 Score = 0.5941257638478218
+Precision = 0.7105139085337105
+Recall = 0.5105013550135501
+Matthew correlation coefficient = 0.5064447241782368
+Shape of the train set: (125973, 28)
+
+
+Testing the system:
+
+Shape of the test set for layer 1: (22544, 28)
+Shape of the test set for layer 2: (22544, 13)
+Confusion Matrix: [TP FP / FN TN]
+[[ 8145  1566]
+ [  919 11914]]
+Accuracy = 0.8897711142654364
+F1 Score = 0.905559989358872
+Precision = 0.8838278931750742
+Recall = 0.9283877503311775
+Matthew corr = 0.7747447316219138
+
+
+Testing results:
+
+Total DoS samples: 7460
+Detected DoS: 6893
+DoS results correctness: 0.923994638069705
+
+Total Probe samples: 2421
+Detected Probe: 2194
+Probe results correctness: 90.62370921106981%
+
+Total R2L samples: 2885
+Detected R2L: 2760
+R2L results correctness: 95.66724436741768%
+
+Total U2R samples: 67
+Detected U2R: 67
+U2R results correctness: 100.0%

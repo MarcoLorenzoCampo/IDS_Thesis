@@ -1,0 +1,10 @@
+Results for the training and testing of DLHA:  Double-Layered Hybrid Approach, an Anomaly-Based Intrusion Detection System (UNSBW-NB15 dataset)
+
+Shape of the training set: (#samples, #features) =(175341, 44)
+Shape of the testing set: (#samples, #features) =(82332, 44)
+Properties of training set and test set for NBC:
+
+Shape of the training data features: (#samples, #features) =(175341, 197)
+Shape of the training data labels: (#samples,) =(175341,)
+Shape of the test data features: (#samples, #features) =(82332, 197)
+Shape of the test data labels: (#samples,) =(82332,)
