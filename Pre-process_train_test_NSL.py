@@ -232,7 +232,7 @@ under_sampler = under_sam(sampling_strategy=1)
 # print(y_train)
 X_train, y_train = under_sampler.fit_resample(X_train, y_train)
 
-# PCS as done before on Dos+Probe
+# PCA as done before on Dos+Probe
 pca_r2l_u2r = PCA(n_components=0.95)
 X_train_r2l_u2r = pca_r2l_u2r.fit_transform(X_train)
 X_test_r2l_u2r = pca_r2l_u2r.transform(X_test)
