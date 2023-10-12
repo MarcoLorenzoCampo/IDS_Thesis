@@ -3,8 +3,10 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from imblearn.under_sampling import RandomUnderSampler as under_sam
+from sklearn.svm import SVC
 
 # Testing the model with a different test set
 pd.set_option("display.max.columns", 10)
@@ -163,16 +165,39 @@ X_train_l2, y_train_l2 = under_sampler.fit_resample(X_train_l2, y_train_l2)
 # balancing the test set for l2. Contains only the attacks pertaining u2r and r2l.
 X_test_l2, y_test_l2 = under_sampler.fit_resample(X_test_l2, y_test_l2)
 
+print('\nBefore PCA:')
 print('Shape of the train set for layer1: ', X_train_l1.shape, ' - Target variable: ', len(y_train_l1))
 print('Shape of the train set for layer2: ', X_train_l2.shape, ' - Target variable: ', len(y_train_l2))
 print('Shape of the test set for layer1: ', X_test_l1.shape, ' - Target variable: ', len(y_test_l1))
 print('Shape of the test set for layer2: ', X_test_l2.shape, ' - Target variable: ', len(y_test_l2))
 
-# Now that all the sets have been set up, we can reason on the features
-'''
-# Now that the data pre-processing is done, let's do feature selection
-pca_dos_probe = PCA(n_components=0.95)  # features selected can explain >95% of the variance
-X_train_dos_probe = pca_dos_probe.fit_transform(X_train)  # Reduce the dimensionality of X_train
-X_test_dos_probe = pca_dos_probe.transform(X_test)  # Reduce the dimensionality of X_test
-'''
+# now we can finally remove the 'attack_cat' column from all sets
+del X_train_l1['attack_cat']
+del X_train_l2['attack_cat']
+del X_test_l1['attack_cat']
+del X_test_l2['attack_cat']
 
+# Now that all the sets have been set up, we can reason on the features
+# starting with the features for l1
+pca_dos_probe = PCA(n_components=0.95)  # features selected can explain >95% of the variance
+X_train_dos_probe = pca_dos_probe.fit_transform(X_train_l1)  # Reduce the dimensionality of X_train
+X_test_dos_probe = pca_dos_probe.fit_transform(X_test_l1)  # Reduce the dimensionality of X_test
+
+# features for l2
+X_train_r2l_u2r = pca_dos_probe.fit_transform(X_train_l2)  # Reduce the dimensionality of X_train
+X_test_r2l_u2r = pca_dos_probe.fit_transform(X_test_l2)  # Reduce the dimensionality of X_test
+
+print('\nAfter PCA:')
+print('Shape of the train set for layer1: ', X_train_dos_probe.shape, ' - Target variable: ', len(y_train_l1))
+print('Shape of the train set for layer2: ', X_train_r2l_u2r.shape, ' - Target variable: ', len(y_train_l2))
+print('Shape of the test set for layer1: ', X_test_dos_probe.shape, ' - Target variable: ', len(y_test_l1))
+print('Shape of the test set for layer2: ', X_test_r2l_u2r.shape, ' - Target variable: ', len(y_test_l2))
+
+dos_probe_classifier = GaussianNB()  # The classifier selected for DoS+Probe is Naive Bayes Classifier (NBC)
+dos_probe_classifier.fit(X_train_dos_probe, y_train_l1)  # NBC is trained on the reduced train set and labels
+predicted_l1 = dos_probe_classifier.predict(X_test_dos_probe)  # Evaluates the model on the test data
+
+# Support Vector Classifier with parameters C, gamma and kernel function 'radial basis function'
+r2l_u2r_classifier = SVC(C=0.1, gamma=0.01, kernel='rbf')
+r2l_u2r_classifier.fit(X_train_r2l_u2r, y_train)
+predicted_l2 = r2l_u2r_classifier.predict(X_test_r2l_u2r)
