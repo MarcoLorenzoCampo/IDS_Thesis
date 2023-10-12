@@ -3,7 +3,8 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+from imblearn.under_sampling import RandomUnderSampler as under_sam
 
 # Testing the model with a different test set
 pd.set_option("display.max.columns", 10)
@@ -139,18 +140,39 @@ X_train_l2 = X_train[(X_train['attack_cat'] == 'normal') | (X_train['attack_cat'
 
 X_test_l1 = X_test
 X_test_l2 = X_test[(X_test['attack_cat'] == 'normal') | (X_test['attack_cat'] == 'generic') |
-                     (X_test['attack_cat'] == 'backdoor') | (X_test['attack_cat'] == 'exploits') |
-                     (X_test['attack_cat'] == 'fuzzer')]
+                   (X_test['attack_cat'] == 'backdoor') | (X_test['attack_cat'] == 'exploits') |
+                   (X_test['attack_cat'] == 'fuzzer')]
 
-# now that we split the sets, we can remove the 'attack_cat' feature
+# set the target variables
+y_train_l1 = np.array([1 if (x in dos_probe_list or x in u2r_r2l_list) else 0 for x in X_train_l1['attack_cat']])
+y_test_l1 = np.array([1 if (x in dos_probe_list or x in u2r_r2l_list) else 0 for x in X_test_l1['attack_cat']])
 
+y_train_l2 = np.array([1 if (x in u2r_r2l_list) else 0 for x in X_train_l2['attack_cat']])
+y_test_l2 = np.array([1 if (x in u2r_r2l_list) else 0 for x in X_test_l2['attack_cat']])
 
-print('Shape of the train set for layer1: ', X_train_l1.shape)
-print('Shape of the train set for layer2: ', X_train_l2.shape)
-print('Shape of the test set for layer1: ', X_test_l1.shape)
-print('Shape of the test set for layer2: ', X_test_l2.shape)
+# define the under sampler, to reduce the disparity of classes
+under_sampler = under_sam(sampling_strategy=1)
 
+# balancing the train set for l1. Contains all the attacks/normal traffic.
+X_train_l1, y_train_l1 = under_sampler.fit_resample(X_train_l1, y_train_l1)
+# balancing the test set for l1. Contains all the attacks/normal traffic.
+X_test_l1, y_test_l1 = under_sampler.fit_resample(X_test_l1, y_test_l1)
+
+# balancing the train set for l2. Contains only the attacks pertaining u2r and r2l.
+X_train_l2, y_train_l2 = under_sampler.fit_resample(X_train_l2, y_train_l2)
+# balancing the test set for l2. Contains only the attacks pertaining u2r and r2l.
+X_test_l2, y_test_l2 = under_sampler.fit_resample(X_test_l2, y_test_l2)
+
+print('Shape of the train set for layer1: ', X_train_l1.shape, ' - Target variable: ', len(y_train_l1))
+print('Shape of the train set for layer2: ', X_train_l2.shape, ' - Target variable: ', len(y_train_l2))
+print('Shape of the test set for layer1: ', X_test_l1.shape, ' - Target variable: ', len(y_test_l1))
+print('Shape of the test set for layer2: ', X_test_l2.shape, ' - Target variable: ', len(y_test_l2))
+
+# Now that all the sets have been set up, we can reason on the features
+'''
 # Now that the data pre-processing is done, let's do feature selection
 pca_dos_probe = PCA(n_components=0.95)  # features selected can explain >95% of the variance
 X_train_dos_probe = pca_dos_probe.fit_transform(X_train)  # Reduce the dimensionality of X_train
 X_test_dos_probe = pca_dos_probe.transform(X_test)  # Reduce the dimensionality of X_test
+'''
+

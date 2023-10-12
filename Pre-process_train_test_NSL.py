@@ -229,6 +229,7 @@ with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
 # Performs undersampling, reduces the number of majority class samples to address class imbalance
 # instances of Normal traffic >>> U2R+R2L instances
 under_sampler = under_sam(sampling_strategy=1)
+# print(y_train)
 X_train, y_train = under_sampler.fit_resample(X_train, y_train)
 
 # PCS as done before on Dos+Probe
