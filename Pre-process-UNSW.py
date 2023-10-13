@@ -99,14 +99,14 @@ not_present_in_test = []
 for x in X_train.columns:
     if x not in X_test.columns:
         not_present_in_test.append(x)
-print('Features: ' + str(not_present_in_test) + ' are OHE features not present in the test-set. Add them manually.')
+print('Features: ' + str(not_present_in_test) + ' are OHE features not present in the test-set. Remove them manually.')
 
 # check the features
 not_present_in_train = []
 for x in X_test.columns:
     if x not in X_train.columns:
         not_present_in_train.append(x)
-print('Features: ' + str(not_present_in_train) + ' are OHE features not present in the train-set. Add them manually.')
+print('Features: ' + str(not_present_in_train) + ' are OHE features not present in the train-set. Remove them manually.')
 
 # add the missing features to the test set as all zeros, they are one hot encoded
 data = np.zeros((82332, len(not_present_in_test)))
@@ -179,11 +179,12 @@ del X_test_l2['attack_cat']
 
 # Now that all the sets have been set up, we can reason on the features
 # starting with the features for l1
-pca_dos_probe = PCA(n_components=0.95)  # features selected can explain >95% of the variance
+pca_dos_probe = PCA(n_components=22)  # features selected can explain >95% of the variance
 X_train_dos_probe = pca_dos_probe.fit_transform(X_train_l1)  # Reduce the dimensionality of X_train
 X_test_dos_probe = pca_dos_probe.fit_transform(X_test_l1)  # Reduce the dimensionality of X_test
 
 # features for l2
+pca_dos_probe = PCA(n_components=20)  # features selected can explain >95% of the variance
 X_train_r2l_u2r = pca_dos_probe.fit_transform(X_train_l2)  # Reduce the dimensionality of X_train
 X_test_r2l_u2r = pca_dos_probe.fit_transform(X_test_l2)  # Reduce the dimensionality of X_test
 
@@ -199,5 +200,5 @@ predicted_l1 = dos_probe_classifier.predict(X_test_dos_probe)  # Evaluates the m
 
 # Support Vector Classifier with parameters C, gamma and kernel function 'radial basis function'
 r2l_u2r_classifier = SVC(C=0.1, gamma=0.01, kernel='rbf')
-r2l_u2r_classifier.fit(X_train_r2l_u2r, y_train)
+r2l_u2r_classifier.fit(X_train_r2l_u2r, y_train_l2)
 predicted_l2 = r2l_u2r_classifier.predict(X_test_r2l_u2r)
