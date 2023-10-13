@@ -1,3 +1,5 @@
+# UNSW-NB15 Computer Security Dataset: Analysis through Visualization
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -27,6 +29,14 @@ else:
 # put everything in lowercase for train and test sets
 df_train = df_train.apply(lambda k: k.astype(str).str.lower())
 df_test = df_test.apply(lambda k: k.astype(str).str.lower())
+
+# drop the redundant features
+del df_train['Stime']; del df_test['Stime']
+del df_train['Ltime']; del df_test['Ltime']
+del df_train['srcip']; del df_test['srcip']
+del df_train['sport']; del df_test['sport']
+del df_train['dstip']; del df_test['dstip']
+del df_train['dsport']; del df_test['dsport']
 
 '''
 # visualize the distribution of attacks in the train set:
