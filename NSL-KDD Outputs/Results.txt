@@ -31,13 +31,13 @@ Shape of the test data labels: (#samples,) =(12663,)
 NSL-KDD Outputs for u2r-r2l Support Vector Machine:
 
 Confusion Matrix: [TP FP / FN TN]
-[[9076  635]
- [1369 1583]]
-Accuracy = 0.841743662639185
-F1 Score = 0.6123791102514506
-Precision = 0.7137060414788098
-Recall = 0.5362466124661247
-Matthew correlation coefficient = 0.5237741393180292
+[[9107  604]
+ [1412 1540]]
+Accuracy = 0.8407960199004975
+F1 Score = 0.6043956043956044
+Precision = 0.7182835820895522
+Recall = 0.521680216802168
+Matthew correlation coefficient = 0.5180357220452285
 Shape of the train set: (125973, 28)
 
 
@@ -46,13 +46,13 @@ Testing the system:
 Shape of the test set for layer 1: (22544, 28)
 Shape of the test set for layer 2: (22544, 13)
 Confusion Matrix: [TP FP / FN TN]
-[[ 8128  1583]
- [  940 11893]]
-Accuracy = 0.8880855216465579
-F1 Score = 0.9041012581245962
-Precision = 0.8825319085782131
-Recall = 0.9267513441907582
-Matthew corr = 0.7712684024475558
+[[ 8149  1562]
+ [  944 11889]]
+Accuracy = 0.8888396025550035
+F1 Score = 0.9046568254451377
+Precision = 0.8838748048472232
+Recall = 0.9264396477830593
+Matthew corr = 0.7727910485537636
 
 
 Testing results:
@@ -66,8 +66,8 @@ Detected Probe: 2163
 Probe results correctness: 89.34324659231723%
 
 Total R2L samples: 2885
-Detected R2L: 2770
-R2L results correctness: 96.01386481802426%
+Detected R2L: 2766
+R2L results correctness: 95.87521663778162%
 
 Total U2R samples: 67
 Detected U2R: 67

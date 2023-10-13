@@ -7,6 +7,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from imblearn.under_sampling import RandomUnderSampler as under_sam
 from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 # Testing the model with a different test set
 pd.set_option("display.max.columns", 10)
@@ -39,7 +40,7 @@ with open('UNSW-NB15 Outputs/Results.txt', 'w') as output_file:
 # U2R: Backdoor
 # R2L: Exploits, Fuzzers
 dos_probe_list = ['dos', 'worms', 'reconnaissance']
-u2r_r2l_list = ['backdoor', 'exploits', 'fuzzer']
+u2r_r2l_list = ['backdoor', 'exploits', 'fuzzer', 'shellcode']
 
 # set the target variables
 y_train = np.array([1 if (x in dos_probe_list or x in u2r_r2l_list) else 0 for x in df_train['label']])
@@ -138,12 +139,12 @@ with open('UNSW-NB15 Outputs/Results.txt', 'a') as output_file:
 X_train_l1 = X_train
 X_train_l2 = X_train[(X_train['attack_cat'] == 'normal') | (X_train['attack_cat'] == 'generic') |
                      (X_train['attack_cat'] == 'backdoor') | (X_train['attack_cat'] == 'exploits') |
-                     (X_train['attack_cat'] == 'fuzzer')]
+                     (X_train['attack_cat'] == 'fuzzer') | (X_train['attack_cat'] == 'shellcode')]
 
 X_test_l1 = X_test
 X_test_l2 = X_test[(X_test['attack_cat'] == 'normal') | (X_test['attack_cat'] == 'generic') |
                    (X_test['attack_cat'] == 'backdoor') | (X_test['attack_cat'] == 'exploits') |
-                   (X_test['attack_cat'] == 'fuzzer')]
+                   (X_test['attack_cat'] == 'fuzzer') | (X_train['attack_cat'] == 'shellcode')]
 
 # set the target variables
 y_train_l1 = np.array([1 if (x in dos_probe_list or x in u2r_r2l_list) else 0 for x in X_train_l1['attack_cat']])
@@ -202,3 +203,32 @@ predicted_l1 = dos_probe_classifier.predict(X_test_dos_probe)  # Evaluates the m
 r2l_u2r_classifier = SVC(C=0.1, gamma=0.01, kernel='rbf')
 r2l_u2r_classifier.fit(X_train_r2l_u2r, y_train_l2)
 predicted_l2 = r2l_u2r_classifier.predict(X_test_r2l_u2r)
+
+# compute the parameters
+accuracy = accuracy_score(y_test_l1, predicted_l1)
+# compute the confusion matrix
+confusion_matrix1 = confusion_matrix(y_test_l1, predicted_l1)
+print('\nAccuracy for l1: ', accuracy)
+print('Confusion matrix for l1: ', confusion_matrix1)
+
+# for l1
+accuracy = accuracy_score(y_test_l2, predicted_l2)
+# compute the confusion matrix
+confusion_matrix2 = confusion_matrix(y_test_l2, predicted_l2)
+print('\nAccuracy for l2: ', accuracy)
+print('Confusion matrix for l2: ', confusion_matrix2)
+
+'''
+# Write the output on the text file
+with open('UNSW-NB15 Outputs/Results.txt', 'a') as output_file:
+    output_file.write("\n\n\nTesting results:\n")
+
+    output_file.write('\nLayer1:')
+    output_file.write('\n\nTotal samples: ' + str(X_train_dos_probe.shape))
+    output_file.write('\nDetected R2L: ' + str(result[r2l_index].sum()))
+    output_file.write('\nR2L results correctness: ' + str(result[r2l_index].sum() / result[r2l_index].shape[0]*100) + '%')
+
+    output_file.write('\n\nTotal U2R samples: ' + str(result[u2r_index].shape[0]))
+    output_file.write('\nDetected U2R: ' + str(result[u2r_index].sum()))
+    output_file.write('\nU2R results correctness: ' + (str(result[u2r_index].sum() / result[u2r_index].shape[0]*100)) + '%')
+'''
