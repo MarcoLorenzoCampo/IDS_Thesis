@@ -1,0 +1,1 @@
+ct_flw_http_mthd,dtcpb,label,ct_srv_src,sjit,djit,ackdat,ct_state_ttl,smean,ct_src_ltm,dinpkt,ct_ftp_cmd,ct_src_dport_ltm,spkts,swin,dwin,sloss,response_body_len,ct_srv_dst

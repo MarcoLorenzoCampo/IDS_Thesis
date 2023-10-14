@@ -1,0 +1,1 @@
+ct_flw_http_mthd,label,dload,dbytes,djit,ct_dst_src_ltm,ackdat,ct_state_ttl,ct_src_ltm,sload,sttl,is_sm_ips_ports,ct_dst_sport_ltm,dinpkt,dpkts,tcprtt,trans_depth,is_ftp_login,dmean,ct_src_dport_ltm,swin,dur,dwin,sloss,sbytes,ct_srv_dst

@@ -119,6 +119,7 @@ features_to_encode = ['proto', 'service', 'state']  # features to one-hot encode
 numerical_features = list(set(df_train.columns) - set(categorical_features))
 
 # now ICFS only on the numerical features
+'''
 num_trainset = copy.deepcopy(df_train)
 del num_trainset['proto']
 del num_trainset['service']
@@ -197,7 +198,7 @@ set_exploits = set(exploits_all)
 set_generic = set(generic_all)
 
 common_features_l1 = set_generic & set_exploits & set_fuzzers & set_dos
-print('Common features to train l1: ', len(common_features_l1), common_features_l1)
+# print('Common features to train l1: ', len(common_features_l1), common_features_l1)
 
 # now l2 needs the features to describe the difference between rare attacks and normal traffic
 normal = normal[numerical_features]
@@ -245,7 +246,32 @@ set_analysis = set(analysis_all)
 set_reconnaissance = set(reconnaissance_all)
 
 common_features_l2 = set_worms & set_shellcode & set_backdoor & set_analysis & set_reconnaissance
-print('Common features to train l2: ', len(common_features_l2), common_features_l2)
+# print('Common features to train l2: ', len(common_features_l2), common_features_l2)
+
+ 
+with open('UNSW-NB15 Outputs/UNSW_features_l1.txt', 'w') as f:
+    for i, x in enumerate(common_features_l1):
+        if i < len(common_features_l1) - 1:
+            f.write(x + ',')
+        else:
+            f.write(x)
+
+# read the common features from file
+with open('UNSW-NB15 Outputs/UNSW_features_l2.txt', 'w') as f:
+    for i, x in enumerate(common_features_l2):
+        if i < len(common_features_l2) - 1:
+            f.write(x + ',')
+        else:
+            f.write(x)
+'''
+
+with open('UNSW-NB15 Outputs/UNSW_features_l1.txt', 'r') as f:
+    file_contents = f.read()
+common_features_l1 = file_contents.split(',')
+
+with open('UNSW-NB15 Outputs/UNSW_features_l2.txt', 'r') as f:
+    file_contents = f.read()
+common_features_l2 = file_contents.split(',')
 
 # two different train sets for l1 and l2. Each one must contain the samples from the original dataset according
 # to the division in layers, and the features obtained from the ICFS as the only features.
@@ -260,6 +286,8 @@ x_train_l2 = df_train[(df_train['attack_cat'] == 'worms') | (df_train['attack_ca
 to_add = list(common_features_l2) + features_to_encode
 x_train_l2 = x_train_l2[list(common_features_l2)]
 x_train_l2 = x_train_l2.sort_index(axis=1)
+
+print(x_train_l1.columns, '\n\n', x_train_l2.columns)
 
 print('\nNow ICSF has been performed, time to scale the numerical values and one-hot-encode the '
       'categorical features.\n')
