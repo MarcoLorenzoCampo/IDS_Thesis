@@ -132,7 +132,6 @@ del worms['attack_cat']
 
 # drop 'attack_cat' for now
 del df_train['attack_cat']
-print('Train set shape: ', df_train.shape)
 
 
 # for layer1, PCC between:
@@ -143,8 +142,7 @@ print('Train set shape: ', df_train.shape)
 # select common features for all of these attacks
 
 # Select the correlated features in the two datasets.
-def get_most_correlated_features(x1, x2, threshold=0.1):
-
+def get_most_correlated_features(x1, x2, n=10):
     # Convert all datasets to numbers
     x1 = x1.apply(pd.to_numeric, errors='ignore')
     x2 = x2.apply(pd.to_numeric, errors='ignore')
@@ -152,13 +150,96 @@ def get_most_correlated_features(x1, x2, threshold=0.1):
     # Calculate the correlation matrix between the two DataFrames.
     corr_matrix = x1.corrwith(x2)
 
-    # Filter the correlation matrix by the threshold.
-    corr_matrix = corr_matrix[corr_matrix.abs() > threshold]
+    # Calculate the correlation matrix between the two DataFrames.
+    corr_matrix = x1.corrwith(x2)
 
-    # Return the list of selected features.
-    return corr_matrix.index.tolist()
+    # Select the features that are most correlated between the two DataFrames.
+    most_correlated_features = corr_matrix.abs().sort_values(ascending=False).index[:n]
+
+    # Return the most important features.
+    return most_correlated_features
 
 
-generic_all = get_most_correlated_features(df_train, generic)
+# compute all elements of df1 that are not in df2
+def compute_set_difference(df1, df2):
+    # Create a new DataFrame containing the set difference of the two DataFrames.
+    df_diff = df1[~df1.index.isin(df2.index)]
+
+    # Return the DataFrame.
+    return df_diff
+
+
+# start with l1
+rest = compute_set_difference(df_train, generic)
+generic_all = get_most_correlated_features(rest, generic)
+print('Generic: ', df_train.shape, generic.shape)
 print('Correlated features between Generic attacks and all data: ', len(generic_all))
 print(generic_all)
+
+rest = compute_set_difference(df_train, exploits)
+exploits_all = get_most_correlated_features(rest, exploits)
+print('Exploits: ', df_train.shape, exploits.shape)
+print('Correlated features between Exploit attacks and all data: ', len(exploits_all))
+print(exploits_all)
+
+rest = compute_set_difference(df_train, fuzzers)
+fuzzers_all = get_most_correlated_features(rest, fuzzers)
+print('Fuzzers: ', df_train.shape, fuzzers.shape)
+print('Correlated features between Fuzzers attacks and all data: ', len(fuzzers_all))
+print(fuzzers_all)
+
+rest = compute_set_difference(df_train, dos)
+dos_all = get_most_correlated_features(rest, dos)
+print('DoS: ', df_train.shape, dos.shape)
+print('Correlated features between Generic attacks and all data: ', len(dos_all))
+print(dos_all)
+
+# intersect for the optimal features
+set_dos = set(dos_all)
+set_fuzzers = set(fuzzers_all)
+set_exploits = set(exploits_all)
+set_generic = set(generic_all)
+
+common_features_l1 = set_generic & set_exploits & set_fuzzers & set_dos
+print('Common features to train l1: ', len(common_features_l1), common_features_l1)
+
+# now for l2
+rest = compute_set_difference(df_train, reconnaissance)
+reconnaissance_all = get_most_correlated_features(rest, reconnaissance)
+print('Reconnaissance: ', df_train.shape, reconnaissance.shape)
+print('Correlated features between reconnaissance attacks and all data: ', len(reconnaissance_all))
+print(reconnaissance_all)
+
+rest = compute_set_difference(df_train, analysis)
+analysis_all = get_most_correlated_features(rest, analysis)
+print('analysis: ', df_train.shape, analysis.shape)
+print('Correlated features between analysis attacks and all data: ', len(analysis_all))
+print(analysis_all)
+
+rest = compute_set_difference(df_train, backdoor)
+backdoor_all = get_most_correlated_features(rest, backdoor)
+print('backdoor: ', df_train.shape, backdoor.shape)
+print('Correlated features between backdoor attacks and all data: ', len(backdoor_all))
+print(backdoor_all)
+
+rest = compute_set_difference(df_train, shellcode)
+shellcode_all = get_most_correlated_features(rest, shellcode)
+print('shellcode: ', df_train.shape, shellcode.shape)
+print('Correlated features between shellcode attacks and all data: ', len(shellcode_all))
+print(shellcode_all)
+
+rest = compute_set_difference(df_train, worms)
+worms_all = get_most_correlated_features(rest, worms)
+print('worms: ', df_train.shape, worms.shape)
+print('Correlated features between worms attacks and all data: ', len(worms_all))
+print(worms_all)
+
+# intersect for the optimal features
+set_worms = set(worms_all)
+set_shellcode = set(shellcode_all)
+set_backdoor = set(backdoor_all)
+set_analysis = set(analysis_all)
+set_reconnaissance = set(reconnaissance_all)
+
+common_features_l2 = set_worms & set_shellcode & set_backdoor & set_analysis & set_reconnaissance
+print('Common features to train l2: ', len(common_features_l2), common_features_l2)
