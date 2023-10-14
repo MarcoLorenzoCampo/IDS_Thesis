@@ -107,7 +107,8 @@ not_present_in_train = []
 for x in X_test.columns:
     if x not in X_train.columns:
         not_present_in_train.append(x)
-print('Features: ' + str(not_present_in_train) + ' are OHE features not present in the train-set. Remove them manually.')
+print('Features: ' + str(not_present_in_train) + ' are OHE features not present in the train-set. '
+                                                 'Remove them manually.')
 
 # add the missing features to the test set as all zeros, they are one hot encoded
 data = np.zeros((82332, len(not_present_in_test)))

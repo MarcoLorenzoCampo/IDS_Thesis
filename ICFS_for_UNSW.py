@@ -7,20 +7,18 @@ import matplotlib.pyplot as plt
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
+
 # Select the correlated features in the two datasets.
-def get_most_correlated_features(x1, x2, n=10):
-    # Convert all datasets to numbers
+def get_most_correlated_features(x1, x2, threshold):
+    # All elements as numbers
     x1 = x1.apply(pd.to_numeric, errors='ignore')
     x2 = x2.apply(pd.to_numeric, errors='ignore')
-
-    # Calculate the correlation matrix between the two DataFrames.
-    corr_matrix = x2.corrwith(x1)
-
-    # Select the features that are most correlated between the two DataFrames.
-    most_correlated_features = corr_matrix.abs().sort_values(ascending=False).index[:n]
-
-    # Return the most important features.
-    return most_correlated_features
+    # Calculate the Pearson's correlation coefficient between the two DataFrames.
+    corr_matrix = x1.corrwith(x2)
+    # print(corr_matrix)
+    # Select the features with a high correlation coefficient.
+    pcf = corr_matrix.abs().sort_values(ascending=False).index[corr_matrix.abs() > threshold]
+    return pcf
 
 
 # compute all elements of df1 that are not in df2
@@ -156,26 +154,42 @@ del num_trainset['attack_cat']
 # select common features for all of these attacks
 
 # start with l1
-rest = compute_set_difference(num_trainset, generic)
-generic_all = get_most_correlated_features(rest, generic)
+
+# features for Generic
+rest = compute_set_difference(num_trainset, dos)
+rest = compute_set_difference(rest, exploits)
+rest = compute_set_difference(rest, fuzzers)
+generic_and_rest = pd.concat([rest, generic], axis=0)
+generic_all = get_most_correlated_features(generic_and_rest, generic_and_rest['label'], 0.05)
 print('Generic: ', num_trainset.shape, generic.shape)
 print('Correlated features between Generic attacks and all data: ', len(generic_all))
-print(generic_all)
 
-rest = compute_set_difference(num_trainset, exploits)
-exploits_all = get_most_correlated_features(rest, exploits)
+# features for exploits
+rest = compute_set_difference(num_trainset, dos)
+rest = compute_set_difference(rest, generic)
+rest = compute_set_difference(rest, fuzzers)
+exploits_and_rest = pd.concat([rest, exploits], axis=0)
+exploits_all = get_most_correlated_features(exploits_and_rest, exploits_and_rest['label'], 0.05)
 print('Exploits: ', num_trainset.shape, exploits.shape)
 print('Correlated features between Exploit attacks and all data: ', len(exploits_all))
 print(exploits_all)
 
-rest = compute_set_difference(num_trainset, fuzzers)
-fuzzers_all = get_most_correlated_features(rest, fuzzers)
+# features for fuzzers
+rest = compute_set_difference(num_trainset, dos)
+rest = compute_set_difference(rest, generic)
+rest = compute_set_difference(rest, exploits)
+fuzzers_and_rest = pd.concat([rest, fuzzers], axis=0)
+fuzzers_all = get_most_correlated_features(fuzzers_and_rest, fuzzers_and_rest['label'], 0.05)
 print('Fuzzers: ', num_trainset.shape, fuzzers.shape)
 print('Correlated features between Fuzzers attacks and all data: ', len(fuzzers_all))
 print(fuzzers_all)
 
-rest = compute_set_difference(num_trainset, dos)
-dos_all = get_most_correlated_features(rest, dos)
+# features for dos
+rest = compute_set_difference(num_trainset, fuzzers)
+rest = compute_set_difference(rest, generic)
+rest = compute_set_difference(rest, exploits)
+dos_and_rest = pd.concat([rest, dos], axis=0)
+dos_all = get_most_correlated_features(dos_and_rest, dos_and_rest['label'], 0.05)
 print('DoS: ', num_trainset.shape, dos.shape)
 print('Correlated features between Generic attacks and all data: ', len(dos_all))
 print(dos_all)
@@ -192,29 +206,39 @@ print('Common features to train l1: ', len(common_features_l1), common_features_
 # now l2 needs the features to describe the difference between rare attacks and normal traffic
 normal = normal[numerical_features]
 
-reconnaissance_all = get_most_correlated_features(normal, reconnaissance)
+# features for reconneissance
+reconnaissance_and_normal = pd.concat([normal, reconnaissance], axis=0)
+reconnaissance_all = get_most_correlated_features(reconnaissance_and_normal, reconnaissance_and_normal['label'], 0.01)
 print('Reconnaissance: ', normal.shape, reconnaissance.shape)
-print('Correlated features between reconnaissance attacks and all data: ', len(reconnaissance_all))
+print('Correlated features between reconnaissance attacks and normal traffic: ', len(reconnaissance_all))
 print(reconnaissance_all)
 
-analysis_all = get_most_correlated_features(normal, analysis)
+# features for analysis
+analysis_and_normal = pd.concat([normal, analysis], axis=0)
+analysis_all = get_most_correlated_features(analysis_and_normal, analysis_and_normal['label'], 0.01)
 print('analysis: ', normal.shape, analysis.shape)
-print('Correlated features between analysis attacks and all data: ', len(analysis_all))
+print('Correlated features between analysis attacks and normal traffic: ', len(analysis_all))
 print(analysis_all)
 
-backdoor_all = get_most_correlated_features(normal, backdoor)
+# features for backdoor
+backdoor_and_normal = pd.concat([normal, backdoor], axis=0)
+backdoor_all = get_most_correlated_features(backdoor_and_normal, backdoor_and_normal['label'], 0.01)
 print('backdoor: ', normal.shape, backdoor.shape)
-print('Correlated features between backdoor attacks and all data: ', len(backdoor_all))
+print('Correlated features between backdoor attacks and normal traffic: ', len(backdoor_all))
 print(backdoor_all)
 
-shellcode_all = get_most_correlated_features(normal, shellcode)
+# features for shellcode
+shellcode_and_normal = pd.concat([normal, shellcode], axis=0)
+shellcode_all = get_most_correlated_features(shellcode_and_normal, shellcode_and_normal['label'], 0.01)
 print('shellcode: ', normal.shape, shellcode.shape)
-print('Correlated features between shellcode attacks and all data: ', len(shellcode_all))
+print('Correlated features between shellcode attacks and normal traffic: ', len(shellcode_all))
 print(shellcode_all)
 
-worms_all = get_most_correlated_features(normal, worms)
+# features for worms
+worms_and_normal = pd.concat([normal, worms], axis=0)
+worms_all = get_most_correlated_features(worms_and_normal, worms_and_normal['label'], 0.01)
 print('worms: ', normal.shape, worms.shape)
-print('Correlated features between worms attacks and all data: ', len(worms_all))
+print('Correlated features between worms attacks and normal traffic: ', len(worms_all))
 print(worms_all)
 
 # intersect for the optimal features
@@ -230,13 +254,13 @@ print('Common features to train l2: ', len(common_features_l2), common_features_
 # two different train sets for l1 and l2. Each one must contain the samples from the original dataset according
 # to the division in layers, and the features obtained from the ICFS as the only features.
 x_train_l1 = df_train[(df_train['attack_cat'] == 'generic') | (df_train['attack_cat'] == 'exploits')
-                     | (df_train['attack_cat'] == 'fuzzers') | (df_train['attack_cat'] == 'dos')]
+                      | (df_train['attack_cat'] == 'fuzzers') | (df_train['attack_cat'] == 'dos')]
 
 x_train_l1 = x_train_l1[list(common_features_l1)]
 
 x_train_l2 = df_train[(df_train['attack_cat'] == 'worms') | (df_train['attack_cat'] == 'shellcode')
-                     | (df_train['attack_cat'] == 'reconnaissance') | (df_train['attack_cat'] == 'backdoor')
-                    | (df_train['attack_cat'] == 'analysis')]
+                      | (df_train['attack_cat'] == 'reconnaissance') | (df_train['attack_cat'] == 'backdoor')
+                      | (df_train['attack_cat'] == 'analysis')]
 
 x_train_l2 = x_train_l2[list(common_features_l2)]
 
