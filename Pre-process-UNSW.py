@@ -224,12 +224,10 @@ print('Confusion matrix for l2: ', confusion_matrix2)
 with open('UNSW-NB15 Outputs/Results.txt', 'a') as output_file:
     output_file.write("\n\n\nTesting results:\n")
 
-    output_file.write('\nLayer1:')
-    output_file.write('\n\nTotal samples: ' + str(X_train_dos_probe.shape))
-    output_file.write('\nDetected R2L: ' + str(result[r2l_index].sum()))
-    output_file.write('\nR2L results correctness: ' + str(result[r2l_index].sum() / result[r2l_index].shape[0]*100) + '%')
+    output_file.write('\nLayer1:') output_file.write('\n\nTotal samples: ' + str(X_train_dos_probe.shape)) 
+    output_file.write('\nDetected R2L: ' + str(result[r2l_index].sum())) output_file.write('\nR2L results 
+    correctness: ' + str(result[r2l_index].sum() / result[r2l_index].shape[0]*100) + '%')
 
-    output_file.write('\n\nTotal U2R samples: ' + str(result[u2r_index].shape[0]))
-    output_file.write('\nDetected U2R: ' + str(result[u2r_index].sum()))
-    output_file.write('\nU2R results correctness: ' + (str(result[u2r_index].sum() / result[u2r_index].shape[0]*100)) + '%')
-'''
+    output_file.write('\n\nTotal U2R samples: ' + str(result[u2r_index].shape[0])) output_file.write('\nDetected U2R: 
+    ' + str(result[u2r_index].sum())) output_file.write('\nU2R results correctness: ' + (str(result[u2r_index].sum() 
+    / result[u2r_index].shape[0]*100)) + '%')'''
