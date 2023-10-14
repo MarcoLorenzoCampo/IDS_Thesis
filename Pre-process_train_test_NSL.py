@@ -226,7 +226,7 @@ with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
     output_file.write('\nShape of the test data features: (#samples, #features) =' + str(X_test.shape))
     output_file.write('\nShape of the test data labels: (#samples,) =' + str(y_test.shape))
 
-# Performs undersampling, reduces the number of majority class samples to address class imbalance
+# Performs under sampling, reduces the number of majority class samples to address class imbalance
 # instances of Normal traffic >>> U2R+R2L instances
 under_sampler = under_sam(sampling_strategy=1)
 # print(y_train)

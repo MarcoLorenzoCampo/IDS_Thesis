@@ -1,20 +1,20 @@
 # UNSW-NB15 Computer Security Dataset: Analysis through Visualization
-
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.feature_selection import mutual_info_classif
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
+# Simulation parameters
+pd.set_option("display.max.columns", None)
+
 # Splitting the sets in two parts, to mirror the strategy used for the DLHA
-# Normal: Normal, Generic
-# DoS: DoS, Worms
-# Probe: Reconnaissance
-# U2R: Backdoor
-# R2L: Exploits, Fuzzers
-dos_probe_list = ['dos', 'worms', 'reconnaissance', 'analysis', 'generic']
-u2r_r2l_list = ['backdoor', 'exploits', 'fuzzer', 'shellcode']
+# First layer will be trained on 'attacks_for_l1', while second layer on 'attacks_for_l2'
+attacks_for_l1 = ['generic', 'exploits', 'fuzzers', 'dos']
+attacks_for_l2 = ['reconnaissance', 'analysis', 'backdoor', 'shellcode', 'worms']
 
 # import the dataset
-df_test = pd.read_csv('UNSW-NB15_datasets/Partial Sets/UNSW_NB15_testing-set.csv', sep=',', header=0)
+# df_test = pd.read_csv('UNSW-NB15_datasets/Partial Sets/UNSW_NB15_testing-set.csv', sep=',', header=0)
 df_train = pd.read_csv('UNSW-NB15_datasets/Partial Sets/UNSW_NB15_training-set.csv', sep=',', header=0)
 
 # write the present features to file
@@ -37,11 +37,11 @@ else:
 
 # put everything in lowercase for train and test sets
 df_train = df_train.apply(lambda k: k.astype(str).str.lower())
-df_test = df_test.apply(lambda k: k.astype(str).str.lower())
+# df_test = df_test.apply(lambda k: k.astype(str).str.lower())
 
-# sort the columns
-df_train = df_train.sort_index(axis=1)  # sort the columns
-df_test = df_test.sort_index(axis=1)  # sort the columns
+# drop the ID column
+del df_train['id']
+# del df_test['id']
 
 # visualization part commented
 '''
@@ -86,9 +86,9 @@ non_numerical = ['proto', 'service', 'state', 'attack_cat', 'label']
 to_encode = ['proto', 'service', 'state']
 num_col = list(set(df_train.columns) - set(non_numerical))
 to_append_train_atk = df_train['attack_cat']
-to_append_test_atk = df_test['attack_cat']
+# to_append_test_atk = df_test['attack_cat']
 to_append_train_lbl = df_train['label']
-to_append_test_lbl = df_test['label']
+# to_append_test_lbl = df_test['label']
 
 # MinMax scales the values of df_train between 0-1
 scaler1 = MinMaxScaler()
@@ -106,23 +106,59 @@ df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
 df_train = pd.concat([df_train[num_col], df_enc, to_append_train_atk, to_append_train_lbl],
                      axis=1)  # df_train includes the newly one-hot-encoded columns
 
-print(df_train.shape)
-print()
-print(df_train.head())
+# sort the columns
+df_train = df_train.sort_index(axis=1)  # sort the columns
+# df_test = df_test.sort_index(axis=1)  # sort the columns
 
-# now do the same for the test set
-# scaling the numerical values of the train set
-df_minmax = scaler1.fit_transform(df_test[num_col])
-df_test[num_col] = pd.DataFrame(df_minmax, columns=df_test[num_col].columns)
+# now let's perform Intersected Correlated Feature Selection
+generic = df_train[(df_train['attack_cat'] == 'generic')]
+del generic['attack_cat']
+exploits = df_train[(df_train['attack_cat'] == 'exploits')]
+del exploits['attack_cat']
+fuzzers = df_train[(df_train['attack_cat'] == 'fuzzers')]
+del fuzzers['attack_cat']
+dos = df_train[(df_train['attack_cat'] == 'dos')]
+del dos['attack_cat']
+reconnaissance = df_train[(df_train['attack_cat'] == 'reconnaissance')]
+del reconnaissance['attack_cat']
+analysis = df_train[(df_train['attack_cat'] == 'analysis')]
+del analysis['attack_cat']
+backdoor = df_train[(df_train['attack_cat'] == 'backdoor')]
+del backdoor['attack_cat']
+shellcode = df_train[(df_train['attack_cat'] == 'shellcode')]
+del shellcode['attack_cat']
+worms = df_train[(df_train['attack_cat'] == 'worms')]
+del worms['attack_cat']
 
-# Perform One-hot encoding of the categorical values
-label_enc = ohe.fit_transform(df_test[to_encode])
-label_enc.toarray()
-new_labels = ohe.get_feature_names_out(to_encode)
-df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-df_test = pd.concat([df_test[num_col], df_enc, to_append_test_atk, to_append_test_lbl],
-                     axis=1)  # df_train includes the newly one-hot-encoded columns
+# drop 'attack_cat' for now
+del df_train['attack_cat']
+print('Train set shape: ', df_train.shape)
 
-print(df_test.shape)
-print()
-print(df_test.head())
+
+# for layer1, PCC between:
+# generic - rest
+# exploits - rest
+# fuzzers - rest
+# dos - rest
+# select common features for all of these attacks
+
+# Select the correlated features in the two datasets.
+def get_most_correlated_features(x1, x2, threshold=0.1):
+
+    # Convert all datasets to numbers
+    x1 = x1.apply(pd.to_numeric, errors='ignore')
+    x2 = x2.apply(pd.to_numeric, errors='ignore')
+
+    # Calculate the correlation matrix between the two DataFrames.
+    corr_matrix = x1.corrwith(x2)
+
+    # Filter the correlation matrix by the threshold.
+    corr_matrix = corr_matrix[corr_matrix.abs() > threshold]
+
+    # Return the list of selected features.
+    return corr_matrix.index.tolist()
+
+
+generic_all = get_most_correlated_features(df_train, generic)
+print('Correlated features between Generic attacks and all data: ', len(generic_all))
+print(generic_all)
