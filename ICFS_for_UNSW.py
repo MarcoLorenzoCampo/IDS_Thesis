@@ -276,23 +276,22 @@ common_features_l2 = file_contents.split(',')
 # two different train sets for l1 and l2. Each one must contain the samples from the original dataset according
 # to the division in layers, and the features obtained from the ICFS as the only features.
 to_add = list(common_features_l1) + features_to_encode
-x_train_l1 = df_train[to_add]
+x_train_l1 = df_train[list(to_add)]
 x_train_l1 = x_train_l1.sort_index(axis=1)
+
+print('l1 before one-hot encoding: ', x_train_l1.shape)
 
 x_train_l2 = df_train[(df_train['attack_cat'] == 'worms') | (df_train['attack_cat'] == 'shellcode')
                       | (df_train['attack_cat'] == 'reconnaissance') | (df_train['attack_cat'] == 'backdoor')
                       | (df_train['attack_cat'] == 'analysis') | (df_train['attack_cat'] == 'normal')]
 
 to_add = list(common_features_l2) + features_to_encode
-x_train_l2 = x_train_l2[list(common_features_l2)]
+x_train_l2 = x_train_l2[list(to_add)]
 x_train_l2 = x_train_l2.sort_index(axis=1)
 
-print(x_train_l1.columns, '\n\n', x_train_l2.columns)
+print('l2 before one-hot encoding: ', x_train_l2.shape)
 
-print('\nNow ICSF has been performed, time to scale the numerical values and one-hot-encode the '
-      'categorical features.\n')
-
-# MinMax scaling for both sets
+# MinMax scaling for both sets, only the numerical features present in the sets
 num_l1 = list(set(numerical_features) & set(common_features_l1))
 num_l2 = list(set(numerical_features) & set(common_features_l2))
 
@@ -306,30 +305,34 @@ x_train_l2_scaled = pd.DataFrame(scaler.fit_transform(x_train_l2[num_l2]), colum
 cat_l1 = list(set(categorical_features) & set(common_features_l1))
 cat_l2 = list(set(categorical_features) & set(common_features_l2))
 
-'''
-# MinMax scales the values of df_train between 0-1
-scaler1 = MinMaxScaler()
-
-# scaling the numerical values of the train set
-df_minmax = scaler1.fit_transform(x_train_l1[numerical_features])
-x_train_l1[numerical_features] = pd.DataFrame(df_minmax, columns=x_train_l1[numerical_features].columns)
-x_train_l2[numerical_features] = pd.DataFrame(df_minmax, columns=x_train_l2[numerical_features].columns)
-
-# Perform One-hot encoding of the categorical values
 ohe = OneHotEncoder(handle_unknown='ignore')
+
+# for the categorical features of l1
 label_enc = ohe.fit_transform(x_train_l1[features_to_encode])
 label_enc.toarray()
 new_labels = ohe.get_feature_names_out(features_to_encode)
-df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-x_train_l1 = pd.concat([x_train_l1[numerical_features], df_enc],
-                     axis=1)  # df_train includes the newly one-hot-encoded columns
 
+x_train_l1_ohe = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
+
+# for the categorical features of l2
 label_enc = ohe.fit_transform(x_train_l2[features_to_encode])
 label_enc.toarray()
 new_labels = ohe.get_feature_names_out(features_to_encode)
-df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-x_train_l2 = pd.concat([x_train_l2[numerical_features], df_enc],
-                     axis=1)  # df_train includes the newly one-hot-encoded columns
+
+x_train_l2_ohe = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
+
+# now let's assemble the whole datasets and sort
+l1_train = pd.concat([x_train_l1_scaled, x_train_l1_ohe], axis=1).sort_index(axis=1)
+l2_train = pd.concat([x_train_l2_scaled, x_train_l2_ohe], axis=1).sort_index(axis=1)
+
+print('features selected for l1: ', len(common_features_l1))
+print('features selected for l2: ', len(common_features_l2))
+print('features to encode: ', len(features_to_encode))
+
+print('l1 after one-hot encoding: ', l1_train.shape)
+print('l2 after one-hot encoding: ', l2_train.shape)
+
+'''
 
 # sort the columns
 x_train_l1 = x_train_l1.sort_index(axis=1)
