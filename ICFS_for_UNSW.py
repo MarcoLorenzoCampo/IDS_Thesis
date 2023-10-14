@@ -249,13 +249,15 @@ print('Common features to train l2: ', len(common_features_l2), common_features_
 
 # two different train sets for l1 and l2. Each one must contain the samples from the original dataset according
 # to the division in layers, and the features obtained from the ICFS as the only features.
-x_train_l1 = df_train[list(common_features_l1)]
+to_add = list(common_features_l1) + features_to_encode
+x_train_l1 = df_train[to_add]
 x_train_l1 = x_train_l1.sort_index(axis=1)
 
 x_train_l2 = df_train[(df_train['attack_cat'] == 'worms') | (df_train['attack_cat'] == 'shellcode')
                       | (df_train['attack_cat'] == 'reconnaissance') | (df_train['attack_cat'] == 'backdoor')
                       | (df_train['attack_cat'] == 'analysis') | (df_train['attack_cat'] == 'normal')]
 
+to_add = list(common_features_l2) + features_to_encode
 x_train_l2 = x_train_l2[list(common_features_l2)]
 x_train_l2 = x_train_l2.sort_index(axis=1)
 
@@ -275,8 +277,6 @@ x_train_l2_scaled = pd.DataFrame(scaler.fit_transform(x_train_l2[num_l2]), colum
 # we now have the numerical features obtained doing the ICFS, now let's handle the categorical ones
 cat_l1 = list(set(categorical_features) & set(common_features_l1))
 cat_l2 = list(set(categorical_features) & set(common_features_l2))
-
-
 
 '''
 # MinMax scales the values of df_train between 0-1
