@@ -1,0 +1,10 @@
+dst_host_count,
+dst_host_srv_serror_rate,
+logged_in,
+srv_diff_host_rate,
+dst_host_serror_rate,
+dst_host_same_src_port_rate,
+dst_host_srv_diff_host_rate,
+serror_rate,
+srv_serror_rate,
+dst_host_srv_count
