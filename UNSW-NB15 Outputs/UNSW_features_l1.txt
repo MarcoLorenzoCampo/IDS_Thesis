@@ -1,1 +1,1 @@
-ct_flw_http_mthd,dtcpb,label,ct_srv_src,sjit,djit,ackdat,ct_state_ttl,smean,ct_src_ltm,dinpkt,ct_ftp_cmd,ct_src_dport_ltm,spkts,swin,dwin,sloss,response_body_len,ct_srv_dst
+ct_src_dport_ltm,ct_state_ttl,ct_flw_http_mthd,djit,ackdat,sloss,smean,dtcpb,response_body_len,dinpkt,spkts,ct_ftp_cmd,swin,ct_srv_src,ct_src_ltm,dwin,sjit,ct_srv_dst,label

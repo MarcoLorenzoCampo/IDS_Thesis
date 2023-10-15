@@ -35,5 +35,3 @@ accuracy2 = classifier2.score(x_test, y_test)
 # Print the accuracy of the two classifiers on the test data
 print("Accuracy of classifier 1:", accuracy1)
 print("Accuracy of classifier 2:", accuracy2)
-
-
