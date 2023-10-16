@@ -2,73 +2,19 @@ Results for the training and testing of DLHA:  Double-Layered Hybrid Approach, a
 
 Properties of training set and test set for NBC:
 
-Shape of the training data features: (#samples, #features) =(125973, 101)
+Shape of the training data features: (#samples, #features) =(125973, 94)
 Shape of the training data labels: (#samples,) =(125973,)
-Shape of the test data features: (#samples, #features) =(22544, 101)
+Shape of the test data features: (#samples, #features) =(22544, 94)
 Shape of the test data labels: (#samples,) =(22544,)
 
 
 NSL-KDD Outputs for DoS+Probe Naive Bayesian Classifier:
 
 Confusion Matrix: [TP FP / FN TN]
-[[9559 3104]
- [ 913 8968]]
-Accuracy = 0.8218151171043293
-F1 Score = 0.8170181751924567
-Precision = 0.7428760768721008
-Recall = 0.9076004452990588
-Shape of the train set: (125973, 28)
-
-
-Properties of training set and test set for SVM:
-
-Shape of the training data features: (#samples, #features) =(68390, 51)
-Shape of the training data labels: (#samples,) =(68390,)
-Shape of the test data features: (#samples, #features) =(12663, 51)
-Shape of the test data labels: (#samples,) =(12663,)
-
-
-NSL-KDD Outputs for u2r-r2l Support Vector Machine:
-
-Confusion Matrix: [TP FP / FN TN]
-[[9074  637]
- [1371 1581]]
-Accuracy = 0.8414277817262892
-F1 Score = 0.6116054158607349
-Precision = 0.7128043282236249
-Recall = 0.5355691056910569
-Matthew correlation coefficient = 0.522791392931039
-Shape of the train set: (125973, 28)
-
-
-Testing the system:
-
-Shape of the test set for layer 1: (22544, 28)
-Shape of the test set for layer 2: (22544, 13)
-Confusion Matrix: [TP FP / FN TN]
-[[ 8126  1585]
- [  941 11892]]
-Accuracy = 0.8879524485450674
-F1 Score = 0.9039908779931586
-Precision = 0.882392223788677
-Recall = 0.9266734200888335
-Matthew corr = 0.7709956371276816
-
-
-Testing results:
-
-Total DoS samples: 7460
-Detected DoS: 6893
-DoS results correctness: 0.923994638069705
-
-Total Probe samples: 2421
-Detected Probe: 2160
-Probe results correctness: 89.21933085501858%
-
-Total R2L samples: 2885
-Detected R2L: 2772
-R2L results correctness: 96.08318890814557%
-
-Total U2R samples: 67
-Detected U2R: 67
-U2R results correctness: 100.0%
+[[10290  2373]
+ [ 4915  4966]]
+Accuracy = 0.6767210787792761
+F1 Score = 0.5767711962833914
+Precision = 0.6766589453604033
+Recall = 0.5025807104544074
+Shape of the train set: (125973, 27)

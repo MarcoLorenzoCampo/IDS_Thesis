@@ -21,11 +21,25 @@ def setup():
     pd.set_option("display.max.columns", None)
 
 
-def scaling(dataset):
+def scaling(df):
+    dataset = copy.deepcopy(df)
     scaler = MinMaxScaler()
     # Create new DataFrames to store the scaled values.
     dataset_scaled = pd.DataFrame(scaler.fit_transform(dataset), columns=dataset.columns)
     return dataset_scaled
+
+
+def ohe(cat, dataset, encoder):
+    df = copy.deepcopy(dataset)
+    label_enc = encoder.fit_transform(cat)
+    label_enc.toarray()
+
+    # Get the names of the one-hot-encoded columns
+    new_labels = encoder.get_feature_names_out(['protocol_type', 'service', 'flag'])
+
+    df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
+    df_encoded = pd.concat([df, df_enc], axis=1)
+    return df_encoded
 
 
 # Perform Pearson's coefficient with threshold
@@ -56,6 +70,18 @@ def compute_set_difference(df1, df2):
     return df_diff
 
 
+def loading(path, titles):
+    # loading the set
+    df = pd.read_csv(path, sep=",", header=None)
+    df = df[df.columns[:-1]]  # Drops the first column
+    df.columns = titles.to_list()  # Gets a list like this: <index> <feature name>
+    df = df.drop(['num_outbound_cmds'], axis=1)
+    df = df.apply(pd.to_numeric, errors='ignore')
+    df = df.apply(lambda k: k.astype(str).str.lower())
+
+    return df
+
+
 def perform_icfs(x_train):
     # now ICFS only on the numerical features
     num_train = copy.deepcopy(x_train)
@@ -68,10 +94,12 @@ def perform_icfs(x_train):
     num_train = pd.concat([num_train, target], axis=1)
 
     # These are how attacks are categorized in the trainset
-    dos_list = ['back', 'land', 'neptune', 'pod', 'smurf', 'teardrop']
-    probe_list = ['ipsweep', 'portsweep', 'satan', 'nmap']
-    u2r_list = ['loadmodule', 'perl', 'rootkit', 'buffer_overflow']
-    r2l_list = ['ftp_write', 'guess_passwd', 'imap', 'multihop', 'phf', 'spy', 'warezclient', 'warezmaster']
+    dos_list = ['apache2', 'mailbomb', 'processtable', 'udpstorm', 'worm', 'back', 'land', 'neptune', 'pod', 'smurf',
+                'teardrop']
+    probe_list = ['ipsweep', 'mscan', 'portsweep', 'satan', 'saint', 'nmap']
+    u2r_list = ['loadmodule', 'perl', 'rootkit', 'buffer_overflow', 'ps', 'sqlattack', 'xterm']
+    r2l_list = ['ftp_write', 'guess_passwd', 'httptunnel', 'imap', 'multihop', 'named', 'phf', 'sendmail',
+                'snmpgetattack', 'snmpguess', 'warezmaster', 'xlock', 'xsnoop']
     normal_list = ['normal']
 
     # useful sub-sets
@@ -136,7 +164,7 @@ def perform_icfs(x_train):
     comm_features_l2 = set_r2l & set_u2r
     # print('Common features to train l2: ', len(common_features_l2), common_features_l2)
 
-    with open('NSL-KDD Outputs/NSL_features_l1.txt', 'w') as g:
+    with open('NSL-KDD Outputs/test_l1.txt', 'w') as g:
         for a, x in enumerate(comm_features_l1):
             if a < len(comm_features_l1) - 1:
                 g.write(x + ',' + '\n')
@@ -144,7 +172,7 @@ def perform_icfs(x_train):
                 g.write(x)
 
     # read the common features from file
-    with open('NSL-KDD Outputs/NSL_features_l2.txt', 'w') as g:
+    with open('NSL-KDD Outputs/test_l2.txt', 'w') as g:
         for a, x in enumerate(comm_features_l2):
             if a < len(comm_features_l2) - 1:
                 g.write(x + ',' + '\n')
@@ -155,126 +183,117 @@ def perform_icfs(x_train):
 def main():
     setup()
 
+    # List of DoS+Probe attacks
+    dos_probe_list = ['apache2', 'back', 'land', 'neptune', 'mailbomb', 'pod', 'processtable', 'smurf', 'teardrop',
+                      'udpstorm', 'worm', 'ipsweep', 'mscan', 'nmap', 'portsweep', 'saint', 'satan']
+    normal_list = ['normal']
+    u2r_r2l_list = ['guess_passwd', 'ftp_write', 'imap', 'xsnoop', 'phf', 'multihop', 'warezmaster', 'xlock',
+                    'snmpguess', 'snmpgetattack', 'httptunnel', 'sendmail', 'named', 'spy', 'warezclient',
+                    'buffer_overflow', 'loadmodule', 'rootkit', 'perl', 'xterm', 'sqlattack', 'ps']
+
+    categorical_features = ['protocol_type', 'service', 'flag']
+
     # loading feature names and value categories
     titles = pd.read_csv('NSL-KDD_datasets/Field Names.csv', header=None)
     label = pd.Series(['label'], index=[41])
     titles = pd.concat([titles[0], label])
 
     # loading the train set
-    df_train = pd.read_csv('NSL-KDD_datasets/KDDTrain+.txt', sep=",", header=None)
-    df_train = df_train[df_train.columns[:-1]]  # Drops the first column
-    df_train.columns = titles.to_list()  # Gets a list like this: <index> <feature name>
-    df_train = df_train.drop(['num_outbound_cmds'], axis=1)
-    df_train_original = df_train
-    df_train_original = df_train_original.apply(pd.to_numeric, errors='ignore')
-    df_train_original = df_train_original.apply(lambda k: k.astype(str).str.lower())
+    df_train_original = loading('NSL-KDD_datasets/KDDTrain+.txt', titles)
+    df_train = copy.deepcopy(df_train_original)
 
     # load the test set
-    df_test = pd.read_csv('NSL-KDD_datasets/KDDTest+.txt', sep=",", header=None)
-    df_test = df_test[df_test.columns[:-1]]
-    df_test.columns = titles.to_list()
-    df_test = df_test.drop(['num_outbound_cmds'], axis=1)
-    df_test_original = df_test
-    df_test_original = df_test_original.apply(pd.to_numeric, errors='ignore')
-    df_test_original = df_test_original.apply(lambda k: k.astype(str).str.lower())
-
-    # load the features obtained with ICFS
-    with open('NSL-KDD Outputs/NSL_features_l1.txt', 'r') as f:
-        file_contents = f.read()
-    common_features_l1 = file_contents.split(',')
-
-    with open('NSL-KDD Outputs/NSL_features_l2.txt', 'r') as f:
-        file_contents = f.read()
-    common_features_l2 = file_contents.split(',')
-
-    # dos + probe classifier
-    df_train = copy.deepcopy(df_train_original)  # Produces copies of the original data sets
+    df_test_original = loading('NSL-KDD_datasets/KDDTest+.txt', titles)
     df_test = copy.deepcopy(df_test_original)
 
-    # perform_icfs(df_train)
+    perform_icfs(df_train)
 
-    # List of DoS+Probe attacks
-    dos_probe_list = ['apache2', 'back', 'land', 'neptune', 'mailbomb', 'pod', 'processtable', 'smurf', 'teardrop',
-                      'udpstorm', 'worm', 'ipsweep', 'mscan', 'nmap', 'portsweep', 'saint', 'satan']
+    # load the features obtained with ICFS
+    with open('NSL-KDD Outputs/test_l1.txt', 'r') as f:
+        common_features_l1 = f.read().split(',')
 
+    with open('NSL-KDD Outputs/test_l2.txt', 'r') as f:
+        common_features_l2 = f.read().split(',')
+
+    # dos + probe classifier
     y_train = np.array([1 if x in dos_probe_list else 0 for x in df_train['label']])
 
     df_train = df_train.drop(['label'], axis=1)
     df_train = df_train.reset_index().drop(['index'], axis=1)
 
     # Features obtained with the ICFS for DoS and Probe
-    X_train = df_train[['logged_in', 'count', 'serror_rate', 'rerror_rate',
-                        'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate',
-                        'srv_diff_host_rate', 'dst_host_srv_count', 'dst_host_same_srv_rate',
-                        'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate',
-                        'dst_host_srv_diff_host_rate', 'dst_host_serror_rate',
-                        'dst_host_srv_serror_rate', 'dst_host_srv_rerror_rate',
-                        'dst_host_rerror_rate']]
+    x_train = df_train[common_features_l1]
 
-    scaler1 = MinMaxScaler()  # MinMax scales the values of X_train between 0-1
-    df_minmax = scaler1.fit_transform(X_train)
-    X_train = pd.DataFrame(df_minmax, columns=X_train.columns)
+    # minmax scaling
+    x_train = scaling(x_train)
 
-    ohe = OneHotEncoder(handle_unknown='ignore')  # Perform One-hot encoding
-    label_enc = ohe.fit_transform(df_train.iloc[:, 1:4])
+    # define an encoder for both test and train
+    df = copy.deepcopy(x_train)
+    encoder = OneHotEncoder(handle_unknown='ignore')
+    label_enc = encoder.fit_transform(df_train[categorical_features])
     label_enc.toarray()
-
-    # Get the names of the one-hot-encoded columns
-    new_labels = ohe.get_feature_names_out(['protocol_type', 'service', 'flag'])
-
+    new_labels = encoder.get_feature_names_out(categorical_features)
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-    X_train = pd.concat([X_train, df_enc], axis=1)  # X_train includes now the newly one-hot-encoded columns
+    df_enc1 = copy.deepcopy(df_enc)
+    x_train = pd.concat([df, df_enc], axis=1)
 
+    # same for the test set
     y_test = np.array([1 if x in dos_probe_list else 0 for x in df_test['label']])  # Same for the test set
 
     df_test = df_test.drop(['label'], axis=1)
     df_test = df_test.reset_index().drop(['index'], axis=1)
 
     # Same features selected for the train set
-    X_test = df_test[['logged_in', 'count', 'serror_rate', 'rerror_rate',
-                      'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate',
-                      'srv_diff_host_rate', 'dst_host_srv_count', 'dst_host_same_srv_rate',
-                      'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate',
-                      'dst_host_srv_diff_host_rate', 'dst_host_serror_rate',
-                      'dst_host_srv_serror_rate', 'dst_host_srv_rerror_rate',
-                      'dst_host_rerror_rate']]
+    x_test = df_test[common_features_l1]
 
-    df_minmax = scaler1.transform(X_test)
-    X_test = pd.DataFrame(df_minmax, columns=X_test.columns)
+    # minmax scaling
+    x_test = scaling(x_test)
 
-    label_enc = ohe.transform(df_test.iloc[:, 1:4])
+    # one hot encoding passing the original dataset, not the ICFS reduced one
+    df = copy.deepcopy(x_test)
+    label_enc = encoder.transform(df_test[categorical_features])
     label_enc.toarray()
-    new_labels = ohe.get_feature_names_out(['protocol_type', 'service', 'flag'])
+    new_labels = encoder.get_feature_names_out(categorical_features)
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-    X_test = pd.concat([X_test, df_enc], axis=1)
+    x_test = pd.concat([df, df_enc], axis=1)
 
     with open('NSL-KDD Outputs/Results.txt', 'w') as output_file:
         output_file.write('Results for the training and testing of DLHA:  Double-Layered Hybrid Approach'
                           ', an Anomaly-Based Intrusion Detection System\n')
         output_file.write("\nProperties of training set and test set for NBC:\n")
-        output_file.write('\nShape of the training data features: (#samples, #features) =' + str(X_train.shape))
+        output_file.write('\nShape of the training data features: (#samples, #features) =' + str(x_train.shape))
         output_file.write('\nShape of the training data labels: (#samples,) =' + str(y_train.shape))
-        output_file.write('\nShape of the test data features: (#samples, #features) =' + str(X_test.shape))
+        output_file.write('\nShape of the test data features: (#samples, #features) =' + str(x_test.shape))
         output_file.write('\nShape of the test data labels: (#samples,) =' + str(y_test.shape))
+
+    # PCA as done before on Dos+Probe
+    pca_dos_probe = PCA(n_components=0.95)
+    x_train_dos_probe = pca_dos_probe.fit_transform(x_train)
+    x_test_dos_probe = pca_dos_probe.transform(x_test)
+
+    # actually build the model using the scaled, one hot encoded, pca train set
+    dos_probe_classifier = GaussianNB()  # The classifier selected for DoS+Probe is Naive Bayes Classifier (NBC)
+    dos_probe_classifier.fit(x_train_dos_probe, y_train)  # NBC is trained on the reduced train set and labels
+    predicted = dos_probe_classifier.predict(x_test_dos_probe)  # Evaluates the model on the test data
+
+    with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
+        output_file.write('\n\n\nNSL-KDD Outputs for DoS+Probe Naive Bayesian Classifier:\n')
+        output_file.write("\nConfusion Matrix: [TP FP / FN TN]\n" + str(confusion_matrix(y_test, predicted)))
+        output_file.write('\nAccuracy = ' + str(accuracy_score(y_test, predicted)))
+        output_file.write('\nF1 Score = ' + str(f1_score(y_test, predicted)))
+        output_file.write('\nPrecision = ' + str(precision_score(y_test, predicted)))
+        output_file.write('\nRecall = ' + str(recall_score(y_test, predicted)))
+        output_file.write('\nShape of the train set: ' + str(x_train_dos_probe.shape))
 
     if EXPORT_DATASETS:
         # Export the datasets used for the NBC
-        X_train.to_csv('Updated Datasets/X_train_NBC.csv', index=False)
+        x_train.to_csv('Updated Datasets/X_train_NBC.csv', index=False)
         y_train_df = pd.DataFrame({'label': y_train})
         y_train_df.to_csv('Updated Datasets/y_train_NBC.csv', index=False)
 
-        X_test.to_csv('Updated Datasets/X_test_NBC.csv', index=False)
+        x_test.to_csv('Updated Datasets/X_test_NBC.csv', index=False)
         y_test_df = pd.DataFrame({'label': y_test})
         y_test_df.to_csv('Updated Datasets/y_test_NBC.csv', index=False)
-
-    # Now that the data pre-processing is done, let's do feature selection
-    pca_dos_probe = PCA(n_components=0.95)  # features selected can explain >95% of the variance
-    X_train_dos_probe = pca_dos_probe.fit_transform(X_train)  # Reduce the dimensionality of X_train
-    X_test_dos_probe = pca_dos_probe.transform(X_test)  # Reduce the dimensionality of X_test
-
-    dos_probe_classifier = GaussianNB()  # The classifier selected for DoS+Probe is Naive Bayes Classifier (NBC)
-    dos_probe_classifier.fit(X_train_dos_probe, y_train)  # NBC is trained on the reduced train set and labels
-    predicted = dos_probe_classifier.predict(X_test_dos_probe)  # Evaluates the model on the test data
 
     # Export the model as a pickle model
     if EXPORT_MODELS:
@@ -285,123 +304,84 @@ def main():
         except Exception as e:
             print(e)
 
-    with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
-        output_file.write('\n\n\nNSL-KDD Outputs for DoS+Probe Naive Bayesian Classifier:\n')
-        output_file.write("\nConfusion Matrix: [TP FP / FN TN]\n" + str(confusion_matrix(y_test, predicted)))
-        output_file.write('\nAccuracy = ' + str(accuracy_score(y_test, predicted)))
-        output_file.write('\nF1 Score = ' + str(f1_score(y_test, predicted)))
-        output_file.write('\nPrecision = ' + str(precision_score(y_test, predicted)))
-        output_file.write('\nRecall = ' + str(recall_score(y_test, predicted)))
-        output_file.write('\nShape of the train set: ' + str(X_train_dos_probe.shape))
-
     # Now that the DoS+Probe classifier has been built, focus on the r2l+u2r classifier
     df_train = copy.deepcopy(df_train_original)
     df_test = copy.deepcopy(df_test_original)
 
     # load from the train set only the targeted attacks categories (Normal+r2l+u2r)
-    df_train = df_train[(df_train['label'] == 'normal') | (df_train['label'] == 'guess_passwd')
-                        | (df_train['label'] == 'ftp_write')
-                        | (df_train['label'] == 'imap') | (df_train['label'] == 'xsnoop') | (df_train['label'] == 'phf')
-                        | (df_train['label'] == 'multihop') | (df_train['label'] == 'warezmaster')
-                        | (df_train['label'] == 'xlock')
-                        | (df_train['label'] == 'snmpguess') | (df_train['label'] == 'snmpgetattack')
-                        | (df_train['label'] == 'httptunnel')
-                        | (df_train['label'] == 'sendmail') | (df_train['label'] == 'named')
-                        | (df_train['label'] == 'spy')
-                        | (df_train['label'] == 'warezclient') | (df_train['label'] == 'buffer_overflow')
-                        | (df_train['label'] == 'loadmodule') | (df_train['label'] == 'rootkit')
-                        | (df_train['label'] == 'perl') | (df_train['label'] == 'xterm')
-                        | (df_train['label'] == 'sqlattack')
-                        | (df_train['label'] == 'ps')]
+    df_train = df_train[df_train['label'].isin(normal_list + u2r_r2l_list)]
 
     # Sets the target label as 0 for normal traffic and 1 for u2r and r2l attacks
     y_train = np.array([0 if x == 'normal' else 1 for x in df_train['label']])
     df_train = df_train.drop(['label'], axis=1)
     df_train = df_train.reset_index().drop(['index'], axis=1)
 
-    # Select the features from NSL-KDD to define u2r and r2l
-    X_train = df_train[['srv_count', 'urgent', 'root_shell', 'hot',
-                        'dst_host_srv_diff_host_rate', 'dst_host_count',
-                        'logged_in', 'dst_host_same_src_port_rate', 'srv_diff_host_rate',
-                        'num_shells', 'dst_host_srv_count']]
+    # common features for u2r and r2l
+    x_train = df_train[common_features_l2]
 
-    scaler2 = MinMaxScaler()
-    df_minmax = scaler2.fit_transform(X_train)  # Scales the features selected
-    X_train = pd.DataFrame(df_minmax, columns=X_train.columns)
+    # scaling the train set
+    x_train = scaling(x_train)
+
+    # define a new encoder for train and test
+    encoder2 = OneHotEncoder(handle_unknown='ignore')
 
     # perform One-hot encoding
-    ohe2 = OneHotEncoder(handle_unknown='ignore')
-    label_enc = ohe2.fit_transform(df_train.iloc[:, 1:4])
+    df = copy.deepcopy(x_train)
+    label_enc = encoder2.fit_transform(df_train[categorical_features])
     label_enc.toarray()
-    new_labels = ohe2.get_feature_names_out(['protocol_type', 'service', 'flag'])
+    new_labels = encoder2.get_feature_names_out(categorical_features)
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-    X_train = pd.concat([X_train, df_enc], axis=1)
+    x_train = pd.concat([df, df_enc], axis=1)
 
     # do the same for test set
-    df_test = df_test[
-        (df_test['label'] == 'normal') | (df_test['label'] == 'guess_passwd') | (df_test['label'] == 'ftp_write')
-        | (df_test['label'] == 'imap') | (df_test['label'] == 'xsnoop') | (df_test['label'] == 'phf')
-        | (df_test['label'] == 'multihop') | (df_test['label'] == 'warezmaster')
-        | (df_test['label'] == 'xlock')
-        | (df_test['label'] == 'snmpguess') | (df_test['label'] == 'snmpgetattack')
-        | (df_test['label'] == 'httptunnel')
-        | (df_test['label'] == 'sendmail') | (df_test['label'] == 'named')
-        | (df_test['label'] == 'spy')
-        | (df_test['label'] == 'warezclient') | (df_test['label'] == 'buffer_overflow')
-        | (df_test['label'] == 'loadmodule') | (df_test['label'] == 'rootkit')
-        | (df_test['label'] == 'perl') | (df_test['label'] == 'xterm')
-        | (df_test['label'] == 'sqlattack')
-        | (df_test['label'] == 'ps')]
+    df_test = df_test[df_test['label'].isin(normal_list + u2r_r2l_list)]
 
     y_test = np.array([0 if x == 'normal' else 1 for x in df_test['label']])
     df_test = df_test.drop(['label'], axis=1)
     df_test = df_test.reset_index().drop(['index'], axis=1)
 
     # same for the test features
-    X_test = df_test[['srv_count', 'urgent', 'root_shell', 'hot',
-                      'dst_host_srv_diff_host_rate', 'dst_host_count',
-                      'logged_in', 'dst_host_same_src_port_rate', 'srv_diff_host_rate',
-                      'num_shells', 'dst_host_srv_count']]
+    x_test = df_test[common_features_l2]
 
-    df_minmax = scaler2.transform(X_test)
-    X_test = pd.DataFrame(df_minmax, columns=X_test.columns)
+    # scaling the test set
+    x_test = scaling(x_test)
 
-    label_enc = ohe2.transform(df_test.iloc[:, 1:4])
+    # one hot encoding the test set
+    df = copy.deepcopy(x_test)
+    label_enc = encoder2.transform(df_test[categorical_features])
     label_enc.toarray()
-    new_labels = ohe2.get_feature_names_out(['protocol_type', 'service', 'flag'])
+    new_labels = encoder2.get_feature_names_out(categorical_features)
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-    X_test = pd.concat([X_test, df_enc], axis=1)
+    x_test = pd.concat([df, df_enc], axis=1)
 
     with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
         output_file.write("\n\n\nProperties of training set and test set for SVM:\n")
-        output_file.write('\nShape of the training data features: (#samples, #features) =' + str(X_train.shape))
+        output_file.write('\nShape of the training data features: (#samples, #features) =' + str(x_train.shape))
         output_file.write('\nShape of the training data labels: (#samples,) =' + str(y_train.shape))
-        output_file.write('\nShape of the test data features: (#samples, #features) =' + str(X_test.shape))
+        output_file.write('\nShape of the test data features: (#samples, #features) =' + str(x_test.shape))
         output_file.write('\nShape of the test data labels: (#samples,) =' + str(y_test.shape))
 
-    # Performs under sampling, reduces the number of majority class samples to address class imbalance
-    # instances of Normal traffic >>> U2R+R2L instances
+    # Performs under sampling only for layer 2 (u2r and r2l)
     under_sampler = under_sam(sampling_strategy=1)
-    # print(y_train)
-    X_train, y_train = under_sampler.fit_resample(X_train, y_train)
+    x_train, y_train = under_sampler.fit_resample(x_train, y_train)
 
     # PCA as done before on Dos+Probe
     pca_r2l_u2r = PCA(n_components=0.95)
-    X_train_r2l_u2r = pca_r2l_u2r.fit_transform(X_train)
-    X_test_r2l_u2r = pca_r2l_u2r.transform(X_test)
+    x_train_r2l_u2r = pca_r2l_u2r.fit_transform(x_train)
+    x_test_r2l_u2r = pca_r2l_u2r.transform(x_test)
 
     # Support Vector Classifier with parameters C, gamma and kernel function 'radial basis function'
     r2l_u2r_classifier = SVC(C=0.1, gamma=0.01, kernel='rbf')
-    r2l_u2r_classifier.fit(X_train_r2l_u2r, y_train)
-    predicted = r2l_u2r_classifier.predict(X_test_r2l_u2r)
+    r2l_u2r_classifier.fit(x_train_r2l_u2r, y_train)
+    predicted = r2l_u2r_classifier.predict(x_test_r2l_u2r)
 
     # Export the datasets used for the NBC
     if EXPORT_DATASETS:
-        X_train.to_csv('Updated Datasets/X_train_SVM.csv', index=False)
+        x_train.to_csv('Updated Datasets/X_train_SVM.csv', index=False)
         y_train_df = pd.DataFrame({'label': y_train})
         y_train_df.to_csv('Updated Datasets/y_train_SVM.csv', index=False)
 
-        X_test.to_csv('Updated Datasets/X_test_SVM.csv', index=False)
+        x_test.to_csv('Updated Datasets/X_test_SVM.csv', index=False)
         y_test_df = pd.DataFrame({'label': y_test})
         y_test_df.to_csv('Updated Datasets/y_test_SVM.csv', index=False)
 
@@ -422,60 +402,57 @@ def main():
         output_file.write('\nPrecision = ' + str(precision_score(y_test, predicted)))
         output_file.write('\nRecall = ' + str(recall_score(y_test, predicted)))
         output_file.write('\nMatthew correlation coefficient = ' + str(matthews_corrcoef(y_test, predicted)))
-        output_file.write('\nShape of the train set: ' + str(X_train_dos_probe.shape))
+        output_file.write('\nShape of the train set: ' + str(x_train_dos_probe.shape))
 
-    # Testing
-    df_test1 = copy.deepcopy(df_test_original)  # Create 2 copies of testing set, one for each layer
+    # Now the models have been all trained, let's test them
+    df_test1 = copy.deepcopy(df_test_original)
     df_test2 = copy.deepcopy(df_test_original)
 
     y_test_real = np.array([0 if x == 'normal' else 1 for x in df_test1['label']])  # 1=anomaly, 0=normal
 
     # Layer 1
-    X_test = df_test1[['logged_in', 'count', 'serror_rate', 'rerror_rate',
-                       'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate',
-                       'srv_diff_host_rate', 'dst_host_srv_count', 'dst_host_same_srv_rate',
-                       'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate',
-                       'dst_host_srv_diff_host_rate', 'dst_host_serror_rate',
-                       'dst_host_srv_serror_rate', 'dst_host_srv_rerror_rate',
-                       'dst_host_rerror_rate']]
+    x_test1 = df_test1[common_features_l1]
 
-    df_minmax = scaler1.transform(X_test)
-    X_test = pd.DataFrame(df_minmax, columns=X_test.columns)
-    label_enc = ohe.transform(df_test1.iloc[:, 1:4])
+    # scaling
+    x_test1 = scaling(x_test1)
+
+    # one hot encoding the test set
+    df = copy.deepcopy(x_test1)
+    label_enc = encoder.transform(df_test1[categorical_features])
     label_enc.toarray()
-    new_labels = ohe.get_feature_names_out(['protocol_type', 'service', 'flag'])
+    new_labels = encoder.get_feature_names_out(categorical_features)
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-    X_test = pd.concat([X_test, df_enc], axis=1)
+    x_test1 = pd.concat([df, df_enc], axis=1)
 
-    X_test_layer1 = pca_dos_probe.transform(X_test)
+    x_test_layer1 = pca_dos_probe.transform(x_test1)
 
     # Layer 2
-    X_test = df_test2[['srv_count', 'urgent', 'root_shell', 'hot',
-                       'dst_host_srv_diff_host_rate', 'dst_host_count',
-                       'logged_in', 'dst_host_same_src_port_rate', 'srv_diff_host_rate',
-                       'num_shells', 'dst_host_srv_count']]
+    x_test2 = df_test2[common_features_l2]
 
-    df_minmax = scaler2.transform(X_test)
-    X_test = pd.DataFrame(df_minmax, columns=X_test.columns)
-    label_enc = ohe2.transform(df_test2.iloc[:, 1:4])
+    # scaling
+    x_test2 = scaling(x_test2)
+
+    # encoding
+    df = copy.deepcopy(x_test2)
+    label_enc = encoder2.transform(df_test2[categorical_features])
     label_enc.toarray()
-    new_labels = ohe2.get_feature_names_out(['protocol_type', 'service', 'flag'])
+    new_labels = encoder2.get_feature_names_out(categorical_features)
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-    X_test = pd.concat([X_test, df_enc], axis=1)
+    x_test2 = pd.concat([df, df_enc], axis=1)
 
-    X_test_layer2 = pca_r2l_u2r.transform(X_test)
+    x_test_layer2 = pca_r2l_u2r.transform(x_test2)
 
     # Real testing
     classifier1 = dos_probe_classifier
     classifier2 = r2l_u2r_classifier
 
     result = []
-    for i in range(22544):
-        layer1 = classifier1.predict(X_test_layer1[i].reshape(1, -1))[0]
+    for i in range(x_test_layer1.shape[0]):
+        layer1 = classifier1.predict(x_test_layer1[i].reshape(1, -1))[0]
         if layer1 == 1:
             result.append(layer1)
         else:
-            layer2 = classifier2.predict(X_test_layer2[i].reshape(1, -1))[0]
+            layer2 = classifier2.predict(x_test_layer2[i].reshape(1, -1))[0]
             if layer2 == 1:
                 result.append(layer2)
             else:
@@ -487,8 +464,8 @@ def main():
     # C=0.1, gamma=0.01
     with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
         output_file.write('\n\n\nTesting the system:\n')
-        output_file.write('\nShape of the test set for layer 1: ' + str(X_test_layer1.shape))
-        output_file.write('\nShape of the test set for layer 2: ' + str(X_test_layer2.shape))
+        output_file.write('\nShape of the test set for layer 1: ' + str(x_test_layer1.shape))
+        output_file.write('\nShape of the test set for layer 2: ' + str(x_test_layer2.shape))
         output_file.write('\nConfusion Matrix: [TP FP / FN TN]\n' + str(confusion_matrix(y_test_real, result)))
         output_file.write('\nAccuracy = ' + str(accuracy_score(y_test_real, result)))
         output_file.write('\nF1 Score = ' + str(f1_score(y_test_real, result)))
@@ -582,7 +559,6 @@ def main():
         output_file.write('\nDetected U2R: ' + str(result[u2r_index].sum()))
         output_file.write(
             '\nU2R results correctness: ' + (str(result[u2r_index].sum() / result[u2r_index].shape[0] * 100)) + '%')
-
 
 
 main()
