@@ -1,5 +1,6 @@
 import pickle
 
+import numpy as np
 import pandas as pd
 
 
@@ -8,16 +9,17 @@ def load_models():
         l1 = pickle.load(f)
     with open('Models/NSL_l2_classifier.pkl', 'rb') as f:
         l2 = pickle.load(f)
-
     return l1, l2
 
-def load_testsets():
-    x_test_l1 = pd.read_csv('NSL-KDD Encoded Datasets/K')
 
-    # Load the NumPy array.
-    array = np.load('my_array.npy')
+def load_tests():
+    x_test = pd.read_csv('NSL-KDD Encoded Datasets/KDDTest+', header=0)
+    y_test = np.load('NSL-KDD Encoded Datasets/KDDTest+_targets.npy')
+    return x_test, y_test
 
 
 def main():
     l1_classifier, l2_classifier = load_models()
-    x_test_l1, y_testl1, x_test_l2, y_test_l2 = load_testsets()
+    x_test, y_test = load_tests()
+
+
