@@ -164,7 +164,7 @@ def perform_icfs(x_train):
     comm_features_l2 = set_r2l & set_u2r
     # print('Common features to train l2: ', len(common_features_l2), common_features_l2)
 
-    with open('NSL-KDD Outputs/test_l1.txt', 'w') as g:
+    with open('NSL-KDD Files/test_l1.txt', 'w') as g:
         for a, x in enumerate(comm_features_l1):
             if a < len(comm_features_l1) - 1:
                 g.write(x + ',' + '\n')
@@ -172,7 +172,7 @@ def perform_icfs(x_train):
                 g.write(x)
 
     # read the common features from file
-    with open('NSL-KDD Outputs/test_l2.txt', 'w') as g:
+    with open('NSL-KDD Files/test_l2.txt', 'w') as g:
         for a, x in enumerate(comm_features_l2):
             if a < len(comm_features_l2) - 1:
                 g.write(x + ',' + '\n')
@@ -194,25 +194,25 @@ def main():
     categorical_features = ['protocol_type', 'service', 'flag']
 
     # loading feature names and value categories
-    titles = pd.read_csv('NSL-KDD_datasets/Field Names.csv', header=None)
+    titles = pd.read_csv('NSL-KDD Original Datasets/Field Names.csv', header=None)
     label = pd.Series(['label'], index=[41])
     titles = pd.concat([titles[0], label])
 
     # loading the train set
-    df_train_original = loading('NSL-KDD_datasets/KDDTrain+.txt', titles)
+    df_train_original = loading('NSL-KDD Original Datasets/KDDTrain+.txt', titles)
     df_train = copy.deepcopy(df_train_original)
 
     # load the test set
-    df_test_original = loading('NSL-KDD_datasets/KDDTest+.txt', titles)
+    df_test_original = loading('NSL-KDD Original Datasets/KDDTest+.txt', titles)
     df_test = copy.deepcopy(df_test_original)
 
     perform_icfs(df_train)
 
     # load the features obtained with ICFS
-    with open('NSL-KDD Outputs/test_l1.txt', 'r') as f:
+    with open('NSL-KDD Files/test_l1.txt', 'r') as f:
         common_features_l1 = f.read().split(',')
 
-    with open('NSL-KDD Outputs/test_l2.txt', 'r') as f:
+    with open('NSL-KDD Files/test_l2.txt', 'r') as f:
         common_features_l2 = f.read().split(',')
 
     # dos + probe classifier
@@ -257,7 +257,7 @@ def main():
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
     x_test = pd.concat([df, df_enc], axis=1)
 
-    with open('NSL-KDD Outputs/Results.txt', 'w') as output_file:
+    with open('NSL-KDD Files/Results.txt', 'w') as output_file:
         output_file.write('Results for the training and testing of DLHA:  Double-Layered Hybrid Approach'
                           ', an Anomaly-Based Intrusion Detection System\n')
         output_file.write("\nProperties of training set and test set for NBC:\n")
@@ -276,8 +276,8 @@ def main():
     dos_probe_classifier.fit(x_train_dos_probe, y_train)  # NBC is trained on the reduced train set and labels
     predicted = dos_probe_classifier.predict(x_test_dos_probe)  # Evaluates the model on the test data
 
-    with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
-        output_file.write('\n\n\nNSL-KDD Outputs for DoS+Probe Naive Bayesian Classifier:\n')
+    with open('NSL-KDD Files/Results.txt', 'a') as output_file:
+        output_file.write('\n\n\nNSL-KDD Files for DoS+Probe Naive Bayesian Classifier:\n')
         output_file.write("\nConfusion Matrix: [TP FP / FN TN]\n" + str(confusion_matrix(y_test, predicted)))
         output_file.write('\nAccuracy = ' + str(accuracy_score(y_test, predicted)))
         output_file.write('\nF1 Score = ' + str(f1_score(y_test, predicted)))
@@ -299,7 +299,7 @@ def main():
     if EXPORT_MODELS:
         try:
             file_name = 'dos_probe_NBC_classifier.pkl'
-            with open(str('NSL-KDD Outputs/' + file_name), 'wb') as f:
+            with open(str('NSL-KDD Files/' + file_name), 'wb') as f:
                 pickle.dump(dos_probe_classifier, f)
         except Exception as e:
             print(e)
@@ -354,7 +354,7 @@ def main():
     df_enc = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
     x_test = pd.concat([df, df_enc], axis=1)
 
-    with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
+    with open('NSL-KDD Files/Results.txt', 'a') as output_file:
         output_file.write("\n\n\nProperties of training set and test set for SVM:\n")
         output_file.write('\nShape of the training data features: (#samples, #features) =' + str(x_train.shape))
         output_file.write('\nShape of the training data labels: (#samples,) =' + str(y_train.shape))
@@ -389,13 +389,13 @@ def main():
     if EXPORT_MODELS:
         try:
             file_name = 'r2l_u2r_classifier.pkl'
-            with open('NSL-KDD Outputs/' + file_name, 'wb') as f:
+            with open('NSL-KDD Files/' + file_name, 'wb') as f:
                 pickle.dump(r2l_u2r_classifier, f)
         except Exception as e:
             print(e)
 
-    with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
-        output_file.write('\n\n\nNSL-KDD Outputs for u2r-r2l Support Vector Machine:\n')
+    with open('NSL-KDD Files/Results.txt', 'a') as output_file:
+        output_file.write('\n\n\nNSL-KDD Files for u2r-r2l Support Vector Machine:\n')
         output_file.write("\nConfusion Matrix: [TP FP / FN TN]\n" + str(confusion_matrix(y_test, predicted)))
         output_file.write('\nAccuracy = ' + str(accuracy_score(y_test, predicted)))
         output_file.write('\nF1 Score = ' + str(f1_score(y_test, predicted)))
@@ -462,7 +462,7 @@ def main():
 
     # the results may vary
     # C=0.1, gamma=0.01
-    with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
+    with open('NSL-KDD Files/Results.txt', 'a') as output_file:
         output_file.write('\n\n\nTesting the system:\n')
         output_file.write('\nShape of the test set for layer 1: ' + str(x_test_layer1.shape))
         output_file.write('\nShape of the test set for layer 2: ' + str(x_test_layer2.shape))
@@ -474,7 +474,7 @@ def main():
         output_file.write('\nMatthew corr = ' + str(matthews_corrcoef(y_test_real, result)))
 
     # Evaluate seen and unseen attack categories
-    df_test = pd.read_csv('NSL-KDD_datasets/KDDTest+.txt', sep=",", header=None)
+    df_test = pd.read_csv('NSL-KDD Original Datasets/KDDTest+.txt', sep=",", header=None)
     df_test = df_test[df_test.columns[:-1]]
     df_test.columns = titles.to_list()
     y_test = df_test['label']
@@ -504,7 +504,7 @@ def main():
             index_of_old_attacks.append(df_test_original.index[i])
 
     # Evaluate each attack type
-    df_test = pd.read_csv('NSL-KDD_datasets/KDDTest+.txt', sep=",", header=None)
+    df_test = pd.read_csv('NSL-KDD Original Datasets/KDDTest+.txt', sep=",", header=None)
     df_test = df_test[df_test.columns[:-1]]
     df_test.columns = titles.to_list()
     y_test = df_test['label']
@@ -537,7 +537,7 @@ def main():
                          | (df['label'] == 'xterm')].tolist()
 
     # Write the output on the text file
-    with open('NSL-KDD Outputs/Results.txt', 'a') as output_file:
+    with open('NSL-KDD Files/Results.txt', 'a') as output_file:
         output_file.write("\n\n\nTesting results:\n")
 
         output_file.write("\nTotal DoS samples: " + str(result[dos_index].shape[0]))

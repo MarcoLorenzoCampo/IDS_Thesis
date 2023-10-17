@@ -1,0 +1,20 @@
+Results for the training and testing of DLHA:  Double-Layered Hybrid Approach, an Anomaly-Based Intrusion Detection System
+
+Properties of training set and test set for NBC:
+
+Shape of the training data features: (#samples, #features) =(125973, 94)
+Shape of the training data labels: (#samples,) =(125973,)
+Shape of the test data features: (#samples, #features) =(22544, 94)
+Shape of the test data labels: (#samples,) =(22544,)
+
+
+NSL-KDD Outputs for DoS+Probe Naive Bayesian Classifier:
+
+Confusion Matrix: [TP FP / FN TN]
+[[10290  2373]
+ [ 4915  4966]]
+Accuracy = 0.6767210787792761
+F1 Score = 0.5767711962833914
+Precision = 0.6766589453604033
+Recall = 0.5025807104544074
+Shape of the train set: (125973, 27)
