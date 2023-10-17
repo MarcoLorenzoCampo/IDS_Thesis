@@ -1,1 +1,0 @@
-stcpb,ct_state_ttl,sbytes,ct_flw_http_mthd,dbytes,sloss,sload,smean,response_body_len,dinpkt,sttl,swin,ct_srv_src,rate,sinpkt,dload,dmean,trans_depth,ct_src_ltm,synack,ct_srv_dst,label,ct_dst_ltm,dur,ct_dst_src_ltm
