@@ -20,9 +20,9 @@ def load_models():
 
 
 def load_preprocessed_tests():
-    x_test_l1 = pd.read_csv('NSL-KDD Encoded Datasets/X_test_l1.txt', header=0)
-    x_test_l2 = pd.read_csv('NSL-KDD Encoded Datasets/X_test_l2.txt', header=0)
-    y_test = np.load('NSL-KDD Encoded Datasets/y_test.npy', allow_pickle=True)
+    x_test_l1 = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/X_test_l1.txt', header=0)
+    x_test_l2 = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/X_test_l2.txt', header=0)
+    y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
     for col in x_test_l1.columns:
         pd.to_numeric(x_test_l1[col], errors='coerce')
