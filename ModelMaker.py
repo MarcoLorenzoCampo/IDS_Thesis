@@ -12,6 +12,8 @@ import joblib
 
 
 class ModelMaker:
+    ANOMALY_THRESHOLD1 = 0.9
+    ANOMALY_THRESHOLD2 = 0.8
 
     def __init__(self):
         """
@@ -31,8 +33,22 @@ class ModelMaker:
         # Load completely processed datasets for training
         self.x_train_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train1.pkl')
         self.x_train_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train2.pkl')
-        self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy', allow_pickle=True)
-        self.y_train_l2 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l2_targets.npy', allow_pickle=True)
+        self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy',
+                                  allow_pickle=True)
+        self.y_train_l2 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l2_targets.npy',
+                                  allow_pickle=True)
+
+        # Load completely processed validations sets
+        self.x_validate_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate1.pkl')
+        self.x_validate_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate2.pkl')
+        self.y_validate_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDValidate+_l1_targets.npy',
+                                     allow_pickle=True)
+        self.y_validate_l2 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDValidate+_l2_targets.npy',
+                                     allow_pickle=True)
+
+        # Load completely processed test set
+        self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
+        self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
         # set the categorical features
         self.cat_features = ['protocol_type', 'service', 'flag']
@@ -51,10 +67,10 @@ class ModelMaker:
             self.x_train_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train1.pkl')
             self.x_train_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train2.pkl')
             # target variables should not change ideally, but the number of samples itself may change over time
-            self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy'
-                                      , allow_pickle=True)
-            self.y_train_l2 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l2_targets.npy'
-                                      , allow_pickle=True)
+            self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy',
+                                      allow_pickle=True)
+            self.y_train_l2 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l2_targets.npy',
+                                      allow_pickle=True)
 
         # load pca transformers to transform features according to layer
         if to_update == 'pca':
@@ -74,7 +90,7 @@ class ModelMaker:
         """
 
         # Start with training classifier 1
-        classifier1 = (RandomForestClassifier(n_estimators=100, random_state=42)
+        classifier1 = (RandomForestClassifier(n_estimators=24, random_state=42)
                        .fit(self.x_train_l1, self.y_train_l1))
 
         # Now train classifier 2
@@ -95,12 +111,12 @@ class ModelMaker:
         - The features are selected starting f
 
         :param target_layer: Indicates if the data is processed to be fed to layer 1 or layer 2
-        :param incoming_data: The single or multiple data sample to process
+        :param incoming_data: A single or multiple data samples to process
         :return: The processed data received as an input
         """
 
         data = copy.deepcopy(incoming_data)
-
+        data = data.sort_index(axis=1)
         scaler = MinMaxScaler()
 
         if target_layer == 1:
@@ -112,13 +128,17 @@ class ModelMaker:
             ohe = self.ohe2
             pca = self.pca2
 
-        scaled_data = scaler.fit_transform(to_scale)
-        label_enc = ohe.fit_transform(data[self.cat_features])
-        label_enc.toarray()
-        new_labels = ohe.get_feature_names_out(self.cat_features)
-        new_encoded = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-        processed = pd.concat([scaled_data, new_encoded], axis=1).sort_index(axis=1)
+        for index, row in to_scale.iterrows():
+            sample = pd.DataFrame(data=np.array([row]), index=None, columns=to_scale.columns)
+            scaled = scaler.fit_transform(sample)
+            scaled_data = pd.DataFrame(scaled, columns=sample.columns)
+            label_enc = ohe.transform(data[self.cat_features])
+            label_enc.toarray()
+            new_labels = ohe.get_feature_names_out(self.cat_features)
+            new_encoded = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
+            processed = pd.concat([scaled_data, new_encoded], axis=1).sort_index(axis=1)
+            print(processed.head())
 
-        pca_transformed = pca.transform(processed)
+            pca_transformed = pca.transform(processed)
 
-        return pca_transformed
+            return pca_transformed
