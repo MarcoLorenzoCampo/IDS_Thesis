@@ -53,6 +53,10 @@ class ModelMaker:
         # set the categorical features
         self.cat_features = ['protocol_type', 'service', 'flag']
 
+        # load the minmax scalers used in training
+        self.scaler1 = joblib.load('NSL-KDD Files/scalers/scaler1.pkl')
+        self.scaler2 = joblib.load('NSL-KDD Files/scalers/scaler2.pkl')
+
         # load one hot encoder for processing according to layer
         self.ohe1 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe1.pkl')
         self.ohe2 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe2.pkl')
@@ -89,9 +93,16 @@ class ModelMaker:
         :return: trained models for layer 1 and 2 respectively
         """
 
+        n_estimators = hp1[0]
+        criterion = hp1[1]
+
         # Start with training classifier 1
-        classifier1 = (RandomForestClassifier(n_estimators=24, random_state=42)
+        classifier1 = (RandomForestClassifier(n_estimators=25, criterion='gini')
                        .fit(self.x_train_l1, self.y_train_l1))
+
+        c = hp2[0]
+        gamma = hp2[1]
+        kernel = hp2[2]
 
         # Now train classifier 2
         classifier2 = (SVC(C=0.1, gamma=0.01, kernel='rbf')
@@ -111,34 +122,30 @@ class ModelMaker:
         - The features are selected starting f
 
         :param target_layer: Indicates if the data is processed to be fed to layer 1 or layer 2
-        :param incoming_data: A single or multiple data samples to process
+        :param incoming_data: A single or multiple data samples to process, always in the format of a DataFrame
         :return: The processed data received as an input
         """
 
         data = copy.deepcopy(incoming_data)
-        data = data.sort_index(axis=1)
-        scaler = MinMaxScaler()
 
         if target_layer == 1:
             to_scale = data[self.features_l1]
+            scaler = self.scaler1
             ohe = self.ohe1
             pca = self.pca1
         else:
             to_scale = data[self.features_l2]
+            scaler = self.scaler2
             ohe = self.ohe2
             pca = self.pca2
 
-        for index, row in to_scale.iterrows():
-            sample = pd.DataFrame(data=np.array([row]), index=None, columns=to_scale.columns)
-            scaled = scaler.fit_transform(sample)
-            scaled_data = pd.DataFrame(scaled, columns=sample.columns)
-            label_enc = ohe.transform(data[self.cat_features])
-            label_enc.toarray()
-            new_labels = ohe.get_feature_names_out(self.cat_features)
-            new_encoded = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
-            processed = pd.concat([scaled_data, new_encoded], axis=1).sort_index(axis=1)
-            print(processed.head())
+        scaled = scaler.transform(to_scale)
+        scaled_data = pd.DataFrame(scaled, columns=to_scale.columns)
+        label_enc = ohe.transform(data[self.cat_features])
+        label_enc.toarray()
+        new_labels = ohe.get_feature_names_out(self.cat_features)
+        new_encoded = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
+        processed = pd.concat([scaled_data, new_encoded], axis=1)
+        pca_transformed = pca.transform(processed)
 
-            pca_transformed = pca.transform(processed)
-
-            return pca_transformed
+        return pca_transformed
