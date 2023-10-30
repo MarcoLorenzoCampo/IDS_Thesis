@@ -14,6 +14,12 @@ import joblib
 class ModelMaker:
     ANOMALY_THRESHOLD1 = 0.9
     ANOMALY_THRESHOLD2 = 0.8
+    BENIGN_THRESHOLD = 0.6
+
+    quarantine_samples = []
+    anomaly_by_l1 = []
+    anomaly_by_l2 = []
+    normal_traffic = []
 
     def __init__(self):
         """
@@ -65,6 +71,12 @@ class ModelMaker:
         self.pca1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer1_transformer.pkl')
         self.pca2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer2_transformer.pkl')
 
+        # set up the dataframes containing the analyzed data
+        self.quarantine_samples = pd.DataFrame(columns=self.x_test.columns)
+        self.anomaly_by_l1 = pd.DataFrame(columns=self.x_test.columns)
+        self.anomaly_by_l2 = pd.DataFrame(columns=self.x_test.columns)
+        self.normal_traffic = pd.DataFrame(columns=self.x_test.columns)
+
     def update_files(self, to_update):
         # reload the datasets/transformers/encoders from memory if they have been changed
         if to_update == 'train':
@@ -93,16 +105,9 @@ class ModelMaker:
         :return: trained models for layer 1 and 2 respectively
         """
 
-        n_estimators = hp1[0]
-        criterion = hp1[1]
-
         # Start with training classifier 1
         classifier1 = (RandomForestClassifier(n_estimators=25, criterion='gini')
                        .fit(self.x_train_l1, self.y_train_l1))
-
-        c = hp2[0]
-        gamma = hp2[1]
-        kernel = hp2[2]
 
         # Now train classifier 2
         classifier2 = (SVC(C=0.1, gamma=0.01, kernel='rbf')
