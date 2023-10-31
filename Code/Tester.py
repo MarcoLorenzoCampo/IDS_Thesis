@@ -1,12 +1,12 @@
 import pandas as pd
 import numpy as np
 
-from Code.DetectionSystem import ModelMaker
+from Code.DetectionSystem import DetectionSystem
 from Code import PreprocessingLayer
 
 pd.set_option('display.max_columns', None)
 pd.options.display.max_columns = None
-maker = ModelMaker()
+maker = DetectionSystem()
 
 
 
@@ -42,6 +42,8 @@ def main():
         elif output[0] == 3:
             maker.normal_traffic = pd.concat([maker.normal_traffic, sample], axis=1)
             print(f'([Prediction: NORMAL, AnomalyScore: {output[1]}], Actual: {actual})')
+
+        # update metrics
 
 
 def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, float]:

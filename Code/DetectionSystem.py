@@ -12,15 +12,20 @@ from sklearn.svm import SVC
 import joblib
 
 
-class ModelMaker:
+class DetectionSystem:
+    # thresholds
     ANOMALY_THRESHOLD1 = 0.9
     ANOMALY_THRESHOLD2 = 0.8
     BENIGN_THRESHOLD = 0.6
 
+    # classed of traffic
     quarantine_samples = []
     anomaly_by_l1 = []
     anomaly_by_l2 = []
     normal_traffic = []
+
+    # performance metrics
+
 
     def __init__(self):
         """
