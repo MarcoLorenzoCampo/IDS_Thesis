@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn.svm import SVC
@@ -98,7 +99,7 @@ class ModelMaker:
             self.ohe1 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe1.pkl')
             self.ohe2 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe2.pkl')
 
-    def train_models(self, hp1, hp2):
+    def train_models(self):
         """
         :param hp1: n-set of hyperparameters to train layer 1
         :param hp2: n-set of hyperparameters to train layer 2
@@ -154,3 +155,23 @@ class ModelMaker:
         pca_transformed = pca.transform(processed)
 
         return pca_transformed
+
+    def train_accuracy(self, layer1, layer2):
+        """
+        Function to see how the IDS performs on training data, useful to see if overfitting happens
+        :param layer1: classifier 1
+        :param layer2: classifier 2
+        """
+
+        l1_prediction = layer1.predict(self.x_train_l1, self.y_train_l1)
+        l2_prediction = layer2.predict(self.x_train_l2, self.y_train_l2)
+
+        # Calculate the accuracy score for layer 1.
+        l1_accuracy = accuracy_score(self.y_train_l1, l1_prediction)
+
+        # Calculate the accuracy score for layer 2.
+        l2_accuracy = accuracy_score(self.y_train_l2, l2_prediction)
+
+        # Print the accuracy scores.
+        print("Layer 1 accuracy:", l1_accuracy)
+        print("Layer 2 accuracy:", l2_accuracy)

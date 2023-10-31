@@ -13,7 +13,7 @@ maker = ModelMaker()
 
 
 def main():
-    layer1, layer2 = maker.train_models([], [])
+    layer1, layer2 = maker.train_models()
 
     # Consider the test sets as a whole
     x_test = maker.x_test
@@ -26,11 +26,8 @@ def main():
         # Make each row as its own data frame and pre-process it
         sample = pd.DataFrame(data=np.array([row]), index=None, columns=x_test.columns)
         actual = y_test[index]
-
         output = test_pipeline(layer1, layer2, sample)
-        print(sample)
 
-        # Sort and print the output
         # it's a case that is unsure for the IDS
         if output[0] == 0:
             maker.quarantine_samples = pd.concat([maker.quarantine_samples, sample], axis=1)
