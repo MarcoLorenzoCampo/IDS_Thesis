@@ -1,15 +1,13 @@
-import copy
-
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
 
-from DetectionSystem import ModelMaker
+from Code.DetectionSystem import ModelMaker
+from Code import PreprocessingLayer
 
 pd.set_option('display.max_columns', None)
 pd.options.display.max_columns = None
 maker = ModelMaker()
+
 
 
 def main():
@@ -76,7 +74,7 @@ def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, flo
   """
     # evaluate if the traffic is malicious
     # Start with layer1 (random forest)
-    sample = maker.pipeline_data_process(unprocessed_sample, target_layer=1)
+    sample = PreprocessingLayer.pipeline_data_process(maker, unprocessed_sample, target_layer=1)
     anomaly_confidence = layer1.predict_proba(sample)[0][1]
     benign_confidence = 1 - anomaly_confidence
 
@@ -88,7 +86,7 @@ def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, flo
             return [3, benign_confidence]
 
     # Continue with layer 2 if layer 1 does not detect anomalies
-    sample = maker.pipeline_data_process(unprocessed_sample, target_layer=2)
+    sample = PreprocessingLayer.pipeline_data_process(maker, unprocessed_sample, target_layer=2)
     anomaly_confidence = layer2.decision_function(sample)
     benign_confidence = 1 - anomaly_confidence
     if anomaly_confidence >= maker.ANOMALY_THRESHOLD2:
