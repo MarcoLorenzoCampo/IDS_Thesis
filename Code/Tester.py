@@ -9,7 +9,6 @@ pd.options.display.max_columns = None
 maker = DetectionSystem()
 
 
-
 def main():
     layer1, layer2 = maker.train_models()
 
@@ -44,7 +43,7 @@ def main():
             print(f'([Prediction: NORMAL, AnomalyScore: {output[1]}], Actual: {actual})')
 
         # update metrics
-
+        
 
 def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, float]:
     """Tests the given sample on the given layers.
@@ -52,7 +51,7 @@ def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, flo
   Args:
     layer1: A random forest classifier.
     layer2: A support vector machine
-    sample: A NumPy array containing the sample to test.
+    unprocessed_sample: A NumPy array containing the sample to test.
 
   Returns:
     A list containing two elements:
