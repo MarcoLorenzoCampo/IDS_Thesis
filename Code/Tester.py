@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from Code.DetectionSystem import DetectionSystem
-from Code import PreprocessingLayer
+from Code import DataPreprocessingComponent
 
 pd.set_option('display.max_columns', None)
 pd.options.display.max_columns = None
@@ -43,7 +43,7 @@ def main():
             print(f'([Prediction: NORMAL, AnomalyScore: {output[1]}], Actual: {actual})')
 
         # update metrics
-        
+
 
 def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, float]:
     """Tests the given sample on the given layers.
