@@ -28,8 +28,6 @@ class DetectionSystem:
     anomaly_by_l2 = []
     normal_traffic = []
 
-    # performance metrics
-
     def __init__(self):
         """
         This is the initialization function for the class responsible for setting up the classifiers and
