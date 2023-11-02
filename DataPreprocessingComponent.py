@@ -1,4 +1,6 @@
-from Code import DetectionSystem
+import os
+
+import DetectionSystem
 import copy
 import pandas as pd
 
@@ -17,21 +19,21 @@ def pipeline_data_process(ds: DetectionSystem, incoming_data, target_layer):
     data = copy.deepcopy(incoming_data)
 
     if target_layer == 1:
-        to_scale = data[ds.features_l1]
-        scaler = ds.scaler1
-        ohe = ds.ohe1
-        pca = ds.pca1
+        to_scale = data[ds.kb.features_l1]
+        scaler = ds.kb.scaler1
+        ohe = ds.kb.ohe1
+        pca = ds.kb.pca1
     else:
-        to_scale = data[ds.features_l2]
-        scaler = ds.scaler2
-        ohe = ds.ohe2
-        pca = ds.pca2
+        to_scale = data[ds.kb.features_l2]
+        scaler = ds.kb.scaler2
+        ohe = ds.kb.ohe2
+        pca = ds.kb.pca2
 
     scaled = scaler.transform(to_scale)
     scaled_data = pd.DataFrame(scaled, columns=to_scale.columns)
-    label_enc = ohe.transform(data[ds.cat_features])
+    label_enc = ohe.transform(data[ds.kb.cat_features])
     label_enc.toarray()
-    new_labels = ohe.get_feature_names_out(ds.cat_features)
+    new_labels = ohe.get_feature_names_out(ds.kb.cat_features)
     new_encoded = pd.DataFrame(data=label_enc.toarray(), columns=new_labels)
     processed = pd.concat([scaled_data, new_encoded], axis=1)
     pca_transformed = pca.transform(processed)

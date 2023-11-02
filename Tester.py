@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from Code.DetectionSystem import DetectionSystem
-from Code import DataPreprocessingComponent
+from DetectionSystem import DetectionSystem
+import DataPreprocessingComponent
 
 pd.set_option('display.max_columns', None)
 pd.options.display.max_columns = None
@@ -13,10 +13,10 @@ def main():
     layer1, layer2 = maker.train_models()
 
     # Consider the test sets as a whole
-    x_test = maker.x_test
+    x_test = maker.kb.x_test
     x_labels = x_test['label']
     del x_test['label']
-    y_test = maker.y_test
+    y_test = maker.kb.y_test
 
     for index, row in x_test.iterrows():
 
@@ -75,7 +75,7 @@ def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, flo
   """
     # evaluate if the traffic is malicious
     # Start with layer1 (random forest)
-    sample = PreprocessingLayer.pipeline_data_process(maker, unprocessed_sample, target_layer=1)
+    sample = DataPreprocessingComponent.pipeline_data_process(maker, unprocessed_sample, target_layer=1)
     anomaly_confidence = layer1.predict_proba(sample)[0][1]
     benign_confidence = 1 - anomaly_confidence
 
@@ -87,7 +87,8 @@ def test_pipeline(layer1, layer2, unprocessed_sample: np.array) -> list[int, flo
             return [3, benign_confidence]
 
     # Continue with layer 2 if layer 1 does not detect anomalies
-    sample = PreprocessingLayer.pipeline_data_process(maker, unprocessed_sample, target_layer=2)
+    sample = DataPreprocessingComponent.pipeline_data_process(maker, unprocessed_sample, target_layer=2)
+    sample = DataPreprocessingComponent.pipeline_data_process(maker, unprocessed_sample, target_layer=2)
     anomaly_confidence = layer2.decision_function(sample)
     benign_confidence = 1 - anomaly_confidence
     if anomaly_confidence >= maker.ANOMALY_THRESHOLD2:
