@@ -12,7 +12,7 @@ class DetectionInfrastructure:
         self.processor = DataPreprocessingComponent()
         self.metrics = Metrics()
         self.plotter = Plotter()
-        self.ids = DetectionSystem(self.kb, self.metrics)
+        self.ids = DetectionSystem(self.kb)
 
     def ids(self) -> DetectionSystem:
         return self.ids

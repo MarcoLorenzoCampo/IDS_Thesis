@@ -13,7 +13,7 @@ from Metrics import Metrics
 
 class DetectionSystem:
 
-    def __init__(self, kb: KnowledgeBase, metrics: Metrics):
+    def __init__(self, kb: KnowledgeBase):
         """
         This is the initialization function for the class responsible for setting up the classifiers and
         process data to make it ready for analysis.
@@ -28,7 +28,7 @@ class DetectionSystem:
         self.kb = kb
 
         # set the metrics from the class Metrics
-        self.metrics = metrics
+        self.metrics = Metrics()
 
         # set up the dataframes containing the analyzed data
         self.quarantine_samples = pd.DataFrame(columns=self.kb.x_test.columns)
@@ -180,23 +180,42 @@ class DetectionSystem:
                 self.add_to_normal(sample)
                 print(f'Prediction: NORMAL, AnomalyScore: {output[1]}')
 
+            return
+
         # in testing only
-        if actual is not None:
-            if output[0] == 0:
-                self.add_to_quarantine(sample)
-                print(f'Prediction: QUARANTINE, AnomalyScore: {output[1]}, actual: {actual}')
-            # it's an anomaly signaled by l1
-            elif output[0] == 1:
-                self.add_to_anomaly1(sample)
-                print(f'Prediction: L1_ANOMALY, AnomalyScore: {output[1]}, actual: {actual}')
-            # it's an anomaly signaled by l2
-            elif output[0] == 2:
-                self.add_to_anomaly1(sample)
-                print(f'Prediction: L2_ANOMALY, AnomalyScore: {output[1]}, actual: {actual}')
-            # it's not an anomaly
-            elif output[0] == 3:
-                self.add_to_normal(sample)
-                print(f'Prediction: NORMAL, AnomalyScore: {output[1]}, actual: {actual}')
+        if output[0] == 0:
+            self.add_to_quarantine(sample)
+            print(f'Prediction: QUARANTINE, AnomalyScore: {output[1]}, actual: {actual}')
+        # it's an anomaly signaled by l1
+        elif output[0] == 1:
+            self.add_to_anomaly1(sample)
+            print(f'Prediction: L1_ANOMALY, AnomalyScore: {output[1]}, actual: {actual}')
+        # it's an anomaly signaled by l2
+        elif output[0] == 2:
+            self.add_to_anomaly1(sample)
+            print(f'Prediction: L2_ANOMALY, AnomalyScore: {output[1]}, actual: {actual}')
+        # it's not an anomaly
+        elif output[0] == 3:
+            self.add_to_normal(sample)
+            print(f'Prediction: NORMAL, AnomalyScore: {output[1]}, actual: {actual}')
+
+        # it's an anomaly and has been correctly labeled
+        if output[0] in [1, 2] and actual == 1:
+            self.metrics.update('tp', 1)
+
+        # it's an anomaly, and it has been labeled as normal traffic
+        if output[0] == 3 and actual == 1:
+            self.metrics.update('fn', 1)
+
+        # it's normal traffic and has been correctly labeled as so
+        if output[0] == 3 and actual == 0:
+            self.metrics.update('tn', 1)
+
+        # it's been labeled as an anomaly, but it's actually normal traffic
+        if output[0] in [1, 2] and actual == 0:
+            self.metrics.update('fp', 1)
+
+        return
 
     """ List of all getters from this class """
     def kb(self) -> KnowledgeBase:

@@ -13,7 +13,7 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
     for i, (index, row) in enumerate(x_test.iterrows()):
 
         # reduce the number of iterations for testing purposes
-        if i >= 20000:
+        if i >= x_test.shape[1]:
             break
 
         # Make each row as its own data frame and pre-process it
