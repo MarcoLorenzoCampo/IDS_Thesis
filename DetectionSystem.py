@@ -1,5 +1,6 @@
 import copy
 import pickle
+import time
 
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -82,26 +83,39 @@ class DetectionSystem:
         sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler1, self.kb.ohe1,
                                                           self.kb.pca1, self.kb.features_l1, self.kb.cat_features))
 
+        start = time.time()
         anomaly_confidence = self.layer1.predict_proba(sample)[0][1]
+        end = time.time()
+        computation_time = end - start
+
         benign_confidence = 1 - anomaly_confidence
 
         if anomaly_confidence >= self.ANOMALY_THRESHOLD1:
             # it's an anomaly for layer1
+            self.metrics.add_classification_time(computation_time)
             return [1, anomaly_confidence]
         else:
             if benign_confidence >= self.BENIGN_THRESHOLD:
+                self.metrics.add_classification_time(computation_time)
                 return [3, benign_confidence]
 
         # Continue with layer 2 if layer 1 does not detect anomalies
         sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler2, self.kb.ohe2,
                                                           self.kb.pca2, self.kb.features_l2, self.kb.cat_features))
+
+        start = time.time()
         anomaly_confidence = self.layer2.decision_function(sample)
+        end = time.time()
+        computation_time = end - start
+
         benign_confidence = 1 - anomaly_confidence
         if anomaly_confidence >= self.ANOMALY_THRESHOLD2:
             # it's an anomaly for layer2
+            self.metrics.add_classification_time(computation_time)
             return [2, anomaly_confidence]
         else:
             if benign_confidence >= self.BENIGN_THRESHOLD:
+                self.metrics.add_classification_time(computation_time)
                 return [3, benign_confidence]
 
         # should not return here

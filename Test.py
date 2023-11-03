@@ -29,10 +29,13 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
     print('Quarantined samples: ', detection_infrastructure.ids.quarantine_samples.shape[0])
 
     # print the outcomes
-    print('tp -> Classified = ANOMALY, Actual = ANOMALY: ', detection_infrastructure.ids.metrics.get('tp'))
-    print('fp -> Classified = ANOMALY, Actual = NORMAL: : ', detection_infrastructure.ids.metrics.get('fp'))
-    print('fn -> Classified = NORMAL, Actual = ANOMALY: ', detection_infrastructure.ids.metrics.get('fn'))
-    print('tn -> Classified = NORMAL, Actual = NORMAL: ', detection_infrastructure.ids.metrics.get('tn'))
+    print('Classified = ANOMALY, Actual = ANOMALY: tp -> ', detection_infrastructure.ids.metrics.get_dict('tp'))
+    print('Classified = ANOMALY, Actual = NORMAL: fp -> ', detection_infrastructure.ids.metrics.get_dict('fp'))
+    print('Classified = NORMAL, Actual = ANOMALY: fn -> ', detection_infrastructure.ids.metrics.get_dict('fn'))
+    print('Classified = NORMAL, Actual = NORMAL: tn -> ', detection_infrastructure.ids.metrics.get_dict('tn'))
+
+    # print the average of the computation time
+    print('Average computation time for the 500 samples: ', detection_infrastructure.ids.metrics.get_avg_time())
 
 
 def main():
