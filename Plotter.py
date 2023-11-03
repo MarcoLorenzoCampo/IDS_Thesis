@@ -37,4 +37,5 @@ def roc_example():
     plt.savefig('C:/Users/marco/Documents/MEGAsync/Thesis/Images/roc.png')
 
 
-roc_example()
+class Plotter:
+    roc_example()

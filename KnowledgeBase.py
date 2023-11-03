@@ -1,4 +1,5 @@
 import copy
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -8,7 +9,8 @@ import joblib
 class KnowledgeBase:
     """
     This class contains all the datasets and files needed for the classification process. It
-    also contains the metrics that are constantly updated after each classification attempt
+    also contains the metrics that are constantly updated after each classification attempt.
+    This is 'unprotected' data that can be accessed from the outside classes.
     """
     # global train, validation, test sets
     x_train_l1, x_train_l2, y_train_l1, y_train_l2 = [], [], [], []
@@ -18,11 +20,14 @@ class KnowledgeBase:
     # ICFS features, categorical features
     features_l1, features_l2, cat_features = [], [], []
 
-    # scalers, one hot encoder, pca encoders
-    scaler1, scaler2, ohe1, ohe2, pca1, pca2 = [], [], [], [], [], []
+    # scalers, one hot encoder
+    scaler1, scaler2, ohe1, ohe2 = [], [], [], []
 
-    # store the updated outcomes of the classification
-    tp, tn, fp, fn = 0, 0, 0, 0
+    # pca encoders
+    pca1, pca2 = [], []
+
+    # actual classifiers
+    layer1, layer2 = [], []
 
     def __init__(self):
         """
@@ -73,6 +78,12 @@ class KnowledgeBase:
         # load pca transformers to transform features according to layer
         self.pca1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer1_transformer.pkl')
         self.pca2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer2_transformer.pkl')
+
+        # load the classifiers trained offline
+        with open('Models/NSL_l1_classifier.pkl', 'rb') as file:
+            self.layer1 = pickle.load(file)
+        with open('Models/NSL_l2_classifier.pkl', 'rb') as file:
+            self.layer2 = pickle.load(file)
 
     def update_files(self, to_update):
         # reload the datasets/transformers/encoders from memory if they have been changed
