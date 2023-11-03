@@ -4,3 +4,6 @@ class Metrics:
 
     def update(self, tag, value):
         self._metrics[tag] += value
+
+    def get(self, tag):
+        return self._metrics[tag]

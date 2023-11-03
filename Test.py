@@ -13,7 +13,7 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
     for i, (index, row) in enumerate(x_test.iterrows()):
 
         # reduce the number of iterations for testing purposes
-        if i >= x_test.shape[1]:
+        if i >= 500:
             break
 
         # Make each row as its own data frame and pre-process it
@@ -27,6 +27,12 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
     print('Anomalies by l2: ', detection_infrastructure.ids.anomaly_by_l2.shape[0])
     print('Normal traffic: ', detection_infrastructure.ids.normal_traffic.shape[0])
     print('Quarantined samples: ', detection_infrastructure.ids.quarantine_samples.shape[0])
+
+    # print the outcomes
+    print('tp -> Classified = ANOMALY, Actual = ANOMALY: ', detection_infrastructure.ids.metrics.get('tp'))
+    print('fp -> Classified = ANOMALY, Actual = NORMAL: : ', detection_infrastructure.ids.metrics.get('fp'))
+    print('fn -> Classified = NORMAL, Actual = ANOMALY: ', detection_infrastructure.ids.metrics.get('fn'))
+    print('tn -> Classified = NORMAL, Actual = NORMAL: ', detection_infrastructure.ids.metrics.get('tn'))
 
 
 def main():
