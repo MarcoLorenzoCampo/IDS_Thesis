@@ -88,16 +88,12 @@ class DetectionSystem:
         end = time.time()
         computation_time = end - start
 
-        benign_confidence = 1 - anomaly_confidence
+        benign_confidence_1 = 1 - anomaly_confidence
 
         if anomaly_confidence >= self.ANOMALY_THRESHOLD1:
             # it's an anomaly for layer1
             self.metrics.add_classification_time(computation_time)
             return [1, anomaly_confidence]
-        else:
-            if benign_confidence >= self.BENIGN_THRESHOLD:
-                self.metrics.add_classification_time(computation_time)
-                return [3, benign_confidence]
 
         # Continue with layer 2 if layer 1 does not detect anomalies
         sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler2, self.kb.ohe2,
@@ -108,22 +104,22 @@ class DetectionSystem:
         end = time.time()
         computation_time = end - start
 
-        benign_confidence = 1 - anomaly_confidence
+        benign_confidence_2 = 1 - anomaly_confidence
         if anomaly_confidence >= self.ANOMALY_THRESHOLD2:
             # it's an anomaly for layer2
             self.metrics.add_classification_time(computation_time)
             return [2, anomaly_confidence]
-        else:
-            if benign_confidence >= self.BENIGN_THRESHOLD:
-                self.metrics.add_classification_time(computation_time)
-                return [3, benign_confidence]
+
+        if benign_confidence_2 >= self.BENIGN_THRESHOLD or benign_confidence_1 >= self.ANOMALY_THRESHOLD1:
+            self.metrics.add_classification_time(computation_time)
+            return [3, benign_confidence_2]
 
         # should not return here
         return [-1111, -1111]
 
     def train_accuracy(self, layer1, layer2):
         """
-        Function to see how the IDS performs on training data, useful to see if overfitting happens
+        Function to see how the IDS performs on training data, useful to see if over fitting happens
         :param layer1: classifier 1
         :param layer2: classifier 2
         """

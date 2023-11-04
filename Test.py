@@ -9,11 +9,13 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
     x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
     y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
+    iterations = 500
+
     # Test the set using this infrastructure
     for i, (index, row) in enumerate(x_test.iterrows()):
 
         # reduce the number of iterations for testing purposes
-        if i >= 500:
+        if i >= iterations:
             break
 
         # Make each row as its own data frame and pre-process it
@@ -21,6 +23,7 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
         actual = y_test[index]
         output = detection_infrastructure.ids.classify(sample)
         detection_infrastructure.ids.evaluate_classification(sample, output, actual=actual)
+        print(i)
 
     # let's see the output of the classification
     print('Anomalies by l1: ', detection_infrastructure.ids.anomaly_by_l1.shape[0])
@@ -35,7 +38,7 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
     print('Classified = NORMAL, Actual = NORMAL: tn -> ', detection_infrastructure.ids.metrics.get_dict('tn'))
 
     # print the average of the computation time
-    print('Average computation time for the 500 samples: ', detection_infrastructure.ids.metrics.get_avg_time())
+    print(f'Average computation time for {iterations} samples: ', detection_infrastructure.ids.metrics.get_avg_time())
 
 
 def main():
