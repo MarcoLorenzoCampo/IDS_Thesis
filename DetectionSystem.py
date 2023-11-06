@@ -1,6 +1,9 @@
 import copy
 import pickle
 import time
+import Metrics
+from Metrics import Metrics
+import psutil
 
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -9,7 +12,7 @@ from sklearn.svm import SVC
 
 import DataPreprocessingComponent
 from KnowledgeBase import KnowledgeBase
-from Metrics import Metrics
+from typing import List, Union
 
 
 class DetectionSystem:
@@ -21,6 +24,9 @@ class DetectionSystem:
         Data is loaded when the class is initiated, then updated when necessary, calling the function
         update_files(.)
         """
+
+        # set up an instance-level logger to report on the classification performance
+        # self.logger = Metrics.set_logger(__name__)
 
         # manually set the detection thresholds
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
@@ -61,7 +67,7 @@ class DetectionSystem:
 
         return classifier1, classifier2
 
-    def classify(self, incoming_data) -> list[int, float]:
+    def classify(self, incoming_data) -> list[Union[int, str]]:
         """Tests the given sample on the given layers.
 
       Args:
@@ -78,44 +84,58 @@ class DetectionSystem:
             A higher score indicates a more likely anomaly.
       """
 
-        # Start with layer1 (random forest)
+        # Data process for layer 1
         unprocessed_sample = copy.deepcopy(incoming_data)
         sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler1, self.kb.ohe1,
                                                           self.kb.pca1, self.kb.features_l1, self.kb.cat_features))
 
+        # evaluate cpu_usage and time before classification
+        cpu_usage_before = psutil.cpu_percent(interval=1)
         start = time.time()
-        anomaly_confidence = self.layer1.predict_proba(sample)[0][1]
-        end = time.time()
-        computation_time = end - start
 
-        benign_confidence_1 = 1 - anomaly_confidence
+        # predict using the classifier for layer 1
+        prediction1 = self.layer1.predict(sample)
 
-        if anomaly_confidence >= self.ANOMALY_THRESHOLD1:
+        # evaluate cpu_usage and time immediately after classification
+        cpu_usage_after = psutil.cpu_percent(interval=1)
+        computation_time = time.time() - start
+
+        # add cpu_usage and computation_time to metrics
+        self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
+        self.metrics.add_classification_time(computation_time)
+
+        if prediction1:
             # it's an anomaly for layer1
-            self.metrics.add_classification_time(computation_time)
-            return [1, anomaly_confidence]
+            return [1, 'L1_ANOMALY']
 
         # Continue with layer 2 if layer 1 does not detect anomalies
         sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler2, self.kb.ohe2,
                                                           self.kb.pca2, self.kb.features_l2, self.kb.cat_features))
 
+        # evaluate cpu_usage and computation_time before classification
+        cpu_usage_before = psutil.cpu_percent(interval=1)
         start = time.time()
+
         anomaly_confidence = self.layer2.decision_function(sample)
-        end = time.time()
-        computation_time = end - start
+
+        # evaluate cpu_usage immediately after classification
+        cpu_usage_after = psutil.cpu_percent(interval=1)
+        computation_time = time.time() - start
+
+        # add cpu_usage and computation_time to metrics
+        self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
+        self.metrics.add_classification_time(computation_time)
 
         benign_confidence_2 = 1 - anomaly_confidence
         if anomaly_confidence >= self.ANOMALY_THRESHOLD2:
             # it's an anomaly for layer2
-            self.metrics.add_classification_time(computation_time)
-            return [2, anomaly_confidence]
+            return [anomaly_confidence, 'L2_ANOMALY']
 
-        if benign_confidence_2 >= self.BENIGN_THRESHOLD or benign_confidence_1 >= self.ANOMALY_THRESHOLD1:
-            self.metrics.add_classification_time(computation_time)
-            return [3, benign_confidence_2]
+        if benign_confidence_2 >= self.BENIGN_THRESHOLD:
+            return [benign_confidence_2, 'NOT_ANOMALY']
 
-        # should not return here
-        return [-1111, -1111]
+        # has not been classified yet, it's not decided
+        return [0, 'QUARANTINE']
 
     def train_accuracy(self, layer1, layer2):
         """
@@ -174,60 +194,61 @@ class DetectionSystem:
         :return:
         """
         if actual is None:
-            if output[0] == 0:
+            if output[1] == 'QUARANTINE':
                 self.add_to_quarantine(sample)
-                print(f'Prediction: QUARANTINE, AnomalyScore: {output[1]}')
+                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
             # it's an anomaly signaled by l1
-            elif output[0] == 1:
+            elif output[1] == 'L1_ANOMALY':
                 self.add_to_anomaly1(sample)
-                print(f'Prediction: L1_ANOMALY, AnomalyScore: {output[1]}')
+                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
             # it's an anomaly signaled by l2
-            elif output[0] == 2:
+            elif output[1] == 'L2_ANOMALY':
                 self.add_to_anomaly1(sample)
-                print(f'Prediction: L2_ANOMALY, AnomalyScore: {output[1]}')
+                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
             # it's not an anomaly
-            elif output[0] == 3:
+            elif output[1] == 'NOT_ANOMALY':
                 self.add_to_normal(sample)
-                print(f'Prediction: NORMAL, AnomalyScore: {output[1]}')
+                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
 
             return
 
         # in testing only
-        if output[0] == 0:
+        if output[1] == 'QUARANTINE':
             self.add_to_quarantine(sample)
-            print(f'Prediction: QUARANTINE, AnomalyScore: {output[1]}, actual: {actual}')
+            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
         # it's an anomaly signaled by l1
-        elif output[0] == 1:
+        elif output[1] == 'L1_ANOMALY':
             self.add_to_anomaly1(sample)
-            print(f'Prediction: L1_ANOMALY, AnomalyScore: {output[1]}, actual: {actual}')
+            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
         # it's an anomaly signaled by l2
-        elif output[0] == 2:
+        elif output[1] == 'l2_ANOMALY':
             self.add_to_anomaly1(sample)
-            print(f'Prediction: L2_ANOMALY, AnomalyScore: {output[1]}, actual: {actual}')
+            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
         # it's not an anomaly
-        elif output[0] == 3:
+        elif output[1] == 'NOT_ANOMALY':
             self.add_to_normal(sample)
-            print(f'Prediction: NORMAL, AnomalyScore: {output[1]}, actual: {actual}')
+            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
 
         # it's an anomaly and has been correctly labeled
-        if output[0] in [1, 2] and actual == 1:
+        if (output[1] == 'L1_ANOMALY' or output[1] == 'L2_ANOMALY') and actual == 1:
             self.metrics.update('tp', 1)
 
         # it's an anomaly, and it has been labeled as normal traffic
-        if output[0] == 3 and actual == 1:
+        if output[1] == 'NOT_ANOMALY' and actual == 1:
             self.metrics.update('fn', 1)
 
         # it's normal traffic and has been correctly labeled as so
-        if output[0] == 3 and actual == 0:
+        if output[1] == 'NOT_ANOMALY' and actual == 0:
             self.metrics.update('tn', 1)
 
         # it's been labeled as an anomaly, but it's actually normal traffic
-        if output[0] in [1, 2] and actual == 0:
+        if (output[1] == 'L1_ANOMALY' or output[1] == 'L2_ANOMALY') and actual == 0:
             self.metrics.update('fp', 1)
 
         return
 
     """ List of all getters from this class """
+
     def kb(self) -> KnowledgeBase:
         return self.kb
 
