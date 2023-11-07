@@ -28,15 +28,48 @@ def set_logger(name):
 
 class Metrics:
     def __init__(self):
-        self._metrics = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
+        self.count = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
+        self._metrics = {'accuracy': -1.0, 'precision': -1.0, 'fscore': -1.0,
+                         'tpr': -1.0, 'fpr': -1.0, 'tnr': -1.0, 'fnr': -1.0}
         self.classification_times = []
         self.cpu_usages = []
 
-    def update(self, tag, value):
-        self._metrics[tag] += value
+    def compute_metrics(self):
+        # true positive rate (recall)
+        self._metrics['tpr'] = self.count['tp'] / (self.count['tp'] + self.count['fn'])
 
-    def get_dict(self, tag):
+        # false positive rate
+        self._metrics['fpr'] = self.count['fp'] / (self.count['fp'] + self.count['tn'])
+
+        # true negative rate
+        self._metrics['tnr'] = self.count['tn'] / (self.count['tn'] + self.count['fn'])
+
+        # false negative rate
+        self._metrics['fnr'] = self.count['fn'] / (self.count['tn'] + self.count['fn'])
+
+        # computation of accuracy
+        self._metrics['accuracy'] = ((self.count['tp'] + self.count['tn'])
+                                     / (self.count['tp'] + self.count['tn'] + self.count['fp'] + self.count['fn']))
+
+        # computation of precision
+        self._metrics['precision'] = self.count['tp'] / (self.count['tp'] + self.count['fp'])
+
+        # computation of fscore
+        self._metrics['fscore'] = (2 * (self._metrics['precision'] * self._metrics['tpr'])
+                                   / (self._metrics['precision'] + self._metrics['tpr']))
+
+    def update_count(self, tag, value):
+        self.count[tag] += value
+        try:
+            self.compute_metrics()
+        except ZeroDivisionError:
+            print("Error: Division by zero occurred in compute_metrics. Could be because of default values.")
+
+    def get_metrics(self, tag):
         return self._metrics[tag]
+
+    def get_counts(self, tag):
+        return self.count[tag]
 
     def add_classification_time(self, time):
         self.classification_times.append(time)

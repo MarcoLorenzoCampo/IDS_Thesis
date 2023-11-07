@@ -46,7 +46,25 @@ class DetectionSystem:
         # set the classifiers
         self.layer1, self.layer2 = self.kb.layer1, self.kb.layer2
 
-    def train_models(self):
+        # dictionary for classification functions
+        self.clf_switcher = {
+            'QUARANTINE': self.add_to_quarantine,
+            'L1_ANOMALY': self.add_to_anomaly1,
+            'L2_ANOMALY': self.add_to_anomaly2,
+            'NOT_ANOMALY': self.add_to_normal
+        }
+
+        # dictionary for metrics functions
+        self.metrics_switcher = {
+            ('L1_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1),
+            ('L2_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1),
+            ('NOT_ANOMALY', 1): lambda: self.metrics.update_count('fn', 1),
+            ('NOT_ANOMALY', 0): lambda: self.metrics.update_count('tn', 1),
+            ('L1_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1),
+            ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1)
+        }
+
+    def train_models(self) -> (RandomForestClassifier, SVC):
         """
         :return: trained models for layer 1 and 2 respectively
         """
@@ -68,11 +86,9 @@ class DetectionSystem:
         return classifier1, classifier2
 
     def classify(self, incoming_data) -> list[int, str]:
-        """Tests the given sample on the given layers.
-
+        """
       Args:
         incoming_data: A NumPy array containing the sample to test.
-
       Returns:
         A list containing two elements:
           * The first element is an integer indicating whether the sample is an anomaly
@@ -80,28 +96,16 @@ class DetectionSystem:
             1: anomaly signaled by layer1
             2: anomaly signaled by layer2
             3: not an anomaly
-          * The second element is a float indicating the anomaly score of the sample.
-            A higher score indicates a more likely anomaly.
       """
 
-        # Data process for layer 1
+        # Copy of the original sample
         unprocessed_sample = copy.deepcopy(incoming_data)
-        sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler1, self.kb.ohe1,
-                                                          self.kb.pca1, self.kb.features_l1, self.kb.cat_features))
 
-        # evaluate cpu_usage and time before classification
-        # cpu_usage_before = psutil.cpu_percent(interval=1)
-        start = time.time()
-
-        # predict using the classifier for layer 1
-        prediction1 = self.layer1.predict(sample)
-
-        # evaluate cpu_usage and time immediately after classification
-        # cpu_usage_after = psutil.cpu_percent(interval=1)
-        computation_time = time.time() - start
+        # Classification for layer 1
+        prediction1, computation_time, cpu_usage = self.clf_1(unprocessed_sample)
 
         # add cpu_usage and computation_time to metrics
-        # self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
+        self.metrics.add_cpu_usage(cpu_usage)
         self.metrics.add_classification_time(computation_time)
 
         if prediction1:
@@ -109,22 +113,10 @@ class DetectionSystem:
             return [1, 'L1_ANOMALY']
 
         # Continue with layer 2 if layer 1 does not detect anomalies
-        sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler2, self.kb.ohe2,
-                                                          self.kb.pca2, self.kb.features_l2, self.kb.cat_features))
-
-        # evaluate cpu_usage and computation_time before classification
-        # cpu_usage_before = psutil.cpu_percent(interval=1)
-        start = time.time()
-
-        # we are interested in anomaly_confidence[0, 1], meaning the first sample and class 1 (the anomaly class)
-        anomaly_confidence = self.layer2.predict_proba(sample)
-
-        # evaluate cpu_usage immediately after classification
-        # cpu_usage_after = psutil.cpu_percent(interval=1)
-        computation_time = time.time() - start
+        anomaly_confidence, computation_time, cpu_usage = self.clf_2(unprocessed_sample)
 
         # add cpu_usage and computation_time to metrics
-        # self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
+        self.metrics.add_cpu_usage(cpu_usage)
         self.metrics.add_classification_time(computation_time)
 
         benign_confidence_2 = 1 - anomaly_confidence[0, 1]
@@ -138,7 +130,49 @@ class DetectionSystem:
         # has not been classified yet, it's not decided
         return [0, 'QUARANTINE']
 
-    def train_accuracy(self, layer1, layer2):
+    def clf_1(self, unprocessed_sample):
+        sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler1, self.kb.ohe1,
+                                                          self.kb.pca1, self.kb.features_l1, self.kb.cat_features))
+
+        # evaluate cpu_usage and time before classification
+        # cpu_usage_before = psutil.cpu_percent(interval=1)
+        start = time.time()
+
+        # predict using the classifier for layer 1
+        prediction1 = self.layer1.predict(sample)
+
+        # evaluate cpu_usage and time immediately after classification
+        # cpu_usage_after = psutil.cpu_percent(interval=1)
+
+        # metrics to return
+        cpu_usage = 0
+        # cpu_usage = cpu_usage_after - cpu_usage_before
+        computation_time = time.time() - start
+
+        return prediction1, computation_time, cpu_usage
+
+    def clf_2(self, unprocessed_sample):
+        sample = (DataPreprocessingComponent.data_process(unprocessed_sample, self.kb.scaler2, self.kb.ohe2,
+                                                          self.kb.pca2, self.kb.features_l2, self.kb.cat_features))
+
+        # evaluate cpu_usage and time before classification
+        # cpu_usage_before = psutil.cpu_percent(interval=1)
+        start = time.time()
+
+        # we are interested in anomaly_confidence[0, 1], meaning the first sample and class 1 (the anomaly class)
+        anomaly_confidence = self.layer2.predict_proba(sample)
+
+        # evaluate cpu_usage and time immediately after classification
+        # cpu_usage_after = psutil.cpu_percent(interval=1)
+
+        # metrics to return
+        cpu_usage = 0
+        # cpu_usage = cpu_usage_after - cpu_usage_before
+        computation_time = time.time() - start
+
+        return anomaly_confidence, computation_time, cpu_usage
+
+    def train_accuracy(self, layer1, layer2) -> list[float, float]:
         """
         Function to see how the IDS performs on training data, useful to see if over fitting happens
         :param layer1: classifier 1
@@ -158,35 +192,38 @@ class DetectionSystem:
         print("Layer 1 accuracy:", l1_accuracy)
         print("Layer 2 accuracy:", l2_accuracy)
 
-    def add_to_quarantine(self, sample: pd.DataFrame):
+        return [l1_accuracy, l2_accuracy]
+
+    def add_to_quarantine(self, sample: pd.DataFrame) -> None:
         """
         Add an unsure traffic sample to quarantine
         :param sample: incoming traffic
         """
         self.quarantine_samples = pd.concat([self.quarantine_samples, sample], axis=0)
 
-    def add_to_anomaly1(self, sample: pd.DataFrame):
+    def add_to_anomaly1(self, sample: pd.DataFrame) -> None:
         """
         Add an anomalous sample by layer1 to the list
         :param sample: incoming traffic
         """
         self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
 
-    def add_to_anomaly2(self, sample: pd.DataFrame):
+    def add_to_anomaly2(self, sample: pd.DataFrame) -> None:
         """
         Add an anomalous sample by layer2 to the list
         :param sample: incoming traffic
         """
         self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
 
-    def add_to_normal(self, sample: pd.DataFrame):
+    def add_to_normal(self, sample: pd.DataFrame) -> None:
         """
         Add a normal sample to the list
         :param sample: incoming traffic
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
 
-    def evaluate_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int):
+    def evaluate_classification(self, sample: pd.DataFrame,
+                                output: list[Union[int, str]], actual: int) -> None:
         """
         This function is used to evaluate whether the prediction made by the IDS itself
         :param actual: optional parameter, it's None in real application but not in testing
@@ -195,36 +232,18 @@ class DetectionSystem:
         :return:
         """
 
-        switcher = {
-            'QUARANTINE': self.add_to_quarantine,
-            'L1_ANOMALY': self.add_to_anomaly1,
-            'L2_ANOMALY': self.add_to_anomaly2,
-            'NOT_ANOMALY': self.add_to_normal
-        }
-
         if actual is None:
-            switch_function = switcher.get(output[1], lambda: "Invalid value")
+            switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)
             print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
 
         if actual is not None:
-            switch_function = switcher.get(output[1], lambda: "Invalid value")
+            switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)
             print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
 
-        switcher = {
-            ('L1_ANOMALY', 1): lambda: self.metrics.update('tp', 1),
-            ('L2_ANOMALY', 1): lambda: self.metrics.update('tp', 1),
-            ('NOT_ANOMALY', 1): lambda: self.metrics.update('fn', 1),
-            ('NOT_ANOMALY', 0): lambda: self.metrics.update('tn', 1),
-            ('L1_ANOMALY', 0): lambda: self.metrics.update('fp', 1),
-            ('L2_ANOMALY', 0): lambda: self.metrics.update('fp', 1)
-        }
-
-        switch_function = switcher.get((output[1], actual), lambda: "Invalid value")
+        switch_function = self.metrics_switcher.get((output[1], actual), lambda: "Invalid value")
         switch_function()
-
-    """ List of all getters from this class """
 
     def kb(self) -> KnowledgeBase:
         return self.kb
