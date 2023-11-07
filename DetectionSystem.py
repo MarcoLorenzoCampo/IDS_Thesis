@@ -56,7 +56,7 @@ class DetectionSystem:
                        .fit(self.kb.x_train_l1, self.kb.y_train_l1))
 
         # Now train classifier 2
-        classifier2 = (SVC(C=0.1, gamma=0.01, kernel='rbf')
+        classifier2 = (SVC(probability=True, C=0.1, gamma=0.01, kernel='rbf')
                        .fit(self.kb.x_train_l2, self.kb.y_train_l2))
 
         # Save models to file
@@ -67,7 +67,7 @@ class DetectionSystem:
 
         return classifier1, classifier2
 
-    def classify(self, incoming_data) -> list[Union[int, str]]:
+    def classify(self, incoming_data) -> list[int, str]:
         """Tests the given sample on the given layers.
 
       Args:
@@ -90,18 +90,18 @@ class DetectionSystem:
                                                           self.kb.pca1, self.kb.features_l1, self.kb.cat_features))
 
         # evaluate cpu_usage and time before classification
-        cpu_usage_before = psutil.cpu_percent(interval=1)
+        # cpu_usage_before = psutil.cpu_percent(interval=1)
         start = time.time()
 
         # predict using the classifier for layer 1
         prediction1 = self.layer1.predict(sample)
 
         # evaluate cpu_usage and time immediately after classification
-        cpu_usage_after = psutil.cpu_percent(interval=1)
+        # cpu_usage_after = psutil.cpu_percent(interval=1)
         computation_time = time.time() - start
 
         # add cpu_usage and computation_time to metrics
-        self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
+        # self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
         self.metrics.add_classification_time(computation_time)
 
         if prediction1:
@@ -113,21 +113,22 @@ class DetectionSystem:
                                                           self.kb.pca2, self.kb.features_l2, self.kb.cat_features))
 
         # evaluate cpu_usage and computation_time before classification
-        cpu_usage_before = psutil.cpu_percent(interval=1)
+        # cpu_usage_before = psutil.cpu_percent(interval=1)
         start = time.time()
 
-        anomaly_confidence = self.layer2.decision_function(sample)
+        # we are interested in anomaly_confidence[0, 1], meaning the first sample and class 1 (the anomaly class)
+        anomaly_confidence = self.layer2.predict_proba(sample)
 
         # evaluate cpu_usage immediately after classification
-        cpu_usage_after = psutil.cpu_percent(interval=1)
+        # cpu_usage_after = psutil.cpu_percent(interval=1)
         computation_time = time.time() - start
 
         # add cpu_usage and computation_time to metrics
-        self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
+        # self.metrics.add_cpu_usage(cpu_usage_after - cpu_usage_before)
         self.metrics.add_classification_time(computation_time)
 
-        benign_confidence_2 = 1 - anomaly_confidence
-        if anomaly_confidence >= self.ANOMALY_THRESHOLD2:
+        benign_confidence_2 = 1 - anomaly_confidence[0, 1]
+        if anomaly_confidence[0, 1] >= self.ANOMALY_THRESHOLD2:
             # it's an anomaly for layer2
             return [anomaly_confidence, 'L2_ANOMALY']
 
@@ -157,95 +158,71 @@ class DetectionSystem:
         print("Layer 1 accuracy:", l1_accuracy)
         print("Layer 2 accuracy:", l2_accuracy)
 
-    def add_to_quarantine(self, sample):
+    def add_to_quarantine(self, sample: pd.DataFrame):
         """
         Add an unsure traffic sample to quarantine
         :param sample: incoming traffic
         """
         self.quarantine_samples = pd.concat([self.quarantine_samples, sample], axis=0)
 
-    def add_to_anomaly1(self, sample):
+    def add_to_anomaly1(self, sample: pd.DataFrame):
         """
         Add an anomalous sample by layer1 to the list
         :param sample: incoming traffic
         """
         self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
 
-    def add_to_anomaly2(self, sample):
+    def add_to_anomaly2(self, sample: pd.DataFrame):
         """
         Add an anomalous sample by layer2 to the list
         :param sample: incoming traffic
         """
         self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
 
-    def add_to_normal(self, sample):
+    def add_to_normal(self, sample: pd.DataFrame):
         """
-        Add an anomalous sample by layer2 to the list
+        Add a normal sample to the list
         :param sample: incoming traffic
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
 
-    def evaluate_classification(self, sample, output: list[int, float], actual: int):
+    def evaluate_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int):
         """
         This function is used to evaluate whether the prediction made by the IDS itself
-        :param actual: optional parameter, it's present in testing but not when running
+        :param actual: optional parameter, it's None in real application but not in testing
         :param sample:
         :param output:
         :return:
         """
+
+        switcher = {
+            'QUARANTINE': self.add_to_quarantine,
+            'L1_ANOMALY': self.add_to_anomaly1,
+            'L2_ANOMALY': self.add_to_anomaly2,
+            'NOT_ANOMALY': self.add_to_normal
+        }
+
         if actual is None:
-            if output[1] == 'QUARANTINE':
-                self.add_to_quarantine(sample)
-                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
-            # it's an anomaly signaled by l1
-            elif output[1] == 'L1_ANOMALY':
-                self.add_to_anomaly1(sample)
-                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
-            # it's an anomaly signaled by l2
-            elif output[1] == 'L2_ANOMALY':
-                self.add_to_anomaly1(sample)
-                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
-            # it's not an anomaly
-            elif output[1] == 'NOT_ANOMALY':
-                self.add_to_normal(sample)
-                print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
+            switch_function = switcher.get(output[1], lambda: "Invalid value")
+            switch_function(sample)
+            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
 
-            return
-
-        # in testing only
-        if output[1] == 'QUARANTINE':
-            self.add_to_quarantine(sample)
-            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
-        # it's an anomaly signaled by l1
-        elif output[1] == 'L1_ANOMALY':
-            self.add_to_anomaly1(sample)
-            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
-        # it's an anomaly signaled by l2
-        elif output[1] == 'l2_ANOMALY':
-            self.add_to_anomaly1(sample)
-            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
-        # it's not an anomaly
-        elif output[1] == 'NOT_ANOMALY':
-            self.add_to_normal(sample)
+        if actual is not None:
+            switch_function = switcher.get(output[1], lambda: "Invalid value")
+            switch_function(sample)
             print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
 
-        # it's an anomaly and has been correctly labeled
-        if (output[1] == 'L1_ANOMALY' or output[1] == 'L2_ANOMALY') and actual == 1:
-            self.metrics.update('tp', 1)
+        switcher = {
+            ('L1_ANOMALY', 1): lambda: self.metrics.update('tp', 1),
+            ('L2_ANOMALY', 1): lambda: self.metrics.update('tp', 1),
+            ('NOT_ANOMALY', 1): lambda: self.metrics.update('fn', 1),
+            ('NOT_ANOMALY', 0): lambda: self.metrics.update('tn', 1),
+            ('L1_ANOMALY', 0): lambda: self.metrics.update('fp', 1),
+            ('L2_ANOMALY', 0): lambda: self.metrics.update('fp', 1)
+        }
 
-        # it's an anomaly, and it has been labeled as normal traffic
-        if output[1] == 'NOT_ANOMALY' and actual == 1:
-            self.metrics.update('fn', 1)
-
-        # it's normal traffic and has been correctly labeled as so
-        if output[1] == 'NOT_ANOMALY' and actual == 0:
-            self.metrics.update('tn', 1)
-
-        # it's been labeled as an anomaly, but it's actually normal traffic
-        if (output[1] == 'L1_ANOMALY' or output[1] == 'L2_ANOMALY') and actual == 0:
-            self.metrics.update('fp', 1)
-
-        return
+        switch_function = switcher.get((output[1], actual), lambda: "Invalid value")
+        switch_function()
 
     """ List of all getters from this class """
 

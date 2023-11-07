@@ -18,12 +18,13 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
         if i >= iterations:
             break
 
+        print(f'Sample #{i}:')
+
         # Make each row as its own data frame and pre-process it
         sample = pd.DataFrame(data=np.array([row]), index=None, columns=x_test.columns)
         actual = y_test[index]
         output = detection_infrastructure.ids.classify(sample)
         detection_infrastructure.ids.evaluate_classification(sample, output, actual=actual)
-        print(i)
 
     # let's see the output of the classification
     print('Anomalies by l1: ', detection_infrastructure.ids.anomaly_by_l1.shape[0])
