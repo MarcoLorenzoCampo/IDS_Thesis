@@ -222,8 +222,7 @@ class DetectionSystem:
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
 
-    def evaluate_classification(self, sample: pd.DataFrame,
-                                output: list[Union[int, str]], actual: int) -> None:
+    def show_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int) -> None:
         """
         This function is used to evaluate whether the prediction made by the IDS itself
         :param actual: optional parameter, it's None in real application but not in testing
@@ -231,7 +230,6 @@ class DetectionSystem:
         :param output:
         :return:
         """
-
         if actual is None:
             switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)

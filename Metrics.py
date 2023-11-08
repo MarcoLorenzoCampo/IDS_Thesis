@@ -28,18 +28,23 @@ def set_logger(name):
 
 class Metrics:
     def __init__(self):
+        self.logger = set_logger(__name__)
         self.count = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
-        self._metrics = {'accuracy': -1.0, 'precision': -1.0, 'fscore': -1.0,
-                         'tpr': -1.0, 'fpr': -1.0, 'tnr': -1.0, 'fnr': -1.0}
+        self._metrics = {'accuracy': 0.0, 'precision': 0.0, 'fscore': 0.0,
+                         'tpr': 0.0, 'fpr': 0.0, 'tnr': 0.0, 'fnr': 0.0}
         self.classification_times = []
         self.cpu_usages = []
+        self.tprs = []
+        self.fprs = []
 
     def compute_metrics(self):
         # true positive rate (recall)
         self._metrics['tpr'] = self.count['tp'] / (self.count['tp'] + self.count['fn'])
+        self.tprs.append(self._metrics['tpr'])
 
         # false positive rate
         self._metrics['fpr'] = self.count['fp'] / (self.count['fp'] + self.count['tn'])
+        self.fprs.append(self._metrics['fpr'])
 
         # true negative rate
         self._metrics['tnr'] = self.count['tn'] / (self.count['tn'] + self.count['fn'])
@@ -60,10 +65,28 @@ class Metrics:
 
     def update_count(self, tag, value):
         self.count[tag] += value
-        try:
+
+        # compute the metrics only if enough samples have been collected
+        if all(value != 0 for value in self.count.values()):
             self.compute_metrics()
-        except ZeroDivisionError:
-            print("Error: Division by zero occurred in compute_metrics. Could be because of default values.")
+        else:
+            self.logger.error('Not enough data, skipping metrics computation for now.')
+
+    def show_metrics(self):
+        print('accuracy: ', self._metrics['accuracy'])
+        print('precision: ', self._metrics['precision'])
+        print('fscore: ', self._metrics['fscore'])
+        print('tpr: ', self._metrics['tpr'])
+        print('fpr: ', self._metrics['fpr'])
+        print('tnr: ', self._metrics['tnr'])
+        print('fnr: ', self._metrics['fnr'])
+        print('\n')
+
+    def get_tprs(self):
+        return self.tprs
+
+    def get_fprs(self):
+        return self.fprs
 
     def get_metrics(self, tag):
         return self._metrics[tag]

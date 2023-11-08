@@ -38,4 +38,21 @@ def roc_example():
 
 
 class Plotter:
-    roc_example()
+    def plot_new(self, tprs, fprs):
+        plt.figure()
+
+        # Plotting the ROC curve
+        plt.plot(fprs, tprs, color='darkorange', lw=2, label='ROC curve')
+
+        # Plotting the line of no discrimination
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver Operating Characteristic curve')
+        plt.legend(loc="lower right")
+
+        # Display the plot
+        plt.show()
