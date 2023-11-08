@@ -1,9 +1,12 @@
 import copy
+import os.path
 import pickle
 
 import numpy as np
 import pandas as pd
 import joblib
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 
 
 class KnowledgeBase:
@@ -79,11 +82,14 @@ class KnowledgeBase:
         self.pca1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer1_transformer.pkl')
         self.pca2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer2_transformer.pkl')
 
-        # load the classifiers trained offline
-        with open('Models/NSL_l1_classifier.pkl', 'rb') as file:
-            self.layer1 = pickle.load(file)
-        with open('Models/NSL_l2_classifier.pkl', 'rb') as file:
-            self.layer2 = pickle.load(file)
+        # load or train the classifiers
+        if os.path.exists('Models/NSL_l1_classifier_og.pkl') and os.path.exists('Models/NSL_l2_classifier_og.pkl'):
+            with open('Models/From notebook/NSL_l1_classifier.pkl', 'rb') as file:
+                self.layer1 = pickle.load(file)
+            with open('Models/From notebook/NSL_l2_classifier.pkl', 'rb') as file:
+                self.layer2 = pickle.load(file)
+        else:
+            self.layer1, self.layer2 = self.default_training()
 
     def update_files(self, to_update):
         # reload the datasets/transformers/encoders from memory if they have been changed
@@ -105,6 +111,59 @@ class KnowledgeBase:
         if to_update == 'ohe':
             self.ohe1 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe1.pkl')
             self.ohe2 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe2.pkl')
+
+    def default_training(self) -> (RandomForestClassifier, SVC):
+        """
+        Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
+        For clarity, all the hyperparameters for random forest and svm are listed below.
+        :return: Trained models for layer 1 and 2 respectively
+        """
+
+        # Start with training classifier 1
+        classifier1 = (RandomForestClassifier(
+            n_estimators=100,
+            criterion='gini',
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.0,
+            max_features='sqrt',
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.0,
+            bootstrap=True,
+            oob_score=False,
+            n_jobs=None,
+            random_state=None,
+            verbose=0,
+            warm_start=False,
+            class_weight=None,
+            max_samples=None
+        ).fit(self.x_train_l1, self.y_train_l1))
+
+        # Now train classifier 2
+        classifier2 = (SVC(
+            C=0.1,
+            kernel='rbf',
+            degree=3,
+            gamma=0.01,
+            coef0=0.0,
+            shrinking=True,
+            probability=True,
+            tol=1e-3,
+            cache_size=200,
+            class_weight=None,
+            verbose=False,
+            max_iter=-1,
+            decision_function_shape='ovr'
+        ).fit(self.x_train_l2, self.y_train_l2))
+
+        # Save models to file
+        with open('Models/Original models/NSL_l1_classifier_og.pkl', 'wb') as model_file:
+            pickle.dump(classifier1, model_file)
+        with open('Models/Original models/NSL_l2_classifier_og.pkl', 'wb') as model_file:
+            pickle.dump(classifier2, model_file)
+
+        return classifier1, classifier2
 
 
 def pearson_correlated_features(x, y, threshold):

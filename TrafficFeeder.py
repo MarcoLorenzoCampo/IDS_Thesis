@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from DetectionInfrastructure import DetectionInfrastructure
+from Infrastructure import DetectionInfrastructure
 
 
 def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
@@ -55,6 +55,8 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
 def main():
     # Launch a new detection infrastructure instance
     detection_infrastructure = DetectionInfrastructure()
+
+    # test the infrastructure on the test set
     launch_on_testset(detection_infrastructure)
 
     return 0
