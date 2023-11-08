@@ -1,9 +1,12 @@
 import copy
 import pickle
 import time
+from datetime import datetime
+
 import Metrics
 from Metrics import Metrics
 import psutil
+import Logger
 
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -24,9 +27,11 @@ class DetectionSystem:
         Data is loaded when the class is initiated, then updated when necessary, calling the function
         update_files(.)
         """
+        self.models_version = 0
 
         # set up an instance-level logger to report on the classification performance
-        # self.logger = Metrics.set_logger(__name__)
+        self.logger = Logger.set_logger(__name__)
+        self.logger.debug('Launching the DetectionSystem.')
 
         # manually set the detection thresholds
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
@@ -44,7 +49,7 @@ class DetectionSystem:
         self.normal_traffic = pd.DataFrame(columns=self.kb.x_test.columns)
 
         # set the classifiers
-        self.layer1, self.layer2 = self.default_training()
+        self.layer1, self.layer2 = self.kb.layer1, self.kb.layer2
 
         # dictionary for classification functions
         self.clf_switcher = {
@@ -64,7 +69,7 @@ class DetectionSystem:
             ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1)
         }
 
-    def default_training(self) -> (RandomForestClassifier, SVC):
+    def new_hp_models_train(self, hp1: dict, hp2: dict) -> (RandomForestClassifier, SVC):
         """
         Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
         For clarity, all the hyperparameters for random forest and svm are listed below.
@@ -73,47 +78,50 @@ class DetectionSystem:
 
         # Start with training classifier 1
         classifier1 = (RandomForestClassifier(
-            n_estimators=100,
-            criterion='gini',
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
-            min_weight_fraction_leaf=0.0,
-            max_features='sqrt',
-            max_leaf_nodes=None,
-            min_impurity_decrease=0.0,
-            bootstrap=True,
-            oob_score=False,
-            n_jobs=None,
-            random_state=None,
+            n_estimators=hp1['n_estimators'],
+            criterion=hp1['criterion'],
+            max_depth=hp1['max_depth'],
+            min_samples_split=hp1['min_samples_split'],
+            min_samples_leaf=hp1['min_samples_leaf'],
+            min_weight_fraction_leaf=['min_weight_fraction_leaf'],
+            max_features=hp1['max_features'],
+            max_leaf_nodes=hp1['max_leaf_nodes'],
+            min_impurity_decrease=hp1['min_impurity_decrease'],
+            bootstrap=hp1['bootstrap'],
+            oob_score=hp1['oob_score'],
+            n_jobs=hp1['n_jobs'],
+            random_state=hp1['random_state'],
             verbose=0,
-            warm_start=False,
-            class_weight=None,
-            max_samples=None
+            warm_start=hp1['warm_start'],
+            class_weight=hp1['class_weight'],
+            ccp_alpha=hp1['ccp_alpha'],
+            max_samples=hp1['max_samples']
         ).fit(self.kb.x_train_l1, self.kb.y_train_l1))
 
         # Now train classifier 2
         classifier2 = (SVC(
-            C=0.1,
-            kernel='rbf',
-            degree=3,
-            gamma=0.01,
-            coef0=0.0,
-            shrinking=True,
+            C=hp2['C'],
+            kernel=hp2['kernel'],
+            degree=hp2['degree'],
+            gamma=hp2['gamma'],
+            coef0=hp2['coef0'],
+            shrinking=hp2['shrinking'],
             probability=True,
-            tol=1e-3,
-            cache_size=200,
-            class_weight=None,
+            tol=hp2['tol'],
+            cache_size=hp2['cache_size'],
+            class_weight=hp2['class_weight'],
             verbose=False,
-            max_iter=-1,
-            decision_function_shape='ovr'
+            max_iter=hp2['max_iter'],
+            decision_function_shape=hp2['decision_function_shape']
         ).fit(self.kb.x_train_l2, self.kb.y_train_l2))
 
         # Save models to file
-        with open('Models/NSL_l1_classifier_og.pkl', 'wb') as model_file:
+
+        with open(f'Models/Tuned/NSL_l1_classifier_{self.models_version}.pkl', 'wb') as model_file:
             pickle.dump(classifier1, model_file)
-        with open('Models/NSL_l2_classifier_og.pkl', 'wb') as model_file:
+        with open(f'Models/Tuned/NSL_l2_classifier_{self.models_version}.pkl', 'wb') as model_file:
             pickle.dump(classifier2, model_file)
+        self.models_version += 1
 
         return classifier1, classifier2
 

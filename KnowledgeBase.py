@@ -8,6 +8,8 @@ import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 
+import Logger
+
 
 class KnowledgeBase:
     """
@@ -39,6 +41,9 @@ class KnowledgeBase:
         Data is loaded when the class is initiated, then updated when necessary, calling the function
         update_files(.)
         """
+        # set an instance-level logger
+        self.logger = Logger.set_logger(__name__)
+        self.logger.debug('Creating an instance of KnowledgeBase.')
 
         # load the features obtained with ICFS for both layer 1 and layer 2
         with open('NSL-KDD Files/NSL_features_l1.txt', 'r') as f:
@@ -48,6 +53,7 @@ class KnowledgeBase:
             self.features_l2 = f.read().split(',')
 
         # Load completely processed datasets for training
+        self.logger.debug('Loading the train sets.')
         self.x_train_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train1.pkl')
         self.x_train_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train2.pkl')
         self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy',
@@ -56,6 +62,7 @@ class KnowledgeBase:
                                   allow_pickle=True)
 
         # Load completely processed validations sets
+        self.logger.debug('Loading the validation sets.')
         self.x_validate_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate1.pkl')
         self.x_validate_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate2.pkl')
         self.y_validate_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDValidate+_l1_targets.npy',
@@ -64,6 +71,7 @@ class KnowledgeBase:
                                      allow_pickle=True)
 
         # Load completely processed test set
+        self.logger.debug('Loading test sets.')
         self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
         self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
@@ -71,24 +79,31 @@ class KnowledgeBase:
         self.cat_features = ['protocol_type', 'service', 'flag']
 
         # load the minmax scalers used in training
+        self.logger.debug('Loading scalers.')
         self.scaler1 = joblib.load('NSL-KDD Files/scalers/scaler1.pkl')
         self.scaler2 = joblib.load('NSL-KDD Files/scalers/scaler2.pkl')
 
         # load one hot encoder for processing according to layer
+        self.logger.debug('Loading one hot encoders.')
         self.ohe1 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe1.pkl')
         self.ohe2 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe2.pkl')
 
         # load pca transformers to transform features according to layer
+        self.logger.debug('Loading test pca encoders.')
         self.pca1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer1_transformer.pkl')
         self.pca2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer2_transformer.pkl')
 
         # load or train the classifiers
-        if os.path.exists('Models/NSL_l1_classifier_og.pkl') and os.path.exists('Models/NSL_l2_classifier_og.pkl'):
-            with open('Models/From notebook/NSL_l1_classifier.pkl', 'rb') as file:
+        if (os.path.exists('Models/Original models/NSL_l1_classifier_og.pkl') and
+                os.path.exists('Models/Original models/NSL_l2_classifier_og.pkl')):
+
+            self.logger.debug('Loading existing models.')
+            with open('Models/Original models/NSL_l1_classifier_og.pkl', 'rb') as file:
                 self.layer1 = pickle.load(file)
-            with open('Models/From notebook/NSL_l2_classifier.pkl', 'rb') as file:
+            with open('Models/Original models/NSL_l2_classifier_og.pkl', 'rb') as file:
                 self.layer2 = pickle.load(file)
         else:
+            self.logger.debug('First program execution has no models, training them..')
             self.layer1, self.layer2 = self.default_training()
 
     def update_files(self, to_update):
@@ -137,6 +152,7 @@ class KnowledgeBase:
             verbose=0,
             warm_start=False,
             class_weight=None,
+            ccp_alpha=0.0,
             max_samples=None
         ).fit(self.x_train_l1, self.y_train_l1))
 

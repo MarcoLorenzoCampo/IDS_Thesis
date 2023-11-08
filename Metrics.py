@@ -1,34 +1,10 @@
 import numpy as np
-import logging
-
-
-def set_logger(name):
-    # Create a custom logger
-    logger = logging.getLogger(name)
-
-    # Create handlers
-    c_handler = logging.StreamHandler()  # Console handler
-    f_handler = logging.FileHandler(f'Logs/{name}.log')  # File handler
-    c_handler.setLevel(logging.WARNING)  # Set level for console handler
-    f_handler.setLevel(logging.ERROR)  # Set level for file handler
-
-    # Create formatters and add it to handlers
-    c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')  # Console format
-    f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # File format
-
-    c_handler.setFormatter(c_format)  # Set format for console handler
-    f_handler.setFormatter(f_format)  # Set format for file handler
-
-    # Add handlers to the logger
-    logger.addHandler(c_handler)
-    logger.addHandler(f_handler)
-
-    return logger
+import Logger
 
 
 class Metrics:
     def __init__(self):
-        self.logger = set_logger(__name__)
+        self.logger = Logger.set_logger(__name__)
         self.count = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
         self._metrics = {'accuracy': 0.0, 'precision': 0.0, 'fscore': 0.0,
                          'tpr': 0.0, 'fpr': 0.0, 'tnr': 0.0, 'fnr': 0.0}
@@ -70,7 +46,7 @@ class Metrics:
         if all(value != 0 for value in self.count.values()):
             self.compute_metrics()
         else:
-            self.logger.error('Not enough data, skipping metrics computation for now.')
+            self.logger.exception('Not enough data, skipping metrics computation for now.')
 
     def show_metrics(self):
         print('accuracy: ', self._metrics['accuracy'])
