@@ -1,8 +1,10 @@
 import copy
 import pickle
+import optuna
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix
 from sklearn.svm import SVC
 
 from KnowledgeBase import KnowledgeBase
@@ -12,7 +14,9 @@ import Logger
 
 class Tuner:
     """
-    This class is used to perform hyperparameter tuning on the two classifiers
+    This class is used to perform hyperparameter tuning on the two classifiers:
+    Define objective functions for both single-objectives and multiple-objectives hyperparameter tuning.
+    - Minimize false positives
     """
 
     def __init__(self, kb: KnowledgeBase, ids: DetectionSystem):
@@ -41,12 +45,62 @@ class Tuner:
         # version of the model
         self.model_version = 0
 
-    def tune(self, objs: list):
+    def tune(self):
+        study = optuna.create_study()   # create a new study
+        study.optimize(self.objective_fp, n_trials=100, layer=1)
+
+    def objective_fp(self, trial: optuna.Trial, layer: int):
         """
-        This function handles the hyperparameter tuning for both of the classifiers
-        :param objs: objectives to reach
+        This function defines an objective function to be minimized.
+        :param layer: Target layer
+        :param trial:
         :return:
         """
+        if layer == 1:
+            # providing a choice of classifiers to use in the 'choices' array
+            regressor_name = trial.suggest_categorical('classifier', ['RandomForest'])
+            if regressor_name == 'RandomForest':
+                # list now the hyperparameters that need tuning
+                rf_max_depth = trial.suggest_int('max_depth', 2, 32)
+                rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
+
+                # add to parameters all the hyperparameters that need tuning
+                parameters = {
+                    'max_depth': rf_max_depth,
+                    'criterion': rf_criterion
+                }
+
+                # train the model with the updated list of hyperparameters
+                classifier = RandomForestClassifier(
+                    n_estimators=parameters.get('n_estimators', 100),
+                    criterion=parameters.get('criterion', 'gini'),
+                    max_depth=parameters.get('max_depth', None),
+                    min_samples_split=parameters.get('min_samples_split', 2),
+                    min_samples_leaf=parameters.get('min_samples_leaf', 1),
+                    min_weight_fraction_leaf=parameters.get('min_weight_fraction_leaf', 0.0),
+                    max_features=parameters.get('max_features', 'sqrt'),
+                    max_leaf_nodes=parameters.get('max_leaf_nodes', None),
+                    min_impurity_decrease=parameters.get('min_impurity_decrease', 0.0),
+                    bootstrap=parameters.get('bootstrap', True),
+                    oob_score=parameters.get('oob_score', False),
+                    n_jobs=parameters.get('n_jobs', None),
+                    random_state=parameters.get('random_state', None),
+                    verbose=0,
+                    warm_start=parameters.get('warm_start', False),
+                    class_weight=parameters.get('class_weight', None),
+                    ccp_alpha=parameters.get('ccp_alpha', 0.0),
+                    max_samples=parameters.get('max_samples', None)
+                )
+
+                # fit the new classifier with the train set
+                classifier.fit(self.x_train_l1, self.y_train_l1)
+
+                predicted = classifier.predict(self.x_validate_l1)
+
+                # confusion_matrix[1] is the false positives
+                return confusion_matrix(self.y_validate_l1, predicted)[1]
+
+
 
     def hp_iterator(self) -> RandomForestClassifier:
         from sklearn.model_selection import RandomizedSearchCV
@@ -86,34 +140,12 @@ class Tuner:
 
         return rf_random.best_estimator_
 
-    def new_hp_models_train(self, hp1: dict, hp2: dict) -> (RandomForestClassifier, SVC):
+    def new_hp_models_train(self, parameters: dict, hp2: dict) -> (RandomForestClassifier, SVC):
         """
         Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
         For clarity, all the hyperparameters for random forest and svm are listed below.
         :return: Trained models for layer 1 and 2 respectively
         """
-
-        # Start with training classifier 1
-        classifier1 = (RandomForestClassifier(
-            n_estimators=hp1['n_estimators'],
-            criterion=hp1['criterion'],
-            max_depth=hp1['max_depth'],
-            min_samples_split=hp1['min_samples_split'],
-            min_samples_leaf=hp1['min_samples_leaf'],
-            min_weight_fraction_leaf=['min_weight_fraction_leaf'],
-            max_features=hp1['max_features'],
-            max_leaf_nodes=hp1['max_leaf_nodes'],
-            min_impurity_decrease=hp1['min_impurity_decrease'],
-            bootstrap=hp1['bootstrap'],
-            oob_score=hp1['oob_score'],
-            n_jobs=hp1['n_jobs'],
-            random_state=hp1['random_state'],
-            verbose=0,
-            warm_start=hp1['warm_start'],
-            class_weight=hp1['class_weight'],
-            ccp_alpha=hp1['ccp_alpha'],
-            max_samples=hp1['max_samples']
-        ).fit(self.x_train_l1, self.y_train_l1))
 
         # Now train classifier 2
         classifier2 = (SVC(
