@@ -27,7 +27,6 @@ class DetectionSystem:
         Data is loaded when the class is initiated, then updated when necessary, calling the function
         update_files(.)
         """
-        self.models_version = 0
 
         # set up an instance-level logger to report on the classification performance
         self.logger = Logger.set_logger(__name__)
@@ -68,62 +67,6 @@ class DetectionSystem:
             ('L1_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1),
             ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1)
         }
-
-    def new_hp_models_train(self, hp1: dict, hp2: dict) -> (RandomForestClassifier, SVC):
-        """
-        Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
-        For clarity, all the hyperparameters for random forest and svm are listed below.
-        :return: Trained models for layer 1 and 2 respectively
-        """
-
-        # Start with training classifier 1
-        classifier1 = (RandomForestClassifier(
-            n_estimators=hp1['n_estimators'],
-            criterion=hp1['criterion'],
-            max_depth=hp1['max_depth'],
-            min_samples_split=hp1['min_samples_split'],
-            min_samples_leaf=hp1['min_samples_leaf'],
-            min_weight_fraction_leaf=['min_weight_fraction_leaf'],
-            max_features=hp1['max_features'],
-            max_leaf_nodes=hp1['max_leaf_nodes'],
-            min_impurity_decrease=hp1['min_impurity_decrease'],
-            bootstrap=hp1['bootstrap'],
-            oob_score=hp1['oob_score'],
-            n_jobs=hp1['n_jobs'],
-            random_state=hp1['random_state'],
-            verbose=0,
-            warm_start=hp1['warm_start'],
-            class_weight=hp1['class_weight'],
-            ccp_alpha=hp1['ccp_alpha'],
-            max_samples=hp1['max_samples']
-        ).fit(self.kb.x_train_l1, self.kb.y_train_l1))
-
-        # Now train classifier 2
-        classifier2 = (SVC(
-            C=hp2['C'],
-            kernel=hp2['kernel'],
-            degree=hp2['degree'],
-            gamma=hp2['gamma'],
-            coef0=hp2['coef0'],
-            shrinking=hp2['shrinking'],
-            probability=True,
-            tol=hp2['tol'],
-            cache_size=hp2['cache_size'],
-            class_weight=hp2['class_weight'],
-            verbose=False,
-            max_iter=hp2['max_iter'],
-            decision_function_shape=hp2['decision_function_shape']
-        ).fit(self.kb.x_train_l2, self.kb.y_train_l2))
-
-        # Save models to file
-
-        with open(f'Models/Tuned/NSL_l1_classifier_{self.models_version}.pkl', 'wb') as model_file:
-            pickle.dump(classifier1, model_file)
-        with open(f'Models/Tuned/NSL_l2_classifier_{self.models_version}.pkl', 'wb') as model_file:
-            pickle.dump(classifier2, model_file)
-        self.models_version += 1
-
-        return classifier1, classifier2
 
     def classify(self, incoming_data) -> list[int, str]:
         """
@@ -241,6 +184,27 @@ class DetectionSystem:
 
         return [l1_accuracy, l2_accuracy]
 
+    def show_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int) -> None:
+        """
+        This function is used to evaluate whether the prediction made by the IDS itself
+        :param actual: optional parameter, it's None in real application but not in testing
+        :param sample:
+        :param output:
+        :return:
+        """
+        if actual is None:
+            switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
+            switch_function(sample)
+            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
+
+        if actual is not None:
+            switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
+            switch_function(sample)
+            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
+
+        switch_function = self.metrics_switcher.get((output[1], actual), lambda: "Invalid value")
+        switch_function()
+
     def add_to_quarantine(self, sample: pd.DataFrame) -> None:
         """
         Add an unsure traffic sample to quarantine
@@ -268,27 +232,6 @@ class DetectionSystem:
         :param sample: incoming traffic
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
-
-    def show_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int) -> None:
-        """
-        This function is used to evaluate whether the prediction made by the IDS itself
-        :param actual: optional parameter, it's None in real application but not in testing
-        :param sample:
-        :param output:
-        :return:
-        """
-        if actual is None:
-            switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
-            switch_function(sample)
-            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
-
-        if actual is not None:
-            switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
-            switch_function(sample)
-            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
-
-        switch_function = self.metrics_switcher.get((output[1], actual), lambda: "Invalid value")
-        switch_function()
 
     def kb(self) -> KnowledgeBase:
         return self.kb

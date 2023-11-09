@@ -9,7 +9,7 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
     x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
     y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
-    iterations = 300
+    iterations = 700
 
     # Test the set using this infrastructure
     for i, (index, row) in enumerate(x_test.iterrows()):
