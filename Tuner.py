@@ -9,7 +9,7 @@ from sklearn.svm import SVC
 
 from KnowledgeBase import KnowledgeBase
 from DetectionSystem import DetectionSystem
-import Logger
+import Utils
 
 
 class Tuner:
@@ -22,7 +22,10 @@ class Tuner:
     def __init__(self, kb: KnowledgeBase, ids: DetectionSystem):
 
         # instance level logger
-        self.logger = Logger.set_logger(__name__)
+        self.logger = Utils.set_logger(__name__)
+
+        # set a reference to the ids to tune
+        self.ids = ids
 
         # do not modify the values, passed by reference
         # validation sets
@@ -35,110 +38,131 @@ class Tuner:
         self.x_train_l1 = kb.x_train_l1
         self.x_train_l2 = kb.x_train_l2
         self.y_train_l1 = kb.y_train_l1
-        self.y_train_l2 = kb.y_train_l1
+        self.y_train_l2 = kb.y_train_l2
 
         # classifiers
         # copied to avoid conflicts
         self.layer1 = copy.deepcopy(ids.layer1)
         self.layer2 = copy.deepcopy(ids.layer2)
 
+        # new models to be stored as temporary variables in the class
+        self.new_opt_layer1 = []
+        self.new_opt_layer2 = []
+
         # version of the model
         self.model_version = 0
 
-    def tune(self):
-        study = optuna.create_study()   # create a new study
-        study.optimize(self.objective_fp, n_trials=100, layer=1)
+        # number of trials for tuning
+        self.n_trials = 5
 
-    def objective_fp(self, trial: optuna.Trial, layer: int):
+    def tune(self):
+        study = optuna.create_study(direction='minimize')  # create a new study
+        study.optimize(self.objective_fp_l1, n_trials=self.n_trials)
+
+        # set the layers as the main for the ids
+        self.ids.layer1 = self.new_opt_layer1
+
+        study = optuna.create_study(direction='minimize')
+        study.optimize(self.objective_fp_l2, n_trials=self.n_trials)
+
+        # set the layer as the main for the ids
+        self.ids.layer2 = self.new_opt_layer2
+
+        # return the newly trained models and hyperparameters
+        return self.new_opt_layer1, self.new_opt_layer2
+
+    def objective_fp_l1(self, trial: optuna.Trial):
         """
         This function defines an objective function to be minimized.
-        :param layer: Target layer
         :param trial:
         :return:
         """
-        if layer == 1:
-            # providing a choice of classifiers to use in the 'choices' array
-            regressor_name = trial.suggest_categorical('classifier', ['RandomForest'])
-            if regressor_name == 'RandomForest':
-                # list now the hyperparameters that need tuning
-                rf_max_depth = trial.suggest_int('max_depth', 2, 32)
-                rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
+        # providing a choice of classifiers to use in the 'choices' array
+        regressor_name = trial.suggest_categorical('classifier', ['RandomForest'])
+        if regressor_name == 'RandomForest':
+            # list now the hyperparameters that need tuning
+            rf_n_estimators = 25
+            # rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
+            rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
+            rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
+            rf_max_features = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
 
-                # add to parameters all the hyperparameters that need tuning
-                parameters = {
-                    'max_depth': rf_max_depth,
-                    'criterion': rf_criterion
-                }
+            # add to parameters all the hyperparameters that need tuning
+            parameters = {
+                'n_estimators': rf_n_estimators,
+                'max_depth': rf_max_depth,
+                'criterion': rf_criterion,
+                'max_features': rf_max_features
+            }
 
-                # train the model with the updated list of hyperparameters
-                classifier = RandomForestClassifier(
-                    n_estimators=parameters.get('n_estimators', 100),
-                    criterion=parameters.get('criterion', 'gini'),
-                    max_depth=parameters.get('max_depth', None),
-                    min_samples_split=parameters.get('min_samples_split', 2),
-                    min_samples_leaf=parameters.get('min_samples_leaf', 1),
-                    min_weight_fraction_leaf=parameters.get('min_weight_fraction_leaf', 0.0),
-                    max_features=parameters.get('max_features', 'sqrt'),
-                    max_leaf_nodes=parameters.get('max_leaf_nodes', None),
-                    min_impurity_decrease=parameters.get('min_impurity_decrease', 0.0),
-                    bootstrap=parameters.get('bootstrap', True),
-                    oob_score=parameters.get('oob_score', False),
-                    n_jobs=parameters.get('n_jobs', None),
-                    random_state=parameters.get('random_state', None),
-                    verbose=0,
-                    warm_start=parameters.get('warm_start', False),
-                    class_weight=parameters.get('class_weight', None),
-                    ccp_alpha=parameters.get('ccp_alpha', 0.0),
-                    max_samples=parameters.get('max_samples', None)
-                )
+            # train the model with the updated list of hyperparameters (if present)
+            classifier = RandomForestClassifier(
+                n_estimators=parameters.get('n_estimators', 10),
+                criterion=parameters.get('criterion', 'gini'),
+                max_depth=parameters.get('max_depth', None),
+                min_samples_split=parameters.get('min_samples_split', 2),
+                min_samples_leaf=parameters.get('min_samples_leaf', 1),
+                min_weight_fraction_leaf=parameters.get('min_weight_fraction_leaf', 0.0),
+                max_features=parameters.get('max_features', 'sqrt'),
+                max_leaf_nodes=parameters.get('max_leaf_nodes', None),
+                min_impurity_decrease=parameters.get('min_impurity_decrease', 0.0),
+                bootstrap=parameters.get('bootstrap', True),
+                oob_score=parameters.get('oob_score', False),
+                n_jobs=parameters.get('n_jobs', None),
+                random_state=parameters.get('random_state', None),
+                verbose=0,
+                warm_start=parameters.get('warm_start', False),
+                class_weight=parameters.get('class_weight', None),
+                ccp_alpha=parameters.get('ccp_alpha', 0.0),
+                max_samples=parameters.get('max_samples', None)
+            )
 
-                # fit the new classifier with the train set
-                classifier.fit(self.x_train_l1, self.y_train_l1)
+            # fit the new classifier with the train set and predict on the validation set
+            classifier.fit(self.x_train_l1, self.y_train_l1)
+            predicted = classifier.predict(self.x_validate_l1)
 
-                predicted = classifier.predict(self.x_validate_l1)
+            # store the new classifier
+            self.new_opt_layer1 = classifier
 
-                # confusion_matrix[1] is the false positives
-                return confusion_matrix(self.y_validate_l1, predicted)[1]
+            # confusion_matrix[1] is the false positives
+            return confusion_matrix(self.y_validate_l1, predicted)[0][1]
 
+    def objective_fp_l2(self, trial: optuna.Trial):
+        # providing a choice of classifiers to use in the 'choices' array
+        regressor_name = trial.suggest_categorical('classifier', ['SVC'])
+        if regressor_name == 'SVC':
+            # list now the hyperparameters that need tuning
+            svc_c = trial.suggest_float(name='svc_c', low=1e-10, high=1e10)
 
+            # add to parameters all the hyperparameters that need tuning
+            parameters = {
+                'C': svc_c
+            }
 
-    def hp_iterator(self) -> RandomForestClassifier:
-        from sklearn.model_selection import RandomizedSearchCV
+            classifier = SVC(
+                C=parameters.get('C', 10),
+                kernel=parameters.get('kernel', 'rbf'),
+                degree=parameters.get('degree', 3),
+                gamma=parameters.get('gamma', 0.01),
+                coef0=parameters.get('coef0', 0.0),
+                shrinking=parameters.get('shrinking', True),
+                probability=True,
+                tol=parameters.get('tol', 1e-3),
+                cache_size=parameters.get('cache_size', 200),
+                class_weight=parameters.get('class_weight', None),
+                verbose=False,
+                max_iter=parameters.get('max_iter', -1),
+                decision_function_shape=parameters.get('decision_function_shape', 'ovr')
+            )
 
-        # Number of trees in random forest
-        n_estimators = [int(x) for x in np.linspace(start=10, stop=200, num=5)]
-        # Number of features to consider at every split
-        max_features = ['auto', 'sqrt']
-        # Maximum number of levels in each tree
-        max_depth = [int(x) for x in np.linspace(10, 110, num=11)]
-        max_depth.append(None)
-        # Minimum number of samples required to split a node
-        min_samples_split = [2, 5, 10]
-        # Minimum number of samples required at each leaf node
-        min_samples_leaf = [1, 2, 4]
-        # Method of selecting samples for training each tree
-        bootstrap = [True, False]
+            classifier.fit(self.x_train_l2, self.y_train_l2)
+            predicted = classifier.predict(self.x_validate_l2)
 
-        # Create the random grid
-        random_grid = {'n_estimators': n_estimators,
-                       'max_features': max_features,
-                       'max_epth': max_depth,
-                       'min_samples_split': min_samples_split,
-                       'min_samples_leaf': min_samples_leaf,
-                       'bootstrap': bootstrap}
+            # store the new classifier
+            self.new_opt_layer2 = classifier
 
-        rf = RandomForestClassifier(random_state=42)
-
-        # Random search of parameters, using 3-fold cross-validation,
-        # search across 100 different combinations, and use all available cores
-        rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid,
-                                       n_iter=100, scoring='neg_mean_absolute_error',
-                                       cv=3, verbose=2, random_state=42, n_jobs=-1,
-                                       return_train_score=True)
-
-        self.logger.debug('New hyperparameters selected:', rf_random.cv_results_)
-
-        return rf_random.best_estimator_
+            # confusion_matrix[1] is the false positives
+            return confusion_matrix(self.y_validate_l2, predicted)[0][1]
 
     def new_hp_models_train(self, parameters: dict, hp2: dict) -> (RandomForestClassifier, SVC):
         """
@@ -166,10 +190,8 @@ class Tuner:
 
         # Save models to file
 
-        with open(f'Models/Tuned/NSL_l1_classifier_{self.model_version}.pkl', 'wb') as model_file:
-            pickle.dump(classifier1, model_file)
         with open(f'Models/Tuned/NSL_l2_classifier_{self.model_version}.pkl', 'wb') as model_file:
             pickle.dump(classifier2, model_file)
         self.model_version += 1
 
-        return classifier1, classifier2
+        return classifier2

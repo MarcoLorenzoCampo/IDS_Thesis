@@ -1,21 +1,16 @@
 import copy
-import pickle
 import time
-from datetime import datetime
 
 import Metrics
 from Metrics import Metrics
-import psutil
-import Logger
+import Utils
 
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.svm import SVC
 
 import DataProcessor
 from KnowledgeBase import KnowledgeBase
-from typing import List, Union
+from typing import Union
 
 
 class DetectionSystem:
@@ -29,7 +24,7 @@ class DetectionSystem:
         """
 
         # set up an instance-level logger to report on the classification performance
-        self.logger = Logger.set_logger(__name__)
+        self.logger = Utils.set_logger(__name__)
         self.logger.debug('Launching the DetectionSystem.')
 
         # manually set the detection thresholds
@@ -155,22 +150,13 @@ class DetectionSystem:
 
         return anomaly_confidence, computation_time, cpu_usage
 
-    def replace_classifier(self, clf1, clf2):
-        """
-        Function called by the Tuner class to replace the classifiers with newly tuned ones
-        """
-        self.layer1 = clf1
-        self.layer2 = clf2
-
-    def train_accuracy(self, layer1, layer2) -> list[float, float]:
+    def train_accuracy(self) -> list[float, float]:
         """
         Function to see how the IDS performs on training data, useful to see if over fitting happens
-        :param layer1: classifier 1
-        :param layer2: classifier 2
         """
 
-        l1_prediction = layer1.predict(self.kb.x_train_l1, self.kb.y_train_l1)
-        l2_prediction = layer2.predict(self.kb.x_train_l2, self.kb.y_train_l2)
+        l1_prediction = self.layer1.predict(self.kb.x_train_l1)
+        l2_prediction = self.layer2.predict(self.kb.x_train_l2)
 
         # Calculate the accuracy score for layer 1.
         l1_accuracy = accuracy_score(self.kb.y_train_l1, l1_prediction)
@@ -179,8 +165,9 @@ class DetectionSystem:
         l2_accuracy = accuracy_score(self.kb.y_train_l2, l2_prediction)
 
         # Print the accuracy scores.
-        print("Layer 1 accuracy:", l1_accuracy)
-        print("Layer 2 accuracy:", l2_accuracy)
+        with open('NSL-KDD Files/Results.txt', 'a') as f:
+            f.write("\nLayer 1 accuracy:" + str(l1_accuracy))
+            f.write("\nLayer 2 accuracy:" + str(l2_accuracy))
 
         return [l1_accuracy, l2_accuracy]
 
@@ -233,11 +220,12 @@ class DetectionSystem:
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
 
-    def kb(self) -> KnowledgeBase:
-        return self.kb
-
-    def thresholds(self) -> list[float]:
-        return [self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD]
+    def reset(self):
+        # reset the output storages
+        self.quarantine_samples = pd.DataFrame(columns=self.kb.x_test.columns)
+        self.anomaly_by_l1 = pd.DataFrame(columns=self.kb.x_test.columns)
+        self.anomaly_by_l2 = pd.DataFrame(columns=self.kb.x_test.columns)
+        self.normal_traffic = pd.DataFrame(columns=self.kb.x_test.columns)
 
     def metrics(self) -> Metrics:
         return self.metrics

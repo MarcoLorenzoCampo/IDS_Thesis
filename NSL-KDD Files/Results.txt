@@ -1,20 +1,23 @@
-Results for the training and testing of DLHA:  Double-Layered Hybrid Approach, an Anomaly-Based Intrusion Detection System
+BEFORE TUNING FOR FALSE POSITIVES FP:
 
-Properties of training set and test set for NBC:
+Overall classification:
+Classified = ANOMALY, Actual = ANOMALY: tp -> 380
+Classified = ANOMALY, Actual = NORMAL: fp -> 35
+Classified = NORMAL, Actual = ANOMALY: fn -> 142
+Classified = NORMAL, Actual = NORMAL: tn -> 410
 
-Shape of the training data features: (#samples, #features) =(125973, 94)
-Shape of the training data labels: (#samples,) =(125973,)
-Shape of the test data features: (#samples, #features) =(22544, 94)
-Shape of the test data labels: (#samples,) =(22544,)
+
+Layer 1 accuracy:0.9997618527853301
+Layer 2 accuracy:0.9415024630541872
+
+AFTER TUNING FOR FALSE POSITIVES FP:
+
+Overall classification:
+Classified = ANOMALY, Actual = ANOMALY: tp -> 431
+Classified = ANOMALY, Actual = NORMAL: fp -> 24
+Classified = NORMAL, Actual = ANOMALY: fn -> 103
+Classified = NORMAL, Actual = NORMAL: tn -> 420
 
 
-NSL-KDD Outputs for DoS+Probe Naive Bayesian Classifier:
-
-Confusion Matrix: [TP FP / FN TN]
-[[10290  2373]
- [ 4915  4966]]
-Accuracy = 0.6767210787792761
-F1 Score = 0.5767711962833914
-Precision = 0.6766589453604033
-Recall = 0.5025807104544074
-Shape of the train set: (125973, 27)
+Layer 1 accuracy:0.9997221615828852
+Layer 2 accuracy:0.979679802955665

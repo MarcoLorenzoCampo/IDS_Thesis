@@ -8,7 +8,7 @@ import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 
-import Logger
+import Utils
 
 
 class KnowledgeBase:
@@ -42,7 +42,7 @@ class KnowledgeBase:
         update_files(.)
         """
         # set an instance-level logger
-        self.logger = Logger.set_logger(__name__)
+        self.logger = Utils.set_logger(__name__)
         self.logger.debug('Creating an instance of KnowledgeBase.')
 
         # load the features obtained with ICFS for both layer 1 and layer 2
@@ -103,7 +103,7 @@ class KnowledgeBase:
             with open('Models/Original models/NSL_l2_classifier_og.pkl', 'rb') as file:
                 self.layer2 = pickle.load(file)
         else:
-            self.logger.debug('First program execution has no models, training them..')
+            self.logger.error('First program execution has no models, training them..')
             self.layer1, self.layer2 = self.default_training()
 
     def update_files(self, to_update):
@@ -136,7 +136,7 @@ class KnowledgeBase:
 
         # Start with training classifier 1
         classifier1 = (RandomForestClassifier(
-            n_estimators=100,
+            n_estimators=25,
             criterion='gini',
             max_depth=None,
             min_samples_split=2,
@@ -302,3 +302,21 @@ def perform_icfs(x_train):
                 g.write(x + ',' + '\n')
             else:
                 g.write(x)
+
+
+def show_info():
+    kb = KnowledgeBase()
+    print('Shapes and sized of the sets:')
+    print(f'TRAIN:\n'
+          f'x_train_l1 = {kb.x_train_l1.shape}\n'
+          f'x_train_l2 = {kb.x_train_l2.shape}\n'
+          f'y_train_l1 = {len(kb.y_train_l1)}\n'
+          f'y_train_l2 = {len(kb.y_train_l2)}')
+    print(f'VALIDATE:\n'
+          f'x_validate_l1 = {kb.x_validate_l1.shape}\n'
+          f'x_validate_l2 = {kb.x_validate_l2.shape}\n'
+          f'y_validate_l1 = {len(kb.y_validate_l1)}\n'
+          f'y_validate_l2 = {len(kb.y_validate_l2)}')
+
+
+show_info()

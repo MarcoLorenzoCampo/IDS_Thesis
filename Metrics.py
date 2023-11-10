@@ -1,10 +1,10 @@
 import numpy as np
-import Logger
+import Utils
 
 
 class Metrics:
     def __init__(self):
-        self.logger = Logger.set_logger(__name__)
+        self.logger = Utils.set_logger(__name__)
         self.count = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
         self._metrics = {'accuracy': 0.0, 'precision': 0.0, 'fscore': 0.0,
                          'tpr': 0.0, 'fpr': 0.0, 'tnr': 0.0, 'fnr': 0.0}
@@ -57,6 +57,16 @@ class Metrics:
         print('tnr: ', self._metrics['tnr'])
         print('fnr: ', self._metrics['fnr'])
         print('\n')
+
+    def reset(self):
+        # reset the metrics and counts
+        self.count = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
+        self._metrics = {'accuracy': 0.0, 'precision': 0.0, 'fscore': 0.0,
+                         'tpr': 0.0, 'fpr': 0.0, 'tnr': 0.0, 'fnr': 0.0}
+        self.classification_times = []
+        self.cpu_usages = []
+        self.tprs = []
+        self.fprs = []
 
     def get_tprs(self):
         return self.tprs
