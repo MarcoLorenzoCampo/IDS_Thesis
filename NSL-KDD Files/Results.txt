@@ -8,16 +8,19 @@ Classified = NORMAL, Actual = NORMAL: tn -> 410
 
 
 Layer 1 accuracy on the train set:0.9997618527853301
-Layer 2 accuracy on the train set:0.9415024630541872System accuracy on the train set: 0.8169596690796277
+Layer 2 accuracy on the train set:0.9415024630541872
+System accuracy on the train set: 0.8169596690796277
 
 AFTER TUNING FOR FALSE POSITIVES FP:
 
 Overall classification:
-Classified = ANOMALY, Actual = ANOMALY: tp -> 423
-Classified = ANOMALY, Actual = NORMAL: fp -> 38
-Classified = NORMAL, Actual = ANOMALY: fn -> 110
-Classified = NORMAL, Actual = NORMAL: tn -> 410
+Classified = ANOMALY, Actual = ANOMALY: tp -> 437
+Classified = ANOMALY, Actual = NORMAL: fp -> 20
+Classified = NORMAL, Actual = ANOMALY: fn -> 95
+Classified = NORMAL, Actual = NORMAL: tn -> 420
 
 
 Layer 1 accuracy on the train set:0.9997320843834964
-Layer 2 accuracy on the train set:0.978448275862069System accuracy on the train set: 0.8491335372069317
+Layer 2 accuracy on the train set:0.9809113300492611
+System accuracy on the train set: 0.8816872427983539
+System accuracy on the validation set: 0.9966263147449891, 0.9821428571428571

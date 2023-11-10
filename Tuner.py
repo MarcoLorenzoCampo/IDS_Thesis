@@ -4,7 +4,7 @@ import optuna
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.svm import SVC
 
 from KnowledgeBase import KnowledgeBase
@@ -49,27 +49,36 @@ class Tuner:
         self.new_opt_layer1 = []
         self.new_opt_layer2 = []
 
-        # version of the model
-        self.model_version = 0
-
         # number of trials for tuning
         self.n_trials = 5
 
         # accuracy for over fitting evaluations
-        self.val_accuracy = 0
+        self.val_accuracy_l1 = []
+        self.val_accuracy_l2 = []
+
+        # accuracy of the best hyperparameters
+        self.best_acc1 = 0
+        self.best_acc2 = 0
 
     def tune(self):
-        study = optuna.create_study(direction='minimize')  # create a new study
+        study = optuna.create_study(study_name='RandomForest optimization', direction='minimize')
         study.optimize(self.objective_fp_l1, n_trials=self.n_trials)
 
         # set the layers as the main for the ids
         self.ids.layer1 = self.new_opt_layer1
 
-        study = optuna.create_study(direction='minimize')
+        self.best_acc1 = self.val_accuracy_l1[study.best_trial.number]
+
+        study = optuna.create_study(study_name='SVM optimization', direction='minimize')
         study.optimize(self.objective_fp_l2, n_trials=self.n_trials)
 
         # set the layer as the main for the ids
         self.ids.layer2 = self.new_opt_layer2
+
+        self.best_acc2 = self.val_accuracy_l2[study.best_trial.number]
+
+        # reset the storage variables
+        self.reset()
 
         # return the newly trained models and hyperparameters
         return self.new_opt_layer1, self.new_opt_layer2
@@ -124,8 +133,8 @@ class Tuner:
             classifier.fit(self.x_train_l1, self.y_train_l1)
             predicted = classifier.predict(self.x_validate_l1)
 
-            # overwrite the value of accuracy if needed
-
+            # append validation accuracy
+            self.val_accuracy_l1.append(accuracy_score(self.y_validate_l1, predicted))
 
             # store the new classifier
             self.new_opt_layer1 = classifier
@@ -167,37 +176,12 @@ class Tuner:
             # store the new classifier
             self.new_opt_layer2 = classifier
 
+            # append validation accuracy
+            self.val_accuracy_l2.append(accuracy_score(self.y_validate_l2, predicted))
+
             # confusion_matrix[1] is the false positives
             return confusion_matrix(self.y_validate_l2, predicted)[0][1]
 
-    def new_hp_models_train(self, parameters: dict, hp2: dict) -> (RandomForestClassifier, SVC):
-        """
-        Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
-        For clarity, all the hyperparameters for random forest and svm are listed below.
-        :return: Trained models for layer 1 and 2 respectively
-        """
-
-        # Now train classifier 2
-        classifier2 = (SVC(
-            C=hp2['C'],
-            kernel=hp2['kernel'],
-            degree=hp2['degree'],
-            gamma=hp2['gamma'],
-            coef0=hp2['coef0'],
-            shrinking=hp2['shrinking'],
-            probability=True,
-            tol=hp2['tol'],
-            cache_size=hp2['cache_size'],
-            class_weight=hp2['class_weight'],
-            verbose=False,
-            max_iter=hp2['max_iter'],
-            decision_function_shape=hp2['decision_function_shape']
-        ).fit(self.x_train_l2, self.y_train_l2))
-
-        # Save models to file
-
-        with open(f'Models/Tuned/NSL_l2_classifier_{self.model_version}.pkl', 'wb') as model_file:
-            pickle.dump(classifier2, model_file)
-        self.model_version += 1
-
-        return classifier2
+    def reset(self):
+        self.val_accuracy_l1 = []
+        self.val_accuracy_l2 = []

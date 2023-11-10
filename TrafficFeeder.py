@@ -58,7 +58,7 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
 
 
 def artificial_tuning(detection_infrastructure: DetectionInfrastructure):
-    detection_infrastructure.hp_tuning.tune()
+    detection_infrastructure.hp_tuner.tune()
 
 
 def main():
@@ -98,8 +98,11 @@ def main():
     detection_infrastructure.ids.train_accuracy()
 
     test_acc = detection_infrastructure.ids.metrics.get_metrics('accuracy')
+    val_acc1 = detection_infrastructure.hp_tuner.best_acc1
+    val_acc2 = detection_infrastructure.hp_tuner.best_acc2
     with open('NSL-KDD Files/Results.txt', 'a') as f:
         f.write('\nSystem accuracy on the train set: ' + str(test_acc))
+        f.write('\nSystem accuracy on the validation set: ' + str(val_acc1) + ', ' + str(val_acc2))
 
     return 0
 

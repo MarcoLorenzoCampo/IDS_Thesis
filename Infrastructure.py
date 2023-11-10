@@ -14,7 +14,4 @@ class DetectionInfrastructure:
         self.metrics = Metrics()
         self.plotter = Plotter()
         self.ids = DetectionSystem(self.kb)
-        self.hp_tuning = Tuner(self.kb, self.ids)
-
-    def ids(self) -> DetectionSystem:
-        return self.ids
+        self.hp_tuner = Tuner(self.kb, self.ids)
