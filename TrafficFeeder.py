@@ -77,6 +77,11 @@ def main():
     # evaluate the precision on the train set to see over fitting
     detection_infrastructure.ids.train_accuracy()
 
+    # evaluate the precision on the test set
+    test_acc = detection_infrastructure.ids.metrics.get_metrics('accuracy')
+    with open('NSL-KDD Files/Results.txt', 'a') as f:
+        f.write('\nSystem accuracy on the train set: ' + str(test_acc))
+
     # reset the variables used to store classification data
     detection_infrastructure.ids.reset()
     detection_infrastructure.ids.metrics.reset()
@@ -91,6 +96,10 @@ def main():
 
     # evaluate the precision on the train set to see over fitting
     detection_infrastructure.ids.train_accuracy()
+
+    test_acc = detection_infrastructure.ids.metrics.get_metrics('accuracy')
+    with open('NSL-KDD Files/Results.txt', 'a') as f:
+        f.write('\nSystem accuracy on the train set: ' + str(test_acc))
 
     return 0
 

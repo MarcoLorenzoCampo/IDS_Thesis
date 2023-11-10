@@ -55,6 +55,9 @@ class Tuner:
         # number of trials for tuning
         self.n_trials = 5
 
+        # accuracy for over fitting evaluations
+        self.val_accuracy = 0
+
     def tune(self):
         study = optuna.create_study(direction='minimize')  # create a new study
         study.optimize(self.objective_fp_l1, n_trials=self.n_trials)
@@ -120,6 +123,9 @@ class Tuner:
             # fit the new classifier with the train set and predict on the validation set
             classifier.fit(self.x_train_l1, self.y_train_l1)
             predicted = classifier.predict(self.x_validate_l1)
+
+            # overwrite the value of accuracy if needed
+
 
             # store the new classifier
             self.new_opt_layer1 = classifier

@@ -166,8 +166,8 @@ class DetectionSystem:
 
         # Print the accuracy scores.
         with open('NSL-KDD Files/Results.txt', 'a') as f:
-            f.write("\nLayer 1 accuracy:" + str(l1_accuracy))
-            f.write("\nLayer 2 accuracy:" + str(l2_accuracy))
+            f.write("\nLayer 1 accuracy on the train set:" + str(l1_accuracy))
+            f.write("\nLayer 2 accuracy on the train set:" + str(l2_accuracy))
 
         return [l1_accuracy, l2_accuracy]
 
