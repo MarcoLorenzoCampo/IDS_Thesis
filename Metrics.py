@@ -6,14 +6,17 @@ class Metrics:
     def __init__(self):
         self.logger = Utils.set_logger(__name__)
         self.count = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
-        self._metrics = {'accuracy': 0.0, 'precision': 0.0, 'fscore': 0.0,
-                         'tpr': 0.0, 'fpr': 0.0, 'tnr': 0.0, 'fnr': 0.0}
+        self._metrics = {'accuracy': 0.0, 'precision': 0.0, 'fscore': 0.0, 'tpr': 0.0, 'fpr': 0.0,
+                         'tnr': 0.0, 'fnr': 0.0}
+        self.classifications = {'total': 0, 'quarantine': 0, 'l1_anomaly': 0, 'l2_anomaly': 0, 'normal_traffic': 0}
+        self.classification_metrics = {'normal_ratio': 0.0, 'quarantine_ratio': 0.0,
+                                       'l1_anomaly_ratio': 0.0, 'l2_anomaly_ratio': 0.0}
         self.classification_times = []
         self.cpu_usages = []
         self.tprs = []
         self.fprs = []
 
-    def compute_metrics(self):
+    def __compute_performance_metrics(self):
         # true positive rate (recall)
         self._metrics['tpr'] = self.count['tp'] / (self.count['tp'] + self.count['fn'])
         self.tprs.append(self._metrics['tpr'])
@@ -42,11 +45,32 @@ class Metrics:
     def update_count(self, tag, value):
         self.count[tag] += value
 
+        # increase the count of encountered traffic samples
+        self.classifications['total'] = self.classifications['total'] + 1
+
         # compute the metrics only if enough samples have been collected
         if all(value != 0 for value in self.count.values()):
-            self.compute_metrics()
+            self.__compute_performance_metrics()
         else:
             self.logger.exception('Not enough data, skipping metrics computation for now.')
+
+        self.__compute_classification_metrics()
+
+    def __compute_classification_metrics(self):
+        # normal ratio computation
+        self.classifications['normal_ratio'] = self.classifications['normal_traffic'] / self.classifications['total']
+
+        # quarantine ratio computation
+        self.classifications['normal_ratio'] = self.classifications['quarantine'] / self.classifications['total']
+
+        # l1_anomaly ratio computation
+        self.classifications['l1_anomaly_ratio'] = self.classifications['l1_anomaly'] / self.classifications['total']
+
+        # l2_anomaly ratio computation
+        self.classifications['l2_anomaly_ratio'] = self.classifications['l2_anomaly'] / self.classifications['total']
+
+    def update_classifications(self, tag, value):
+        self.classifications[tag] += value
 
     def show_metrics(self):
         print('accuracy: ', self._metrics['accuracy'])

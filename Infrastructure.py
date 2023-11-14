@@ -3,7 +3,7 @@ from KnowledgeBase import KnowledgeBase
 from DataProcessor import DataPreprocessingComponent
 from Metrics import Metrics
 from Plotter import Plotter
-from Tuner import Tuner
+from Hypertuner import Tuner
 
 
 class DetectionInfrastructure:

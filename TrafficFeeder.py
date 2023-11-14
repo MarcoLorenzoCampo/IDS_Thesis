@@ -4,7 +4,7 @@ import pandas as pd
 from Infrastructure import DetectionInfrastructure
 
 
-def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
+def launch_on_test(detection_infrastructure: DetectionInfrastructure):
     # Load a testing dataset
     x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
     y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
@@ -18,15 +18,12 @@ def launch_on_testset(detection_infrastructure: DetectionInfrastructure):
         if i >= iterations:
             break
 
-        print(f'Sample #{i}:')
-
         # Make each row as its own data frame and pre-process it
         sample = pd.DataFrame(data=np.array([row]), index=None, columns=x_test.columns)
         actual = y_test[index]
-        output = detection_infrastructure.ids.classify(sample)
-        detection_infrastructure.ids.show_classification(sample, output, actual=actual)
+        detection_infrastructure.ids.classify(sample, actual=actual)
 
-        if i in list(range(iterations))[::50]:
+        if i-1 in list(range(iterations))[::50]:
             print(f'\nAt iterations #{i}:')
             detection_infrastructure.ids.metrics.show_metrics()
 
@@ -72,7 +69,7 @@ def main():
     detection_infrastructure = DetectionInfrastructure()
 
     # test the infrastructure on the test set
-    launch_on_testset(detection_infrastructure)
+    launch_on_test(detection_infrastructure)
 
     # evaluate the precision on the train set to see over fitting
     detection_infrastructure.ids.train_accuracy()
@@ -92,7 +89,7 @@ def main():
     # test if the new iterations produce better results
     with open('NSL-KDD Files/Results.txt', 'a') as f:
         f.write('\n\nAFTER TUNING FOR FALSE POSITIVES FP:\n')
-    launch_on_testset(detection_infrastructure)
+    launch_on_test(detection_infrastructure)
 
     # evaluate the precision on the train set to see over fitting
     detection_infrastructure.ids.train_accuracy()

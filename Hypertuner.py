@@ -50,7 +50,7 @@ class Tuner:
         self.new_opt_layer2 = []
 
         # number of trials for tuning
-        self.n_trials = 5
+        self.n_trials = 1
 
         # accuracy for over fitting evaluations
         self.val_accuracy_l1 = []
@@ -62,7 +62,7 @@ class Tuner:
 
     def tune(self):
         study = optuna.create_study(study_name='RandomForest optimization', direction='minimize')
-        study.optimize(self.objective_fp_l1, n_trials=self.n_trials)
+        study.optimize(self.__objective_fp_l1, n_trials=self.n_trials)
 
         # set the layers as the main for the ids
         self.ids.layer1 = self.new_opt_layer1
@@ -70,7 +70,7 @@ class Tuner:
         self.best_acc1 = self.val_accuracy_l1[study.best_trial.number]
 
         study = optuna.create_study(study_name='SVM optimization', direction='minimize')
-        study.optimize(self.objective_fp_l2, n_trials=self.n_trials)
+        study.optimize(self.__objective_fp_l2, n_trials=self.n_trials)
 
         # set the layer as the main for the ids
         self.ids.layer2 = self.new_opt_layer2
@@ -83,11 +83,23 @@ class Tuner:
         # return the newly trained models and hyperparameters
         return self.new_opt_layer1, self.new_opt_layer2
 
-    def objective_fp_l1(self, trial: optuna.Trial):
+    def __objective_tpr_l1(self, trial: optuna.Trial) -> float:
+        """
+        This function defines the objective to maximize the true positive rate
+        :param trial:
+        :return: True positive rate
+        """
+        classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
+        return
+
+    def __objective_acc_l2(self, trial: optuna.Trial) -> float:
+        return
+
+    def __objective_fp_l1(self, trial: optuna.Trial) -> int:
         """
         This function defines an objective function to be minimized.
         :param trial:
-        :return:
+        :return: Number of false positives
         """
         # providing a choice of classifiers to use in the 'choices' array
         regressor_name = trial.suggest_categorical('classifier', ['RandomForest'])
@@ -142,7 +154,7 @@ class Tuner:
             # confusion_matrix[1] is the false positives
             return confusion_matrix(self.y_validate_l1, predicted)[0][1]
 
-    def objective_fp_l2(self, trial: optuna.Trial):
+    def __objective_fp_l2(self, trial: optuna.Trial):
         # providing a choice of classifiers to use in the 'choices' array
         regressor_name = trial.suggest_categorical('classifier', ['SVC'])
         if regressor_name == 'SVC':

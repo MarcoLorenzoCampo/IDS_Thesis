@@ -27,9 +27,6 @@ class DetectionSystem:
         self.logger = Utils.set_logger(__name__)
         self.logger.debug('Launching the DetectionSystem.')
 
-        # manually set the detection thresholds
-        self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
-
         # set new knowledge base
         self.kb = kb
 
@@ -47,10 +44,10 @@ class DetectionSystem:
 
         # dictionary for classification functions
         self.clf_switcher = {
-            'QUARANTINE': self.add_to_quarantine,
-            'L1_ANOMALY': self.add_to_anomaly1,
-            'L2_ANOMALY': self.add_to_anomaly2,
-            'NOT_ANOMALY': self.add_to_normal
+            'QUARANTINE': self.__add_to_quarantine,
+            'L1_ANOMALY': self.__add_to_anomaly1,
+            'L2_ANOMALY': self.__add_to_anomaly2,
+            'NOT_ANOMALY': self.__add_to_normal
         }
 
         # dictionary for metrics functions
@@ -63,10 +60,11 @@ class DetectionSystem:
             ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1)
         }
 
-    def classify(self, incoming_data) -> list[int, str]:
+    def classify(self, incoming_data, actual: int = None):
         """
       Args:
         incoming_data: A NumPy array containing the sample to test.
+        actual: Optional argument containing the label the incoming traffic data, if available
       Returns:
         A list containing two elements:
           * The first element is an integer indicating whether the sample is an anomaly
@@ -80,7 +78,7 @@ class DetectionSystem:
         unprocessed_sample = copy.deepcopy(incoming_data)
 
         # Classification for layer 1
-        prediction1, computation_time, cpu_usage = self.clf_layer1(unprocessed_sample)
+        prediction1, computation_time, cpu_usage = self.__clf_layer1(unprocessed_sample)
 
         # add cpu_usage and computation_time to metrics
         self.metrics.add_cpu_usage(cpu_usage)
@@ -88,27 +86,30 @@ class DetectionSystem:
 
         if prediction1:
             # it's an anomaly for layer1
-            return [1, 'L1_ANOMALY']
+            self.__show_classification(incoming_data, [1, 'L1_ANOMALY'], actual)
+            return
 
         # Continue with layer 2 if layer 1 does not detect anomalies
-        anomaly_confidence, computation_time, cpu_usage = self.clf_layer2(unprocessed_sample)
+        anomaly_confidence, computation_time, cpu_usage = self.__clf_layer2(unprocessed_sample)
 
         # add cpu_usage and computation_time to metrics
         self.metrics.add_cpu_usage(cpu_usage)
         self.metrics.add_classification_time(computation_time)
 
         benign_confidence_2 = 1 - anomaly_confidence[0, 1]
-        if anomaly_confidence[0, 1] >= self.ANOMALY_THRESHOLD2:
+        if anomaly_confidence[0, 1] >= self.kb.ANOMALY_THRESHOLD2:
             # it's an anomaly for layer2
-            return [anomaly_confidence, 'L2_ANOMALY']
+            self.__show_classification(incoming_data, [anomaly_confidence, 'L2_ANOMALY'], actual)
+            return
 
-        if benign_confidence_2 >= self.BENIGN_THRESHOLD:
-            return [benign_confidence_2, 'NOT_ANOMALY']
+        if benign_confidence_2 >= self.kb.BENIGN_THRESHOLD:
+            self.__show_classification(incoming_data, [benign_confidence_2, 'NOT_ANOMALY'], actual)
+            return
 
         # has not been classified yet, it's not decided
-        return [0, 'QUARANTINE']
+        self.__show_classification(incoming_data, [0, 'QUARANTINE'], actual)
 
-    def clf_layer1(self, unprocessed_sample):
+    def __clf_layer1(self, unprocessed_sample):
         sample = (DataProcessor.data_process(unprocessed_sample, self.kb.scaler1, self.kb.ohe1,
                                              self.kb.pca1, self.kb.features_l1, self.kb.cat_features))
 
@@ -129,7 +130,7 @@ class DetectionSystem:
 
         return prediction1, computation_time, cpu_usage
 
-    def clf_layer2(self, unprocessed_sample):
+    def __clf_layer2(self, unprocessed_sample):
         sample = (DataProcessor.data_process(unprocessed_sample, self.kb.scaler2, self.kb.ohe2,
                                              self.kb.pca2, self.kb.features_l2, self.kb.cat_features))
 
@@ -171,12 +172,12 @@ class DetectionSystem:
 
         return [l1_accuracy, l2_accuracy]
 
-    def show_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int) -> None:
+    def __show_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int = None):
         """
         This function is used to evaluate whether the prediction made by the IDS itself
         :param actual: optional parameter, it's None in real application but not in testing
-        :param sample:
-        :param output:
+        :param sample: Traffic data to store
+        :param output: What to classify
         :return:
         """
         if actual is None:
@@ -192,33 +193,37 @@ class DetectionSystem:
         switch_function = self.metrics_switcher.get((output[1], actual), lambda: "Invalid value")
         switch_function()
 
-    def add_to_quarantine(self, sample: pd.DataFrame) -> None:
+    def __add_to_quarantine(self, sample: pd.DataFrame) -> None:
         """
         Add an unsure traffic sample to quarantine
         :param sample: incoming traffic
         """
         self.quarantine_samples = pd.concat([self.quarantine_samples, sample], axis=0)
+        self.metrics.update_classifications('quarantine', 1)
 
-    def add_to_anomaly1(self, sample: pd.DataFrame) -> None:
+    def __add_to_anomaly1(self, sample: pd.DataFrame) -> None:
         """
         Add an anomalous sample by layer1 to the list
         :param sample: incoming traffic
         """
         self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
+        self.metrics.update_classifications('l1_anomaly', 1)
 
-    def add_to_anomaly2(self, sample: pd.DataFrame) -> None:
+    def __add_to_anomaly2(self, sample: pd.DataFrame) -> None:
         """
         Add an anomalous sample by layer2 to the list
         :param sample: incoming traffic
         """
         self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
+        self.metrics.update_classifications('l2_anomaly', 1)
 
-    def add_to_normal(self, sample: pd.DataFrame) -> None:
+    def __add_to_normal(self, sample: pd.DataFrame) -> None:
         """
         Add a normal sample to the list
         :param sample: incoming traffic
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
+        self.metrics.update_classifications('normal_traffic', 1)
 
     def reset(self):
         # reset the output storages

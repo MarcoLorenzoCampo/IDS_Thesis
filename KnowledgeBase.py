@@ -45,6 +45,9 @@ class KnowledgeBase:
         self.logger = Utils.set_logger(__name__)
         self.logger.debug('Creating an instance of KnowledgeBase.')
 
+        # manually set the detection thresholds
+        self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
+
         # load the features obtained with ICFS for both layer 1 and layer 2
         with open('NSL-KDD Files/NSL_features_l1.txt', 'r') as f:
             self.features_l1 = f.read().split(',')
@@ -104,7 +107,7 @@ class KnowledgeBase:
                 self.layer2 = pickle.load(file)
         else:
             self.logger.error('First program execution has no models, training them..')
-            self.layer1, self.layer2 = self.default_training()
+            self.layer1, self.layer2 = self.__default_training()
 
     def update_files(self, to_update):
         # reload the datasets/transformers/encoders from memory if they have been changed
@@ -127,7 +130,7 @@ class KnowledgeBase:
             self.ohe1 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe1.pkl')
             self.ohe2 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe2.pkl')
 
-    def default_training(self) -> (RandomForestClassifier, SVC):
+    def __default_training(self) -> (RandomForestClassifier, SVC):
         """
         Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
         For clarity, all the hyperparameters for random forest and svm are listed below.
@@ -182,7 +185,7 @@ class KnowledgeBase:
         return classifier1, classifier2
 
 
-def pearson_correlated_features(x, y, threshold):
+def __pearson_correlated_features(x, y, threshold):
     y['target'] = y['target'].astype(int)
 
     for p in x.columns:
@@ -201,7 +204,7 @@ def pearson_correlated_features(x, y, threshold):
     return selected_features
 
 
-def compute_set_difference(df1, df2):
+def __compute_set_difference(df1, df2):
     # Create a new DataFrame containing the set difference of the two DataFrames.
     df_diff = df1[~df1.index.isin(df2.index)]
     # Return the DataFrame.
@@ -241,7 +244,7 @@ def perform_icfs(x_train):
     y = np.array([1 if x in dos_list else 0 for x in dos['label']])
     y_dos = pd.DataFrame(y, columns=['target'])
     del dos['label']
-    dos_all = pearson_correlated_features(dos, y_dos, 0.1)
+    dos_all = __pearson_correlated_features(dos, y_dos, 0.1)
     print(dos_all)
 
     # features for probe
@@ -250,7 +253,7 @@ def perform_icfs(x_train):
     y = np.array([1 if x in probe_list else 0 for x in probe['label']])
     y_probe = pd.DataFrame(y, columns=['target'])
     del probe['label']
-    probe_all = pearson_correlated_features(probe, y_probe, 0.1)
+    probe_all = __pearson_correlated_features(probe, y_probe, 0.1)
     print(probe_all)
 
     # intersect for the optimal features
@@ -269,7 +272,7 @@ def perform_icfs(x_train):
     y = np.array([1 if x in u2r_list else 0 for x in u2r['label']])
     y_u2r = pd.DataFrame(y, columns=['target'])
     del u2r['label']
-    u2r_all = pearson_correlated_features(u2r, y_u2r, 0.01)
+    u2r_all = __pearson_correlated_features(u2r, y_u2r, 0.01)
     print(u2r_all)
 
     # features for r2l
@@ -278,7 +281,7 @@ def perform_icfs(x_train):
     y = np.array([1 if x in r2l_list else 0 for x in r2l['label']])
     y_r2l = pd.DataFrame(y, columns=['target'])
     del r2l['label']
-    r2l_all = pearson_correlated_features(r2l, y_r2l, 0.01)
+    r2l_all = __pearson_correlated_features(r2l, y_r2l, 0.01)
     print(r2l_all)
 
     # intersect for the optimal features
