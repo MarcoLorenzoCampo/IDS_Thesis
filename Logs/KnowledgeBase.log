@@ -1,0 +1,16 @@
+2023-11-14 20:50:41,374 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-14 20:50:41,374 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-14 20:50:41,402 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-14 20:50:41,410 - KnowledgeBase - INFO - Loading test sets.
+2023-11-14 20:50:41,518 - KnowledgeBase - INFO - Loading scalers.
+2023-11-14 20:50:41,520 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-14 20:50:41,522 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-14 20:50:41,523 - KnowledgeBase - INFO - Loading existing models.
+2023-11-14 20:55:56,618 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-14 20:55:56,619 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-14 20:55:56,637 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-14 20:55:56,642 - KnowledgeBase - INFO - Loading test sets.
+2023-11-14 20:55:56,728 - KnowledgeBase - INFO - Loading scalers.
+2023-11-14 20:55:56,730 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-14 20:55:56,731 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-14 20:55:56,733 - KnowledgeBase - INFO - Loading existing models.

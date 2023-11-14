@@ -16,12 +16,6 @@ from typing import Union
 class DetectionSystem:
 
     def __init__(self, kb: KnowledgeBase):
-        """
-        This is the initialization function for the class responsible for setting up the classifiers and
-        process data to make it ready for analysis.
-        Data is loaded when the class is initiated, then updated when necessary, calling the function
-        update_files(.)
-        """
 
         # set up an instance-level logger to report on the classification performance
         self.logger = Utils.set_logger(__name__)
@@ -165,12 +159,10 @@ class DetectionSystem:
         if actual is None:
             switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)
-            # print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
 
         if actual is not None:
             switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)
-            # print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
 
         switch_function = self.metrics_switcher.get((output[1], actual), lambda: "Invalid value")
         switch_function()
@@ -229,7 +221,7 @@ class DetectionSystem:
         # Calculate the accuracy score for layer 2.
         l2_accuracy = accuracy_score(self.kb.y_train_l2, l2_prediction)
 
-        # Print the accuracy scores.
+        # write accuracy scores to file
         with open('Required Files/Results.txt', 'a') as f:
             f.write("\nLayer 1 accuracy on the train set:" + str(l1_accuracy))
             f.write("\nLayer 2 accuracy on the train set:" + str(l2_accuracy))

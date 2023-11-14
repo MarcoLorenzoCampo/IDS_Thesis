@@ -4,13 +4,14 @@ import logging
 
 def set_logger(name):
     # Create a custom logger
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(name)
 
     # Create handlers
     c_handler = logging.StreamHandler()  # Console handler
     f_handler = logging.FileHandler(f'Logs/{name}.log')  # File handler
     c_handler.setLevel(logging.WARNING)  # Set level for console handler
-    f_handler.setLevel(logging.ERROR)  # Set level for file handler
+    f_handler.setLevel(logging.INFO)  # Set level for file handler
 
     # Create formatters and add it to handlers
     c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')  # Console format

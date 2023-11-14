@@ -1,112 +1,88 @@
 import time
-
 import numpy as np
 import pandas as pd
-
+import Utils
 from Infrastructure import DetectionInfrastructure
 
 
-def launch_on_test(detection_infrastructure: DetectionInfrastructure):
-    # Load a testing dataset
-    x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
-    y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
+class DetectionSystemLauncher:
+    def __init__(self, infrastructure: DetectionInfrastructure):
+        self.detection_infrastructure = infrastructure
+        self.logger = Utils.set_logger(__name__)
 
-    iterations = 1000
+    def launch_on_test(self, iterations=100):
+        x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
+        y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
-    # Test the set using this infrastructure
-    for i, (index, row) in enumerate(x_test.iterrows()):
+        for i, (index, row) in enumerate(x_test.iterrows()):
+            if i >= iterations:
+                break
 
-        # reduce the number of iterations for testing purposes
-        if i >= iterations:
-            break
+            sample = pd.DataFrame(data=np.array([row]), index=None, columns=x_test.columns)
+            actual = y_test[index]
+            self.detection_infrastructure.ids.classify(sample, actual=actual)
 
-        # time.sleep(0.25)
+            if i - 1 in list(range(iterations))[::50]:
+                self.logger.info('\nAt iterations #%s:', i)
+                self.detection_infrastructure.ids.metrics.show_metrics()
 
-        # Make each row as its own data frame and pre-process it
-        sample = pd.DataFrame(data=np.array([row]), index=None, columns=x_test.columns)
-        actual = y_test[index]
-        detection_infrastructure.ids.classify(sample, actual=actual)
+        self.logger.info('Classification of %s test samples:', iterations)
+        self.logger.info('Anomalies by l1: %s', self.detection_infrastructure.ids.anomaly_by_l1.shape[0])
+        self.logger.info('Anomalies by l2: %s', self.detection_infrastructure.ids.anomaly_by_l2.shape[0])
+        self.logger.info('Normal traffic: %s', self.detection_infrastructure.ids.normal_traffic.shape[0])
+        self.logger.info('Quarantined samples: %s', self.detection_infrastructure.ids.quarantine_samples.shape[0])
 
-        if i-1 in list(range(iterations))[::50]:
-            print(f'\nAt iterations #{i}:')
-            detection_infrastructure.ids.metrics.show_metrics()
+        with open('Required Files/Results.txt', 'a') as file:
+            file.write('\nOverall classification:\n')
+            file.write('Classified = ANOMALY, Actual = ANOMALY: tp -> ' + str(
+                self.detection_infrastructure.ids.metrics.get_counts('tp')) + '\n')
+            file.write('Classified = ANOMALY, Actual = NORMAL: fp -> ' + str(
+                self.detection_infrastructure.ids.metrics.get_counts('fp')) + '\n')
+            file.write('Classified = NORMAL, Actual = ANOMALY: fn -> ' + str(
+                self.detection_infrastructure.ids.metrics.get_counts('fn')) + '\n')
+            file.write('Classified = NORMAL, Actual = NORMAL: tn -> ' + str(
+                self.detection_infrastructure.ids.metrics.get_counts('tn')) + '\n\n')
 
-    # let's see the output of the classification
-    print(f'Classification of {iterations} test samples:')
-    print('Anomalies by l1: ', detection_infrastructure.ids.anomaly_by_l1.shape[0])
-    print('Anomalies by l2: ', detection_infrastructure.ids.anomaly_by_l2.shape[0])
-    print('Normal traffic: ', detection_infrastructure.ids.normal_traffic.shape[0])
-    print('Quarantined samples: ', detection_infrastructure.ids.quarantine_samples.shape[0])
+        self.logger.info('Average computation time for %s samples: %s', iterations,
+                         self.detection_infrastructure.ids.metrics.get_avg_time())
 
-    with open('Required Files/Results.txt', 'a') as file:
-        # Write the strings to the file
-        file.write('\nOverall classification:\n')
-        file.write('Classified = ANOMALY, Actual = ANOMALY: tp -> ' + str(
-            detection_infrastructure.ids.metrics.get_counts('tp')) + '\n')
-        file.write('Classified = ANOMALY, Actual = NORMAL: fp -> ' + str(
-            detection_infrastructure.ids.metrics.get_counts('fp')) + '\n')
-        file.write('Classified = NORMAL, Actual = ANOMALY: fn -> ' + str(
-            detection_infrastructure.ids.metrics.get_counts('fn')) + '\n')
-        file.write('Classified = NORMAL, Actual = NORMAL: tn -> ' + str(
-            detection_infrastructure.ids.metrics.get_counts('tn')) + '\n\n')
+    def artificial_tuning(self):
+        self.detection_infrastructure.hp_tuner.tune()
 
-    # print the average of the computation time
-    print(f'Average computation time for {iterations} samples: ', detection_infrastructure.ids.metrics.get_avg_time())
+    def run(self):
+        with open('Required Files/Results.txt', 'w') as f:
+            pass
 
-    # plot the ROC curve
-    # detection_infrastructure.plotter.plot_new(detection_infrastructure.ids.metrics.get_tprs(),
-    # detection_infrastructure.ids.metrics.get_fprs())
+        self.launch_on_test()
 
+        self.detection_infrastructure.ids.train_accuracy()
 
-def artificial_tuning(detection_infrastructure: DetectionInfrastructure):
-    detection_infrastructure.hp_tuner.tune()
+        test_acc = self.detection_infrastructure.ids.metrics.get_metrics('accuracy')
+        with open('Required Files/Results.txt', 'a') as f:
+            f.write('BEFORE TUNING FOR FALSE POSITIVES FP:\n')
+            f.write('\nSystem accuracy on the train set: ' + str(test_acc))
 
+        self.detection_infrastructure.ids.reset()
+        self.detection_infrastructure.ids.metrics.reset()
 
-def main():
-    # empty the result.txt file before writing on it
-    with open('Required Files/Results.txt', 'w') as f:
-        pass
+        self.artificial_tuning()
 
-    # Launch a new detection infrastructure instance
-    with open('Required Files/Results.txt', 'a') as f:
-        f.write('BEFORE TUNING FOR FALSE POSITIVES FP:\n')
-    detection_infrastructure = DetectionInfrastructure()
+        self.launch_on_test()
 
-    # test the infrastructure on the test set
-    launch_on_test(detection_infrastructure)
+        self.detection_infrastructure.ids.train_accuracy()
 
-    # evaluate the precision on the train set to see over fitting
-    detection_infrastructure.ids.train_accuracy()
+        test_acc = self.detection_infrastructure.ids.metrics.get_metrics('accuracy')
+        val_acc1 = self.detection_infrastructure.hp_tuner.best_acc1
+        val_acc2 = self.detection_infrastructure.hp_tuner.best_acc2
+        with open('Required Files/Results.txt', 'a') as f:
+            f.write('\n\nAFTER TUNING FOR FALSE POSITIVES FP:\n')
+            f.write('\nSystem accuracy on the train set: ' + str(test_acc))
+            f.write('\nSystem accuracy on the validation set: ' + str(val_acc1) + ', ' + str(val_acc2))
 
-    # evaluate the precision on the test set
-    test_acc = detection_infrastructure.ids.metrics.get_metrics('accuracy')
-    with open('Required Files/Results.txt', 'a') as f:
-        f.write('\nSystem accuracy on the train set: ' + str(test_acc))
-
-    # reset the variables used to store classification data
-    detection_infrastructure.ids.reset()
-    detection_infrastructure.ids.metrics.reset()
-
-    # test if and how the tuning procedure works
-    artificial_tuning(detection_infrastructure)
-
-    # test if the new iterations produce better results
-    with open('Required Files/Results.txt', 'a') as f:
-        f.write('\n\nAFTER TUNING FOR FALSE POSITIVES FP:\n')
-    launch_on_test(detection_infrastructure)
-
-    # evaluate the precision on the train set to see over fitting
-    detection_infrastructure.ids.train_accuracy()
-
-    test_acc = detection_infrastructure.ids.metrics.get_metrics('accuracy')
-    val_acc1 = detection_infrastructure.hp_tuner.best_acc1
-    val_acc2 = detection_infrastructure.hp_tuner.best_acc2
-    with open('Required Files/Results.txt', 'a') as f:
-        f.write('\nSystem accuracy on the train set: ' + str(test_acc))
-        f.write('\nSystem accuracy on the validation set: ' + str(val_acc1) + ', ' + str(val_acc2))
-
-    return 0
+        return 0
 
 
 if __name__ == '__main__':
-    main()
+    detection_infrastructure = DetectionInfrastructure()
+    launcher = DetectionSystemLauncher(detection_infrastructure)
+    launcher.run()

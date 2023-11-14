@@ -43,7 +43,7 @@ class KnowledgeBase:
         """
         # set an instance-level logger
         self.logger = Utils.set_logger(__name__)
-        self.logger.debug('Creating an instance of KnowledgeBase.')
+        self.logger.info('Creating an instance of KnowledgeBase.')
 
         # manually set the detection thresholds
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
@@ -56,7 +56,7 @@ class KnowledgeBase:
             self.features_l2 = f.read().split(',')
 
         # Load completely processed datasets for training
-        self.logger.debug('Loading the train sets.')
+        self.logger.info('Loading the train sets.')
         self.x_train_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train1.pkl')
         self.x_train_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train2.pkl')
         self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy',
@@ -65,7 +65,7 @@ class KnowledgeBase:
                                   allow_pickle=True)
 
         # Load completely processed validations sets
-        self.logger.debug('Loading the validation sets.')
+        self.logger.info('Loading the validation sets.')
         self.x_validate_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate1.pkl')
         self.x_validate_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate2.pkl')
         self.y_validate_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDValidate+_l1_targets.npy',
@@ -74,7 +74,7 @@ class KnowledgeBase:
                                      allow_pickle=True)
 
         # Load completely processed test set
-        self.logger.debug('Loading test sets.')
+        self.logger.info('Loading test sets.')
         self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
         self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
@@ -82,17 +82,17 @@ class KnowledgeBase:
         self.cat_features = ['protocol_type', 'service', 'flag']
 
         # load the minmax scalers used in training
-        self.logger.debug('Loading scalers.')
+        self.logger.info('Loading scalers.')
         self.scaler1 = joblib.load('Required Files/scalers/scaler1.pkl')
         self.scaler2 = joblib.load('Required Files/scalers/scaler2.pkl')
 
         # load one hot encoder for processing according to layer
-        self.logger.debug('Loading one hot encoders.')
+        self.logger.info('Loading one hot encoders.')
         self.ohe1 = joblib.load('Required Files/one_hot_encoders/ohe1.pkl')
         self.ohe2 = joblib.load('Required Files/one_hot_encoders/ohe2.pkl')
 
         # load pca transformers to transform features according to layer
-        self.logger.debug('Loading test pca encoders.')
+        self.logger.info('Loading test pca encoders.')
         self.pca1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer1_transformer.pkl')
         self.pca2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer2_transformer.pkl')
 
@@ -100,7 +100,7 @@ class KnowledgeBase:
         if (os.path.exists('Models/Original models/NSL_l1_classifier_og.pkl') and
                 os.path.exists('Models/Original models/NSL_l2_classifier_og.pkl')):
 
-            self.logger.debug('Loading existing models.')
+            self.logger.info('Loading existing models.')
             with open('Models/Original models/NSL_l1_classifier_og.pkl', 'rb') as file:
                 self.layer1 = pickle.load(file)
             with open('Models/Original models/NSL_l2_classifier_og.pkl', 'rb') as file:
@@ -183,6 +183,19 @@ class KnowledgeBase:
             pickle.dump(classifier2, model_file)
 
         return classifier1, classifier2
+
+    def show_info(self):
+        self.logger.info('Shapes and sized of the sets:')
+        self.logger.info(f'TRAIN:\n'
+                         f'x_train_l1 = {self.x_train_l1.shape}\n'
+                         f'x_train_l2 = {self.x_train_l2.shape}\n'
+                         f'y_train_l1 = {len(self.y_train_l1)}\n'
+                         f'y_train_l2 = {len(self.y_train_l2)}')
+        self.logger.info(f'VALIDATE:\n'
+                         f'x_validate_l1 = {self.x_validate_l1.shape}\n'
+                         f'x_validate_l2 = {self.x_validate_l2.shape}\n'
+                         f'y_validate_l1 = {len(self.y_validate_l1)}\n'
+                         f'y_validate_l2 = {len(self.y_validate_l2)}')
 
 
 def __pearson_correlated_features(x, y, threshold):
@@ -305,21 +318,3 @@ def perform_icfs(x_train):
                 g.write(x + ',' + '\n')
             else:
                 g.write(x)
-
-
-def show_info():
-    kb = KnowledgeBase()
-    print('Shapes and sized of the sets:')
-    print(f'TRAIN:\n'
-          f'x_train_l1 = {kb.x_train_l1.shape}\n'
-          f'x_train_l2 = {kb.x_train_l2.shape}\n'
-          f'y_train_l1 = {len(kb.y_train_l1)}\n'
-          f'y_train_l2 = {len(kb.y_train_l2)}')
-    print(f'VALIDATE:\n'
-          f'x_validate_l1 = {kb.x_validate_l1.shape}\n'
-          f'x_validate_l2 = {kb.x_validate_l2.shape}\n'
-          f'y_validate_l1 = {len(kb.y_validate_l1)}\n'
-          f'y_validate_l2 = {len(kb.y_validate_l2)}')
-
-
-show_info()

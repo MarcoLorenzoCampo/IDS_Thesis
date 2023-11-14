@@ -1,0 +1,40 @@
+2023-11-14 20:50:41,708 - __main__ - INFO - 
+At iterations #1:
+2023-11-14 20:50:42,460 - __main__ - INFO - 
+At iterations #51:
+2023-11-14 20:50:42,998 - __main__ - INFO - Classification of 100 test samples:
+2023-11-14 20:50:42,998 - __main__ - INFO - Anomalies by l1: 36
+2023-11-14 20:50:42,998 - __main__ - INFO - Anomalies by l2: 6
+2023-11-14 20:50:42,998 - __main__ - INFO - Normal traffic: 119
+2023-11-14 20:50:42,998 - __main__ - INFO - Quarantined samples: 3
+2023-11-14 20:50:42,999 - __main__ - INFO - Average computation time for 100 samples: 0.001569779907784811
+2023-11-14 20:51:31,550 - __main__ - INFO - 
+At iterations #1:
+2023-11-14 20:51:32,007 - __main__ - INFO - 
+At iterations #51:
+2023-11-14 20:51:32,457 - __main__ - INFO - Classification of 100 test samples:
+2023-11-14 20:51:32,494 - __main__ - INFO - Anomalies by l1: 36
+2023-11-14 20:51:32,494 - __main__ - INFO - Anomalies by l2: 7
+2023-11-14 20:51:32,494 - __main__ - INFO - Normal traffic: 119
+2023-11-14 20:51:32,495 - __main__ - INFO - Quarantined samples: 2
+2023-11-14 20:51:32,496 - __main__ - INFO - Average computation time for 100 samples: 0.001048460239317359
+2023-11-14 20:55:56,868 - __main__ - INFO - 
+At iterations #1:
+2023-11-14 20:55:57,472 - __main__ - INFO - 
+At iterations #51:
+2023-11-14 20:55:57,994 - __main__ - INFO - Classification of 100 test samples:
+2023-11-14 20:55:57,995 - __main__ - INFO - Anomalies by l1: 36
+2023-11-14 20:55:57,995 - __main__ - INFO - Anomalies by l2: 6
+2023-11-14 20:55:57,995 - __main__ - INFO - Normal traffic: 119
+2023-11-14 20:55:57,995 - __main__ - INFO - Quarantined samples: 3
+2023-11-14 20:55:57,996 - __main__ - INFO - Average computation time for 100 samples: 0.001405207122244486
+2023-11-14 20:56:18,131 - __main__ - INFO - 
+At iterations #1:
+2023-11-14 20:56:18,644 - __main__ - INFO - 
+At iterations #51:
+2023-11-14 20:56:19,087 - __main__ - INFO - Classification of 100 test samples:
+2023-11-14 20:56:19,087 - __main__ - INFO - Anomalies by l1: 36
+2023-11-14 20:56:19,087 - __main__ - INFO - Anomalies by l2: 7
+2023-11-14 20:56:19,087 - __main__ - INFO - Normal traffic: 118
+2023-11-14 20:56:19,087 - __main__ - INFO - Quarantined samples: 3
+2023-11-14 20:56:19,088 - __main__ - INFO - Average computation time for 100 samples: 0.0010634806098007575
