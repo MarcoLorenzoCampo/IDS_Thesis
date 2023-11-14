@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pandas as pd
 
@@ -18,6 +20,8 @@ def launch_on_test(detection_infrastructure: DetectionInfrastructure):
         if i >= iterations:
             break
 
+        # time.sleep(0.25)
+
         # Make each row as its own data frame and pre-process it
         sample = pd.DataFrame(data=np.array([row]), index=None, columns=x_test.columns)
         actual = y_test[index]
@@ -34,7 +38,7 @@ def launch_on_test(detection_infrastructure: DetectionInfrastructure):
     print('Normal traffic: ', detection_infrastructure.ids.normal_traffic.shape[0])
     print('Quarantined samples: ', detection_infrastructure.ids.quarantine_samples.shape[0])
 
-    with open('NSL-KDD Files/Results.txt', 'a') as file:
+    with open('Required Files/Results.txt', 'a') as file:
         # Write the strings to the file
         file.write('\nOverall classification:\n')
         file.write('Classified = ANOMALY, Actual = ANOMALY: tp -> ' + str(
@@ -60,11 +64,11 @@ def artificial_tuning(detection_infrastructure: DetectionInfrastructure):
 
 def main():
     # empty the result.txt file before writing on it
-    with open('NSL-KDD Files/Results.txt', 'w') as f:
+    with open('Required Files/Results.txt', 'w') as f:
         pass
 
     # Launch a new detection infrastructure instance
-    with open('NSL-KDD Files/Results.txt', 'a') as f:
+    with open('Required Files/Results.txt', 'a') as f:
         f.write('BEFORE TUNING FOR FALSE POSITIVES FP:\n')
     detection_infrastructure = DetectionInfrastructure()
 
@@ -76,7 +80,7 @@ def main():
 
     # evaluate the precision on the test set
     test_acc = detection_infrastructure.ids.metrics.get_metrics('accuracy')
-    with open('NSL-KDD Files/Results.txt', 'a') as f:
+    with open('Required Files/Results.txt', 'a') as f:
         f.write('\nSystem accuracy on the train set: ' + str(test_acc))
 
     # reset the variables used to store classification data
@@ -87,7 +91,7 @@ def main():
     artificial_tuning(detection_infrastructure)
 
     # test if the new iterations produce better results
-    with open('NSL-KDD Files/Results.txt', 'a') as f:
+    with open('Required Files/Results.txt', 'a') as f:
         f.write('\n\nAFTER TUNING FOR FALSE POSITIVES FP:\n')
     launch_on_test(detection_infrastructure)
 
@@ -97,7 +101,7 @@ def main():
     test_acc = detection_infrastructure.ids.metrics.get_metrics('accuracy')
     val_acc1 = detection_infrastructure.hp_tuner.best_acc1
     val_acc2 = detection_infrastructure.hp_tuner.best_acc2
-    with open('NSL-KDD Files/Results.txt', 'a') as f:
+    with open('Required Files/Results.txt', 'a') as f:
         f.write('\nSystem accuracy on the train set: ' + str(test_acc))
         f.write('\nSystem accuracy on the validation set: ' + str(val_acc1) + ', ' + str(val_acc2))
 

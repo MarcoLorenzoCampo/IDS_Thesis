@@ -1,3 +1,4 @@
+import configparser
 import logging
 
 
@@ -23,3 +24,11 @@ def set_logger(name):
     logger.addHandler(f_handler)
 
     return logger
+
+def config_parser():
+    config = configparser.ConfigParser()
+
+    config['DEFAULT'] = {'ANOMALY_THRESHOLD1': '0.9',
+                         'ANOMALY_THRESHOLD2': '0.8',
+                         'BENIGN_THRESHOLD': '0.6',
+                         }

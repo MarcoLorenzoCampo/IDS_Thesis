@@ -49,10 +49,10 @@ class KnowledgeBase:
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
 
         # load the features obtained with ICFS for both layer 1 and layer 2
-        with open('NSL-KDD Files/NSL_features_l1.txt', 'r') as f:
+        with open('Required Files/NSL_features_l1.txt', 'r') as f:
             self.features_l1 = f.read().split(',')
 
-        with open('NSL-KDD Files/NSL_features_l2.txt', 'r') as f:
+        with open('Required Files/NSL_features_l2.txt', 'r') as f:
             self.features_l2 = f.read().split(',')
 
         # Load completely processed datasets for training
@@ -83,13 +83,13 @@ class KnowledgeBase:
 
         # load the minmax scalers used in training
         self.logger.debug('Loading scalers.')
-        self.scaler1 = joblib.load('NSL-KDD Files/scalers/scaler1.pkl')
-        self.scaler2 = joblib.load('NSL-KDD Files/scalers/scaler2.pkl')
+        self.scaler1 = joblib.load('Required Files/scalers/scaler1.pkl')
+        self.scaler2 = joblib.load('Required Files/scalers/scaler2.pkl')
 
         # load one hot encoder for processing according to layer
         self.logger.debug('Loading one hot encoders.')
-        self.ohe1 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe1.pkl')
-        self.ohe2 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe2.pkl')
+        self.ohe1 = joblib.load('Required Files/one_hot_encoders/ohe1.pkl')
+        self.ohe2 = joblib.load('Required Files/one_hot_encoders/ohe2.pkl')
 
         # load pca transformers to transform features according to layer
         self.logger.debug('Loading test pca encoders.')
@@ -127,8 +127,8 @@ class KnowledgeBase:
 
         # load one hot encoder for processing according to layer
         if to_update == 'ohe':
-            self.ohe1 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe1.pkl')
-            self.ohe2 = joblib.load('NSL-KDD Files/one_hot_encoders/ohe2.pkl')
+            self.ohe1 = joblib.load('Required Files/one_hot_encoders/ohe1.pkl')
+            self.ohe2 = joblib.load('Required Files/one_hot_encoders/ohe2.pkl')
 
     def __default_training(self) -> (RandomForestClassifier, SVC):
         """
@@ -291,7 +291,7 @@ def perform_icfs(x_train):
     comm_features_l2 = set_r2l & set_u2r
     # print('Common features to train l2: ', len(common_features_l2), common_features_l2)
 
-    with open('NSL-KDD Files/test_l1.txt', 'w') as g:
+    with open('Required Files/test_l1.txt', 'w') as g:
         for a, x in enumerate(comm_features_l1):
             if a < len(comm_features_l1) - 1:
                 g.write(x + ',' + '\n')
@@ -299,7 +299,7 @@ def perform_icfs(x_train):
                 g.write(x)
 
     # read the common features from file
-    with open('NSL-KDD Files/test_l2.txt', 'w') as g:
+    with open('Required Files/test_l2.txt', 'w') as g:
         for a, x in enumerate(comm_features_l2):
             if a < len(comm_features_l2) - 1:
                 g.write(x + ',' + '\n')

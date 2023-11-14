@@ -47,17 +47,20 @@ class DetectionSystem:
             'QUARANTINE': self.__add_to_quarantine,
             'L1_ANOMALY': self.__add_to_anomaly1,
             'L2_ANOMALY': self.__add_to_anomaly2,
-            'NOT_ANOMALY': self.__add_to_normal
+            'NOT_ANOMALY1': self.__add_to_normal1,
+            'NOT_ANOMALY2': self.__add_to_normal2
         }
 
         # dictionary for metrics functions
         self.metrics_switcher = {
-            ('L1_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1),
-            ('L2_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1),
-            ('NOT_ANOMALY', 1): lambda: self.metrics.update_count('fn', 1),
-            ('NOT_ANOMALY', 0): lambda: self.metrics.update_count('tn', 1),
-            ('L1_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1),
-            ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1)
+            ('NOT_ANOMALY1', 1): lambda: self.metrics.update_count('fn', 1, 1),
+            ('NOT_ANOMALY1', 0): lambda: self.metrics.update_count('tn', 1, 1),
+            ('NOT_ANOMALY2', 1): lambda: self.metrics.update_count('fn', 1, 2),
+            ('NOT_ANOMALY2', 0): lambda: self.metrics.update_count('tn', 1, 2),
+            ('L1_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1, 1),
+            ('L1_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1, 1),
+            ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1, 2),
+            ('L2_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1, 2),
         }
 
     def classify(self, incoming_data, actual: int = None):
@@ -65,13 +68,6 @@ class DetectionSystem:
       Args:
         incoming_data: A NumPy array containing the sample to test.
         actual: Optional argument containing the label the incoming traffic data, if available
-      Returns:
-        A list containing two elements:
-          * The first element is an integer indicating whether the sample is an anomaly
-            0: unsure, quarantines the sample for further analysis
-            1: anomaly signaled by layer1
-            2: anomaly signaled by layer2
-            3: not an anomaly
       """
 
         # Copy of the original sample
@@ -85,29 +81,35 @@ class DetectionSystem:
         self.metrics.add_classification_time(computation_time)
 
         if prediction1:
-            # it's an anomaly for layer1
-            self.__show_classification(incoming_data, [1, 'L1_ANOMALY'], actual)
+            # anomaly identified by layer1
+            self.__finalize_clf(incoming_data, [1, 'L1_ANOMALY'], actual)
             return
 
-        # Continue with layer 2 if layer 1 does not detect anomalies
-        anomaly_confidence, computation_time, cpu_usage = self.__clf_layer2(unprocessed_sample)
+        else:
+            # considered as normal by layer1
+            self.__finalize_clf(incoming_data, [0, 'NOT_ANOMALY1'], actual)
 
-        # add cpu_usage and computation_time to metrics
-        self.metrics.add_cpu_usage(cpu_usage)
-        self.metrics.add_classification_time(computation_time)
+            # Continue with layer 2 if layer 1 does not detect anomalies
+            anomaly_confidence, computation_time, cpu_usage = self.__clf_layer2(unprocessed_sample)
 
-        benign_confidence_2 = 1 - anomaly_confidence[0, 1]
-        if anomaly_confidence[0, 1] >= self.kb.ANOMALY_THRESHOLD2:
-            # it's an anomaly for layer2
-            self.__show_classification(incoming_data, [anomaly_confidence, 'L2_ANOMALY'], actual)
-            return
+            # add cpu_usage and computation_time to metrics
+            self.metrics.add_cpu_usage(cpu_usage)
+            self.metrics.add_classification_time(computation_time)
 
-        if benign_confidence_2 >= self.kb.BENIGN_THRESHOLD:
-            self.__show_classification(incoming_data, [benign_confidence_2, 'NOT_ANOMALY'], actual)
-            return
+            benign_confidence_2 = 1 - anomaly_confidence[0, 1]
+
+            # anomaly identified by layer2
+            if anomaly_confidence[0, 1] >= self.kb.ANOMALY_THRESHOLD2:
+                self.__finalize_clf(incoming_data, [anomaly_confidence, 'L2_ANOMALY'], actual)
+                return
+
+            # not an anomaly identified by layer2
+            if benign_confidence_2 >= self.kb.BENIGN_THRESHOLD:
+                self.__finalize_clf(incoming_data, [benign_confidence_2, 'NOT_ANOMALY2'], actual)
+                return
 
         # has not been classified yet, it's not decided
-        self.__show_classification(incoming_data, [0, 'QUARANTINE'], actual)
+        self.__finalize_clf(incoming_data, [0, 'QUARANTINE'], actual)
 
     def __clf_layer1(self, unprocessed_sample):
         sample = (DataProcessor.data_process(unprocessed_sample, self.kb.scaler1, self.kb.ohe1,
@@ -151,30 +153,10 @@ class DetectionSystem:
 
         return anomaly_confidence, computation_time, cpu_usage
 
-    def train_accuracy(self) -> list[float, float]:
+    def __finalize_clf(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int = None):
         """
-        Function to see how the IDS performs on training data, useful to see if over fitting happens
-        """
-
-        l1_prediction = self.layer1.predict(self.kb.x_train_l1)
-        l2_prediction = self.layer2.predict(self.kb.x_train_l2)
-
-        # Calculate the accuracy score for layer 1.
-        l1_accuracy = accuracy_score(self.kb.y_train_l1, l1_prediction)
-
-        # Calculate the accuracy score for layer 2.
-        l2_accuracy = accuracy_score(self.kb.y_train_l2, l2_prediction)
-
-        # Print the accuracy scores.
-        with open('NSL-KDD Files/Results.txt', 'a') as f:
-            f.write("\nLayer 1 accuracy on the train set:" + str(l1_accuracy))
-            f.write("\nLayer 2 accuracy on the train set:" + str(l2_accuracy))
-
-        return [l1_accuracy, l2_accuracy]
-
-    def __show_classification(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int = None):
-        """
-        This function is used to evaluate whether the prediction made by the IDS itself
+        This function is used to evaluate whether the prediction made by the IDS itself is correct or not
+        and acts accordingly
         :param actual: optional parameter, it's None in real application but not in testing
         :param sample: Traffic data to store
         :param output: What to classify
@@ -183,12 +165,12 @@ class DetectionSystem:
         if actual is None:
             switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)
-            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
+            # print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}')
 
         if actual is not None:
             switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)
-            print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
+            # print(f'Prediction: {output[1]}, AnomalyScore: {output[0]}, actual: {actual}')
 
         switch_function = self.metrics_switcher.get((output[1], actual), lambda: "Invalid value")
         switch_function()
@@ -207,7 +189,7 @@ class DetectionSystem:
         :param sample: incoming traffic
         """
         self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
-        self.metrics.update_classifications('l1_anomaly', 1)
+        self.metrics.update_classifications(tag='l1_anomaly', value=1)
 
     def __add_to_anomaly2(self, sample: pd.DataFrame) -> None:
         """
@@ -217,13 +199,42 @@ class DetectionSystem:
         self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
         self.metrics.update_classifications('l2_anomaly', 1)
 
-    def __add_to_normal(self, sample: pd.DataFrame) -> None:
+    def __add_to_normal1(self, sample: pd.DataFrame) -> None:
         """
         Add a normal sample to the list
         :param sample: incoming traffic
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
+
+    def __add_to_normal2(self, sample: pd.DataFrame) -> None:
+        """
+        Add a normal sample to the list
+        :param sample: incoming traffic
+        """
+        self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
+        self.metrics.update_classifications('normal_traffic', 1)
+
+    def train_accuracy(self) -> list[float, float]:
+        """
+        Function to see how the IDS performs on training data, useful to see if over fitting happens
+        """
+
+        l1_prediction = self.layer1.predict(self.kb.x_train_l1)
+        l2_prediction = self.layer2.predict(self.kb.x_train_l2)
+
+        # Calculate the accuracy score for layer 1.
+        l1_accuracy = accuracy_score(self.kb.y_train_l1, l1_prediction)
+
+        # Calculate the accuracy score for layer 2.
+        l2_accuracy = accuracy_score(self.kb.y_train_l2, l2_prediction)
+
+        # Print the accuracy scores.
+        with open('Required Files/Results.txt', 'a') as f:
+            f.write("\nLayer 1 accuracy on the train set:" + str(l1_accuracy))
+            f.write("\nLayer 2 accuracy on the train set:" + str(l2_accuracy))
+
+        return [l1_accuracy, l2_accuracy]
 
     def reset(self):
         # reset the output storages
