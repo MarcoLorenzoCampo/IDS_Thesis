@@ -13,6 +13,7 @@ class DetectionSystemLauncher:
     def __init__(self, infrastructure: DetectionInfrastructure):
         self.detection_infrastructure = infrastructure
         self.logger = Utils.set_logger(__name__)
+        self.infrastructure = infrastructure
 
         # load the test sets as simulated traffic samples
         self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
@@ -24,15 +25,9 @@ class DetectionSystemLauncher:
 
         # pause event for the threads
         self.pause_classification_event = threading.Event()
-        self.pause_monitoring_event = threading.Event()
 
         # thread used to actually run the ids
         self.ids_thread = threading.Thread(target=self.read_packet, args=(self.pause_classification_event,))
-
-        # thread used to monitor the ids
-        self.monitor_thread = threading.Thread(target=infrastructure.ids.metrics.monitor_metrics,
-                                               args=(self.pause_monitoring_event,))
-        self.monitor_thread.start()
 
     def read_packet(self, pause_event: threading.Event, iterations=100):
 
@@ -80,12 +75,14 @@ class DetectionSystemLauncher:
 
     def run(self):
 
+        # start the classification thread
         self.ids_thread.start()
 
         while True:
             try:
                 # start the metrics monitor thread and watch for exceptions
-                time.sleep(0)
+                self.infrastructure.ids.metrics.monitor_metrics()
+                time.sleep(3)
 
             except accuracyException as e:
                 self.logger.exception(f"Caught accuracyException: {e}")

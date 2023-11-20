@@ -5,8 +5,3 @@ Classified = ANOMALY, Actual = NORMAL: fp -> 3
 Classified = NORMAL, Actual = ANOMALY: fn -> 23
 Classified = NORMAL, Actual = NORMAL: tn -> 96
 
-
-Layer 1 accuracy on the train set:0.9997618527853301
-Layer 2 accuracy on the train set:0.9415024630541872BEFORE TUNING FOR FALSE POSITIVES FP:
-
-System accuracy on the train set: 0.8348360655737705

@@ -5390,3 +5390,916 @@ NoneType: None
 2023-11-20 13:42:27,885 - Metrics - INFO - L2 anomalies ratio: 0.036585365853658534
 2023-11-20 13:42:27,885 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
 2023-11-20 13:42:27,885 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
+2023-11-20 18:16:08,619 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:16:08,621 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:16:08,621 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:16:11,720 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,720 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,729 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,729 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,730 - Metrics - INFO - Accuracy for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - Accuracy for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - Precision for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - Precision for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - F-score for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - F-score for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - TPR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - TPR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - FPR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - FPR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - TNR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - TNR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - FNR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - FNR for layer 1: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - 
+
+2023-11-20 18:16:11,730 - Metrics - INFO - 
+
+2023-11-20 18:16:11,730 - Metrics - INFO - Accuracy for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - Accuracy for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - Precision for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - Precision for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - F-score for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - F-score for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - TPR for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - TPR for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - FPR for layer 2: 0.0
+2023-11-20 18:16:11,730 - Metrics - INFO - FPR for layer 2: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - TNR for layer 2: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - TNR for layer 2: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - FNR for layer 2: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - FNR for layer 2: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - 
+
+2023-11-20 18:16:11,732 - Metrics - INFO - 
+
+2023-11-20 18:16:11,732 - Metrics - INFO - Normal ratio: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - Normal ratio: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - L1 anomalies ratio: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - L1 anomalies ratio: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - L2 anomalies ratio: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - L2 anomalies ratio: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - Quarantined ratio: 0.0
+2023-11-20 18:16:11,732 - Metrics - INFO - Quarantined ratio: 0.0
+2023-11-20 18:16:11,739 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,739 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,746 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,746 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,753 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,753 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,761 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,761 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,772 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,772 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,778 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,778 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,786 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,786 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,791 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,791 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,798 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,798 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,804 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,804 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,812 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,812 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,816 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,816 - Metrics - ERROR - Exception: Not enough data for LAYER2, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 157, in update_count
+    raise ValueError('Not enough data for LAYER2, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:16:11,823 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,823 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,835 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,835 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,846 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,846 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,859 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,859 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,867 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,867 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,874 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,874 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,887 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,887 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,898 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,898 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,910 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,910 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,921 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,921 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,943 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,943 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,959 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,959 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,975 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,975 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,987 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:11,987 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,006 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,006 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,024 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,024 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,036 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,036 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,047 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,047 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,064 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,064 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,078 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,078 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,086 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,086 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,098 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,098 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,106 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,106 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,118 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,118 - Metrics - ERROR - Exception: Not enough data for LAYER1, skipping metrics computation for now.
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 147, in update_count
+    raise ValueError('Not enough data for LAYER1, skipping metrics computation for now.')
+ValueError: Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:16:12,348 - Metrics - INFO - Accuracy for layer 1: 0.8653846153846154
+2023-11-20 18:16:12,348 - Metrics - INFO - Accuracy for layer 1: 0.8653846153846154
+2023-11-20 18:16:12,348 - Metrics - INFO - Precision for layer 1: 0.9473684210526315
+2023-11-20 18:16:12,348 - Metrics - INFO - Precision for layer 1: 0.9473684210526315
+2023-11-20 18:16:12,348 - Metrics - INFO - F-score for layer 1: 0.8372093023255814
+2023-11-20 18:16:12,348 - Metrics - INFO - F-score for layer 1: 0.8372093023255814
+2023-11-20 18:16:12,348 - Metrics - INFO - TPR for layer 1: 0.75
+2023-11-20 18:16:12,348 - Metrics - INFO - TPR for layer 1: 0.75
+2023-11-20 18:16:12,348 - Metrics - INFO - FPR for layer 1: 0.03571428571428571
+2023-11-20 18:16:12,348 - Metrics - INFO - FPR for layer 1: 0.03571428571428571
+2023-11-20 18:16:12,348 - Metrics - INFO - TNR for layer 1: 0.8181818181818182
+2023-11-20 18:16:12,348 - Metrics - INFO - TNR for layer 1: 0.8181818181818182
+2023-11-20 18:16:12,348 - Metrics - INFO - FNR for layer 1: 0.18181818181818182
+2023-11-20 18:16:12,348 - Metrics - INFO - FNR for layer 1: 0.18181818181818182
+2023-11-20 18:16:12,348 - Metrics - INFO - 
+
+2023-11-20 18:16:12,348 - Metrics - INFO - 
+
+2023-11-20 18:16:12,349 - Metrics - INFO - Accuracy for layer 2: 0.8666666666666667
+2023-11-20 18:16:12,349 - Metrics - INFO - Accuracy for layer 2: 0.8666666666666667
+2023-11-20 18:16:12,349 - Metrics - INFO - Precision for layer 2: 0.6666666666666666
+2023-11-20 18:16:12,349 - Metrics - INFO - Precision for layer 2: 0.6666666666666666
+2023-11-20 18:16:12,349 - Metrics - INFO - F-score for layer 2: 0.5
+2023-11-20 18:16:12,349 - Metrics - INFO - F-score for layer 2: 0.5
+2023-11-20 18:16:12,349 - Metrics - INFO - TPR for layer 2: 0.4
+2023-11-20 18:16:12,349 - Metrics - INFO - TPR for layer 2: 0.4
+2023-11-20 18:16:12,349 - Metrics - INFO - FPR for layer 2: 0.04
+2023-11-20 18:16:12,349 - Metrics - INFO - FPR for layer 2: 0.04
+2023-11-20 18:16:12,349 - Metrics - INFO - TNR for layer 2: 0.8888888888888888
+2023-11-20 18:16:12,349 - Metrics - INFO - TNR for layer 2: 0.8888888888888888
+2023-11-20 18:16:12,349 - Metrics - INFO - FNR for layer 2: 0.1111111111111111
+2023-11-20 18:16:12,349 - Metrics - INFO - FNR for layer 2: 0.1111111111111111
+2023-11-20 18:16:12,349 - Metrics - INFO - 
+
+2023-11-20 18:16:12,349 - Metrics - INFO - 
+
+2023-11-20 18:16:12,349 - Metrics - INFO - Normal ratio: 0.7317073170731707
+2023-11-20 18:16:12,349 - Metrics - INFO - Normal ratio: 0.7317073170731707
+2023-11-20 18:16:12,349 - Metrics - INFO - L1 anomalies ratio: 0.23170731707317074
+2023-11-20 18:16:12,349 - Metrics - INFO - L1 anomalies ratio: 0.23170731707317074
+2023-11-20 18:16:12,349 - Metrics - INFO - L2 anomalies ratio: 0.036585365853658534
+2023-11-20 18:16:12,349 - Metrics - INFO - L2 anomalies ratio: 0.036585365853658534
+2023-11-20 18:16:12,349 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
+2023-11-20 18:16:12,349 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
+2023-11-20 18:19:03,927 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:19:03,928 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:19:03,928 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:19:07,042 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,042 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,051 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,051 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,051 - Metrics - INFO - Accuracy for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - Accuracy for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - Precision for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - Precision for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - F-score for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - F-score for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - TPR for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - TPR for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - FPR for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - FPR for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - TNR for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - TNR for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - FNR for layer 1: 0.0
+2023-11-20 18:19:07,051 - Metrics - INFO - FNR for layer 1: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - 
+
+2023-11-20 18:19:07,052 - Metrics - INFO - 
+
+2023-11-20 18:19:07,052 - Metrics - INFO - Accuracy for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - Accuracy for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - Precision for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - Precision for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - F-score for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - F-score for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - TPR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - TPR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - FPR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - FPR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - TNR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - TNR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - FNR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - FNR for layer 2: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - 
+
+2023-11-20 18:19:07,052 - Metrics - INFO - 
+
+2023-11-20 18:19:07,052 - Metrics - INFO - Normal ratio: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - Normal ratio: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - L1 anomalies ratio: 1.0
+2023-11-20 18:19:07,052 - Metrics - INFO - L1 anomalies ratio: 1.0
+2023-11-20 18:19:07,052 - Metrics - INFO - L2 anomalies ratio: 0.0
+2023-11-20 18:19:07,052 - Metrics - INFO - L2 anomalies ratio: 0.0
+2023-11-20 18:19:07,053 - Metrics - INFO - Quarantined ratio: 0.0
+2023-11-20 18:19:07,053 - Metrics - INFO - Quarantined ratio: 0.0
+2023-11-20 18:19:07,061 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,061 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,066 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,066 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,072 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,072 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,079 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,079 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,091 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,091 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,096 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,096 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,102 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,102 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,107 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,107 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,113 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,113 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,118 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,118 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,126 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,126 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,131 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,131 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:19:07,138 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,138 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,150 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,150 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,162 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,162 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,173 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,173 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,181 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,181 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,188 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,188 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,200 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,200 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,211 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,211 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,221 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,221 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,233 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,233 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,247 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,247 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,258 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,258 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,274 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,274 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,284 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,284 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,302 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,302 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,321 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,321 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,333 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,333 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,342 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,342 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,359 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,359 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,373 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,373 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,381 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,381 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,393 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,393 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,399 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,399 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,411 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,411 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:19:07,650 - Metrics - INFO - Accuracy for layer 1: 0.8653846153846154
+2023-11-20 18:19:07,650 - Metrics - INFO - Accuracy for layer 1: 0.8653846153846154
+2023-11-20 18:19:07,650 - Metrics - INFO - Precision for layer 1: 0.9473684210526315
+2023-11-20 18:19:07,650 - Metrics - INFO - Precision for layer 1: 0.9473684210526315
+2023-11-20 18:19:07,651 - Metrics - INFO - F-score for layer 1: 0.8372093023255814
+2023-11-20 18:19:07,651 - Metrics - INFO - F-score for layer 1: 0.8372093023255814
+2023-11-20 18:19:07,651 - Metrics - INFO - TPR for layer 1: 0.75
+2023-11-20 18:19:07,651 - Metrics - INFO - TPR for layer 1: 0.75
+2023-11-20 18:19:07,651 - Metrics - INFO - FPR for layer 1: 0.03571428571428571
+2023-11-20 18:19:07,651 - Metrics - INFO - FPR for layer 1: 0.03571428571428571
+2023-11-20 18:19:07,651 - Metrics - INFO - TNR for layer 1: 0.8181818181818182
+2023-11-20 18:19:07,651 - Metrics - INFO - TNR for layer 1: 0.8181818181818182
+2023-11-20 18:19:07,651 - Metrics - INFO - FNR for layer 1: 0.18181818181818182
+2023-11-20 18:19:07,651 - Metrics - INFO - FNR for layer 1: 0.18181818181818182
+2023-11-20 18:19:07,651 - Metrics - INFO - 
+
+2023-11-20 18:19:07,651 - Metrics - INFO - 
+
+2023-11-20 18:19:07,651 - Metrics - INFO - Accuracy for layer 2: 0.8666666666666667
+2023-11-20 18:19:07,651 - Metrics - INFO - Accuracy for layer 2: 0.8666666666666667
+2023-11-20 18:19:07,651 - Metrics - INFO - Precision for layer 2: 0.6666666666666666
+2023-11-20 18:19:07,651 - Metrics - INFO - Precision for layer 2: 0.6666666666666666
+2023-11-20 18:19:07,651 - Metrics - INFO - F-score for layer 2: 0.5
+2023-11-20 18:19:07,651 - Metrics - INFO - F-score for layer 2: 0.5
+2023-11-20 18:19:07,651 - Metrics - INFO - TPR for layer 2: 0.4
+2023-11-20 18:19:07,651 - Metrics - INFO - TPR for layer 2: 0.4
+2023-11-20 18:19:07,652 - Metrics - INFO - FPR for layer 2: 0.04
+2023-11-20 18:19:07,652 - Metrics - INFO - FPR for layer 2: 0.04
+2023-11-20 18:19:07,652 - Metrics - INFO - TNR for layer 2: 0.8888888888888888
+2023-11-20 18:19:07,652 - Metrics - INFO - TNR for layer 2: 0.8888888888888888
+2023-11-20 18:19:07,652 - Metrics - INFO - FNR for layer 2: 0.1111111111111111
+2023-11-20 18:19:07,652 - Metrics - INFO - FNR for layer 2: 0.1111111111111111
+2023-11-20 18:19:07,652 - Metrics - INFO - 
+
+2023-11-20 18:19:07,652 - Metrics - INFO - 
+
+2023-11-20 18:19:07,652 - Metrics - INFO - Normal ratio: 0.7317073170731707
+2023-11-20 18:19:07,652 - Metrics - INFO - Normal ratio: 0.7317073170731707
+2023-11-20 18:19:07,652 - Metrics - INFO - L1 anomalies ratio: 0.23170731707317074
+2023-11-20 18:19:07,652 - Metrics - INFO - L1 anomalies ratio: 0.23170731707317074
+2023-11-20 18:19:07,652 - Metrics - INFO - L2 anomalies ratio: 0.036585365853658534
+2023-11-20 18:19:07,652 - Metrics - INFO - L2 anomalies ratio: 0.036585365853658534
+2023-11-20 18:19:07,652 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
+2023-11-20 18:19:07,652 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
+2023-11-20 18:20:01,597 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:20:01,598 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:20:01,598 - Metrics - INFO - Metrics thresholds loaded from file.
+2023-11-20 18:20:04,693 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,693 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,701 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,701 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,702 - Metrics - INFO - Accuracy for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - Accuracy for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - Precision for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - Precision for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - F-score for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - F-score for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - TPR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - TPR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - FPR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - FPR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - TNR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - TNR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - FNR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - FNR for layer 1: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - 
+
+2023-11-20 18:20:04,702 - Metrics - INFO - 
+
+2023-11-20 18:20:04,702 - Metrics - INFO - Accuracy for layer 2: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - Accuracy for layer 2: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - Precision for layer 2: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - Precision for layer 2: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - F-score for layer 2: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - F-score for layer 2: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - TPR for layer 2: 0.0
+2023-11-20 18:20:04,702 - Metrics - INFO - TPR for layer 2: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - FPR for layer 2: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - FPR for layer 2: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - TNR for layer 2: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - TNR for layer 2: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - FNR for layer 2: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - FNR for layer 2: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - 
+
+2023-11-20 18:20:04,703 - Metrics - INFO - 
+
+2023-11-20 18:20:04,703 - Metrics - INFO - Normal ratio: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - Normal ratio: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - L1 anomalies ratio: 1.0
+2023-11-20 18:20:04,703 - Metrics - INFO - L1 anomalies ratio: 1.0
+2023-11-20 18:20:04,703 - Metrics - INFO - L2 anomalies ratio: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - L2 anomalies ratio: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - Quarantined ratio: 0.0
+2023-11-20 18:20:04,703 - Metrics - INFO - Quarantined ratio: 0.0
+2023-11-20 18:20:04,710 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,710 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,715 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,715 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,723 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,723 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,730 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,730 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,742 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,742 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,747 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,747 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,754 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,754 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,759 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,759 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,765 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,765 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,770 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,770 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,777 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,777 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,782 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,782 - Metrics - ERROR - Not enough data for LAYER2, skipping metrics computation for now.
+2023-11-20 18:20:04,789 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,789 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,800 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,800 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,811 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,811 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,823 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,823 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,829 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,829 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,837 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,837 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,848 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,848 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,860 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,860 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,870 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,870 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,882 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,882 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,894 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,894 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,902 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,902 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,913 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,913 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,924 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,924 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,944 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,944 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,964 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,964 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,976 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,976 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,987 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:04,987 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,016 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,016 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,029 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,029 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,037 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,037 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,049 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,049 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,056 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,056 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,068 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,068 - Metrics - ERROR - Not enough data for LAYER1, skipping metrics computation for now.
+2023-11-20 18:20:05,310 - Metrics - INFO - Accuracy for layer 1: 0.8653846153846154
+2023-11-20 18:20:05,310 - Metrics - INFO - Accuracy for layer 1: 0.8653846153846154
+2023-11-20 18:20:05,310 - Metrics - INFO - Precision for layer 1: 0.9473684210526315
+2023-11-20 18:20:05,310 - Metrics - INFO - Precision for layer 1: 0.9473684210526315
+2023-11-20 18:20:05,310 - Metrics - INFO - F-score for layer 1: 0.8372093023255814
+2023-11-20 18:20:05,310 - Metrics - INFO - F-score for layer 1: 0.8372093023255814
+2023-11-20 18:20:05,310 - Metrics - INFO - TPR for layer 1: 0.75
+2023-11-20 18:20:05,310 - Metrics - INFO - TPR for layer 1: 0.75
+2023-11-20 18:20:05,310 - Metrics - INFO - FPR for layer 1: 0.03571428571428571
+2023-11-20 18:20:05,310 - Metrics - INFO - FPR for layer 1: 0.03571428571428571
+2023-11-20 18:20:05,310 - Metrics - INFO - TNR for layer 1: 0.8181818181818182
+2023-11-20 18:20:05,310 - Metrics - INFO - TNR for layer 1: 0.8181818181818182
+2023-11-20 18:20:05,310 - Metrics - INFO - FNR for layer 1: 0.18181818181818182
+2023-11-20 18:20:05,310 - Metrics - INFO - FNR for layer 1: 0.18181818181818182
+2023-11-20 18:20:05,310 - Metrics - INFO - 
+
+2023-11-20 18:20:05,310 - Metrics - INFO - 
+
+2023-11-20 18:20:05,310 - Metrics - INFO - Accuracy for layer 2: 0.8666666666666667
+2023-11-20 18:20:05,310 - Metrics - INFO - Accuracy for layer 2: 0.8666666666666667
+2023-11-20 18:20:05,310 - Metrics - INFO - Precision for layer 2: 0.6666666666666666
+2023-11-20 18:20:05,310 - Metrics - INFO - Precision for layer 2: 0.6666666666666666
+2023-11-20 18:20:05,311 - Metrics - INFO - F-score for layer 2: 0.5
+2023-11-20 18:20:05,311 - Metrics - INFO - F-score for layer 2: 0.5
+2023-11-20 18:20:05,311 - Metrics - INFO - TPR for layer 2: 0.4
+2023-11-20 18:20:05,311 - Metrics - INFO - TPR for layer 2: 0.4
+2023-11-20 18:20:05,311 - Metrics - INFO - FPR for layer 2: 0.04
+2023-11-20 18:20:05,311 - Metrics - INFO - FPR for layer 2: 0.04
+2023-11-20 18:20:05,311 - Metrics - INFO - TNR for layer 2: 0.8888888888888888
+2023-11-20 18:20:05,311 - Metrics - INFO - TNR for layer 2: 0.8888888888888888
+2023-11-20 18:20:05,311 - Metrics - INFO - FNR for layer 2: 0.1111111111111111
+2023-11-20 18:20:05,311 - Metrics - INFO - FNR for layer 2: 0.1111111111111111
+2023-11-20 18:20:05,311 - Metrics - INFO - 
+
+2023-11-20 18:20:05,311 - Metrics - INFO - 
+
+2023-11-20 18:20:05,311 - Metrics - INFO - Normal ratio: 0.7317073170731707
+2023-11-20 18:20:05,311 - Metrics - INFO - Normal ratio: 0.7317073170731707
+2023-11-20 18:20:05,311 - Metrics - INFO - L1 anomalies ratio: 0.23170731707317074
+2023-11-20 18:20:05,311 - Metrics - INFO - L1 anomalies ratio: 0.23170731707317074
+2023-11-20 18:20:05,311 - Metrics - INFO - L2 anomalies ratio: 0.036585365853658534
+2023-11-20 18:20:05,311 - Metrics - INFO - L2 anomalies ratio: 0.036585365853658534
+2023-11-20 18:20:05,311 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
+2023-11-20 18:20:05,311 - Metrics - INFO - Quarantined ratio: 0.036585365853658534
+2023-11-20 18:20:07,683 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:07,683 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:07,683 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:07,683 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:07,683 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:07,683 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:10,684 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:10,684 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:10,684 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:10,684 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:10,684 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:10,684 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:13,686 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:13,686 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:13,686 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:13,686 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:13,686 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:13,686 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:16,687 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:16,687 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:16,687 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:16,687 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:16,687 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:16,687 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:19,688 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:19,688 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:19,688 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:19,688 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:19,688 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:19,688 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:22,690 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:22,690 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:22,690 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:22,690 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:22,690 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:22,690 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:25,691 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:25,691 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:25,691 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:25,691 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:25,691 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:25,691 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:28,692 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:28,692 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:28,692 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:28,692 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:28,692 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:28,692 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:31,693 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:31,693 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:31,693 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:31,693 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:31,693 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:31,693 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:34,695 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:34,695 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:34,695 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:34,695 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:34,695 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:34,695 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:37,696 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:37,696 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:37,696 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:37,696 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:37,696 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:37,696 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:40,697 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:40,697 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:40,697 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:40,697 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:40,697 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:40,697 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:43,698 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:43,698 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:43,698 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:43,698 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:43,698 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:43,698 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:46,699 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:46,699 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:46,699 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:46,699 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:46,699 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:46,699 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:49,701 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:49,701 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:49,701 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:49,701 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:49,701 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:49,701 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:52,701 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:52,701 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:52,702 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:52,702 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:52,702 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:52,702 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:55,703 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:55,703 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:55,703 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:55,703 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:55,703 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:55,703 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:58,704 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:58,704 - Metrics - INFO - Tpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:58,704 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:58,704 - Metrics - INFO - Fpr for Layer 1 fell below the threshold.
+2023-11-20 18:20:58,704 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.
+2023-11-20 18:20:58,704 - Metrics - INFO - Tnr for Layer 1 fell below the threshold.

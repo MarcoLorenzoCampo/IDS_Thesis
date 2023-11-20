@@ -30,3 +30,27 @@
 2023-11-20 13:42:11,341 - KnowledgeBase - INFO - Loading one hot encoders.
 2023-11-20 13:42:11,343 - KnowledgeBase - INFO - Loading test pca encoders.
 2023-11-20 13:42:11,348 - KnowledgeBase - INFO - Loading existing models.
+2023-11-20 18:16:08,484 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-20 18:16:08,485 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-20 18:16:08,502 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-20 18:16:08,508 - KnowledgeBase - INFO - Loading test sets.
+2023-11-20 18:16:08,608 - KnowledgeBase - INFO - Loading scalers.
+2023-11-20 18:16:08,611 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-20 18:16:08,612 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-20 18:16:08,615 - KnowledgeBase - INFO - Loading existing models.
+2023-11-20 18:19:03,815 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-20 18:19:03,816 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-20 18:19:03,832 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-20 18:19:03,836 - KnowledgeBase - INFO - Loading test sets.
+2023-11-20 18:19:03,915 - KnowledgeBase - INFO - Loading scalers.
+2023-11-20 18:19:03,918 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-20 18:19:03,920 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-20 18:19:03,921 - KnowledgeBase - INFO - Loading existing models.
+2023-11-20 18:20:01,496 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-20 18:20:01,496 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-20 18:20:01,514 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-20 18:20:01,518 - KnowledgeBase - INFO - Loading test sets.
+2023-11-20 18:20:01,586 - KnowledgeBase - INFO - Loading scalers.
+2023-11-20 18:20:01,589 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-20 18:20:01,590 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-20 18:20:01,592 - KnowledgeBase - INFO - Loading existing models.
