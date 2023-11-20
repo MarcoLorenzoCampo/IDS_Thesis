@@ -2,6 +2,10 @@ import time
 import numpy as np
 import pandas as pd
 import Utils
+import threading
+
+from CustomExceptions import quarantineRatioException, fnrException, tnrException, fprException, tprException, \
+    f1Exception, precisionException, accuracyException
 from Infrastructure import DetectionInfrastructure
 
 
@@ -10,16 +14,41 @@ class DetectionSystemLauncher:
         self.detection_infrastructure = infrastructure
         self.logger = Utils.set_logger(__name__)
 
-    def launch_on_test(self, iterations=100):
-        x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
-        y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
+        # load the test sets as simulated traffic samples
+        self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
+        self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
-        for i, (index, row) in enumerate(x_test.iterrows()):
+        # clean the output files before a new execution
+        with open('Required Files/Results.txt', 'w') as f:
+            pass
+
+        # pause event for the threads
+        self.pause_classification_event = threading.Event()
+        self.pause_monitoring_event = threading.Event()
+
+        # thread used to actually run the ids
+        self.ids_thread = threading.Thread(target=self.read_packet, args=(self.pause_classification_event,))
+
+        # thread used to monitor the ids
+        self.monitor_thread = threading.Thread(target=infrastructure.ids.metrics.monitor_metrics,
+                                               args=(self.pause_monitoring_event,))
+        self.monitor_thread.start()
+
+    def read_packet(self, pause_event: threading.Event, iterations=100):
+
+        for i, (index, row) in enumerate(self.x_test.iterrows()):
+
+            # wait for the event to be unpaused (set)
+            pause_event.wait()
+
+            # portion the input for clarity
+            time.sleep(0)
+
             if i >= iterations:
                 break
 
-            sample = pd.DataFrame(data=np.array([row]), index=None, columns=x_test.columns)
-            actual = y_test[index]
+            sample = pd.DataFrame(data=np.array([row]), index=None, columns=self.x_test.columns)
+            actual = self.y_test[index]
             self.detection_infrastructure.ids.classify(sample, actual=actual)
 
             if i - 1 in list(range(iterations))[::50]:
@@ -50,9 +79,49 @@ class DetectionSystemLauncher:
         self.detection_infrastructure.hp_tuner.tune()
 
     def run(self):
-        with open('Required Files/Results.txt', 'w') as f:
-            pass
 
+        self.ids_thread.start()
+
+        while True:
+            try:
+                # start the metrics monitor thread and watch for exceptions
+                time.sleep(0)
+
+            except accuracyException as e:
+                self.logger.exception(f"Caught accuracyException: {e}")
+                self.pause_classification_event.clear()    # pause the classification thread
+
+            except precisionException as e:
+                self.logger.exception(f"Caught precisionException: {e}")
+                self.pause_classification_event.clear()
+
+            except f1Exception as e:
+                self.logger.exception(f"Caught f1Exception: {e}")
+                self.pause_classification_event.clear()
+
+            except tprException as e:
+                self.logger.exception(f"Caught tprException: {e}")
+                self.pause_classification_event.clear()
+
+            except fprException as e:
+                self.logger.exception(f"Caught fprException: {e}")
+                self.pause_classification_event.clear()
+
+            except tnrException as e:
+                self.logger.exception(f"Caught tnrException: {e}")
+                self.pause_classification_event.clear()
+
+            except fnrException as e:
+                self.logger.exception(f"Caught fnrException: {e}")
+                self.pause_classification_event.clear()
+
+            except quarantineRatioException as e:
+                self.logger.exception(f"Caught quarantineRatioException: {e}")
+                self.pause_classification_event.clear()
+
+            self.pause_classification_event.set()   # resume the classification thread
+
+        '''
         self.launch_on_test()
 
         self.detection_infrastructure.ids.train_accuracy()
@@ -78,8 +147,9 @@ class DetectionSystemLauncher:
             f.write('\n\nAFTER TUNING FOR FALSE POSITIVES FP:\n')
             f.write('\nSystem accuracy on the train set: ' + str(test_acc))
             f.write('\nSystem accuracy on the validation set: ' + str(val_acc1) + ', ' + str(val_acc2))
+        '''
 
-        return 0
+        return
 
 
 if __name__ == '__main__':

@@ -10,17 +10,3 @@ Layer 1 accuracy on the train set:0.9997618527853301
 Layer 2 accuracy on the train set:0.9415024630541872BEFORE TUNING FOR FALSE POSITIVES FP:
 
 System accuracy on the train set: 0.8348360655737705
-Overall classification:
-Classified = ANOMALY, Actual = ANOMALY: tp -> 40
-Classified = ANOMALY, Actual = NORMAL: fp -> 1
-Classified = NORMAL, Actual = ANOMALY: fn -> 24
-Classified = NORMAL, Actual = NORMAL: tn -> 98
-
-
-Layer 1 accuracy on the train set:0.9714024886383933
-Layer 2 accuracy on the train set:0.9759852216748769
-
-AFTER TUNING FOR FALSE POSITIVES FP:
-
-System accuracy on the train set: 0.415
-System accuracy on the validation set: 0.9699146656082556, 0.9759852216748769

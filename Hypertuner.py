@@ -60,7 +60,7 @@ class Tuner:
         self.best_acc1 = 0
         self.best_acc2 = 0
 
-    def tune(self, objs: list):
+    def tune(self):
         study = optuna.create_study(study_name='RandomForest optimization', direction='minimize')
         study.optimize(self.__objective_fp_l1, n_trials=self.n_trials)
 
