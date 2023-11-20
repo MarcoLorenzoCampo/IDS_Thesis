@@ -14,3 +14,11 @@
 2023-11-14 20:55:56,730 - KnowledgeBase - INFO - Loading one hot encoders.
 2023-11-14 20:55:56,731 - KnowledgeBase - INFO - Loading test pca encoders.
 2023-11-14 20:55:56,733 - KnowledgeBase - INFO - Loading existing models.
+2023-11-16 17:40:29,410 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-16 17:40:29,411 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-16 17:40:29,444 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-16 17:40:29,455 - KnowledgeBase - INFO - Loading test sets.
+2023-11-16 17:40:29,536 - KnowledgeBase - INFO - Loading scalers.
+2023-11-16 17:40:29,540 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-16 17:40:29,542 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-16 17:40:29,546 - KnowledgeBase - INFO - Loading existing models.

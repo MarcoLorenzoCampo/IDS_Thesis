@@ -38,3 +38,23 @@ At iterations #51:
 2023-11-14 20:56:19,087 - __main__ - INFO - Normal traffic: 118
 2023-11-14 20:56:19,087 - __main__ - INFO - Quarantined samples: 3
 2023-11-14 20:56:19,088 - __main__ - INFO - Average computation time for 100 samples: 0.0010634806098007575
+2023-11-16 17:40:29,706 - __main__ - INFO - 
+At iterations #1:
+2023-11-16 17:40:30,318 - __main__ - INFO - 
+At iterations #51:
+2023-11-16 17:40:30,878 - __main__ - INFO - Classification of 100 test samples:
+2023-11-16 17:40:30,878 - __main__ - INFO - Anomalies by l1: 36
+2023-11-16 17:40:30,878 - __main__ - INFO - Anomalies by l2: 6
+2023-11-16 17:40:30,878 - __main__ - INFO - Normal traffic: 119
+2023-11-16 17:40:30,878 - __main__ - INFO - Quarantined samples: 3
+2023-11-16 17:40:30,879 - __main__ - INFO - Average computation time for 100 samples: 0.0013812126182928318
+2023-11-16 17:40:58,734 - __main__ - INFO - 
+At iterations #1:
+2023-11-16 17:40:59,211 - __main__ - INFO - 
+At iterations #51:
+2023-11-16 17:40:59,673 - __main__ - INFO - Classification of 100 test samples:
+2023-11-16 17:40:59,673 - __main__ - INFO - Anomalies by l1: 34
+2023-11-16 17:40:59,673 - __main__ - INFO - Anomalies by l2: 7
+2023-11-16 17:40:59,673 - __main__ - INFO - Normal traffic: 122
+2023-11-16 17:40:59,673 - __main__ - INFO - Quarantined samples: 3
+2023-11-16 17:40:59,674 - __main__ - INFO - Average computation time for 100 samples: 0.0010482604245105422
