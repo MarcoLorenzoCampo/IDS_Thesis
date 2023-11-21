@@ -6,7 +6,7 @@ class precisionException(Exception):
     """Raised when the precision of a model falls below a certain threshold."""
     pass
 
-class f1Exception(Exception):
+class fException(Exception):
     """Raised when the F1 score of a model falls below a certain threshold."""
     pass
 

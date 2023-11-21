@@ -4,6 +4,8 @@ import time
 
 import numpy as np
 import Utils
+from CustomExceptions import accuracyException, precisionException, fException, tprException, fprException, \
+    tnrException, fnrException
 
 
 class Metrics:
@@ -178,24 +180,31 @@ class Metrics:
         if self.have_enough_data:
             if self._metrics_1['accuracy'] < self._metrics_thresh_1['accuracy_t']:
                 self.logger.info("Accuracy for Layer 1 fell below the threshold.")
+                raise accuracyException
 
             if self._metrics_1['precision'] < self._metrics_thresh_1['precision_t']:
                 self.logger.info("Precision for Layer 1 fell below the threshold.")
+                raise precisionException
 
             if self._metrics_1['fscore'] < self._metrics_thresh_1['fscore_t']:
                 self.logger.info("Fscore for Layer 1 fell below the threshold.")
+                raise fException
 
             if self._metrics_1['tpr'] < self._metrics_thresh_1['tpr_t']:
                 self.logger.info("Tpr for Layer 1 fell below the threshold.")
+                raise tprException
 
             if self._metrics_1['fpr'] < self._metrics_thresh_1['fpr_t']:
                 self.logger.info("Fpr for Layer 1 fell below the threshold.")
+                raise fprException
 
             if self._metrics_1['tnr'] < self._metrics_thresh_1['tnr_t']:
                 self.logger.info("Tnr for Layer 1 fell below the threshold.")
+                raise tnrException
 
             if self._metrics_1['fnr'] < self._metrics_thresh_1['fnr_t']:
                 self.logger.info("Fnr for Layer 1 fell below the threshold.")
+                raise fnrException
 
     def show_metrics(self):
 

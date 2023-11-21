@@ -17,7 +17,7 @@
         "tnr_t": 0.87,
         "fnr_t": 0.25
     },
-    "time_interval": 5,
+    "time_interval": 15,
     "max_clf_time": 0.005,
     "max_usage": 1
 }

@@ -1,0 +1,76 @@
+2023-11-20 19:57:12,614 - Hypertuner - INFO - Optimizing L1 for tpr.
+2023-11-20 20:06:29,162 - Hypertuner - INFO - Optimizing L1 for tpr.
+2023-11-20 20:13:46,421 - Hypertuner - INFO - Optimizing L1 for tpr.
+2023-11-20 20:21:36,110 - Hypertuner - INFO - Optimizing L1 for tpr.
+2023-11-20 20:38:31,939 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 20:49:23,006 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 20:50:12,836 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 20:51:29,999 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 20:54:37,292 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 20:54:37,332 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:55:01,848 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:55:04,249 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:55:08,752 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:55:13,551 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:55:26,146 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:55:29,730 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:55:43,311 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 20:55:54,856 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 20:56:05,981 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 20:56:15,198 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 20:56:29,903 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 20:56:53,118 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 20:57:04,857 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 20:57:21,625 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 20:57:21,626 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:57:30,883 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:57:31,081 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:57:35,615 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 20:57:39,812 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:03:35,125 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 21:03:35,126 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:03:53,984 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:03:57,772 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:04:02,350 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:04:06,521 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:04:16,147 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:04:32,165 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:04:44,005 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:04:51,324 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:05:06,308 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:05:28,560 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:05:42,524 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:05:55,727 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:06:11,737 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:06:25,914 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 21:06:25,915 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:06:56,200 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:06:59,864 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:07:11,733 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:07:18,555 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:07:21,096 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:07:23,975 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:18:04,831 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 21:18:04,836 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:18:05,899 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:18:22,689 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:18:40,981 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:18:41,908 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:18:47,783 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:19:07,133 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:19:16,804 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:19:24,915 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:19:37,724 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:19:52,463 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:20:03,282 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:20:14,316 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:20:30,124 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:20:43,477 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:20:54,730 - Hypertuner - INFO - Trained a new SVM classifier.
+2023-11-20 21:20:54,841 - Hypertuner - INFO - Optimizing L1 for accuracy.
+2023-11-20 21:20:54,847 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:21:12,178 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:21:12,857 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:21:13,149 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:21:13,638 - Hypertuner - INFO - Trained a new RandomForest classifier.
+2023-11-20 21:21:22,698 - Hypertuner - INFO - Trained a new RandomForest classifier.

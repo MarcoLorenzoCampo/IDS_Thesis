@@ -4,15 +4,15 @@ import pandas as pd
 import Utils
 import threading
 
-from CustomExceptions import quarantineRatioException, fnrException, tnrException, fprException, tprException, \
-    f1Exception, precisionException, accuracyException
+from CustomExceptions import (quarantineRatioException, fnrException, tnrException, fprException, tprException,
+                              precisionException, accuracyException, fException)
 from Infrastructure import DetectionInfrastructure
 
 
 class DetectionSystemLauncher:
     def __init__(self, infrastructure: DetectionInfrastructure):
         self.detection_infrastructure = infrastructure
-        self.logger = Utils.set_logger(__name__)
+        self.logger = Utils.set_logger('Runner')
         self.infrastructure = infrastructure
 
         # load the test sets as simulated traffic samples
@@ -20,7 +20,7 @@ class DetectionSystemLauncher:
         self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
         # clean the output files before a new execution
-        with open('Required Files/Results.txt', 'w') as f:
+        with open('Required Files/Results.txt', 'w'):
             pass
 
         # pause event for the threads
@@ -29,8 +29,9 @@ class DetectionSystemLauncher:
         # thread used to actually run the ids
         self.ids_thread = threading.Thread(target=self.read_packet, args=(self.pause_classification_event,))
 
-    def read_packet(self, pause_event: threading.Event, iterations=100):
+    def read_packet(self, pause_event: threading.Event, iterations=None):
 
+        iterations = self.x_test.shape[0]
         for i, (index, row) in enumerate(self.x_test.iterrows()):
 
             # wait for the event to be unpaused (set)
@@ -46,8 +47,8 @@ class DetectionSystemLauncher:
             actual = self.y_test[index]
             self.detection_infrastructure.ids.classify(sample, actual=actual)
 
-            if i - 1 in list(range(iterations))[::50]:
-                self.logger.info('\nAt iterations #%s:', i)
+            if i - 1 in list(range(iterations))[::200]:
+                self.logger.info('At iterations #%s:', i)
                 self.detection_infrastructure.ids.metrics.show_metrics()
 
         self.logger.info('Classification of %s test samples:', iterations)
@@ -70,9 +71,6 @@ class DetectionSystemLauncher:
         self.logger.info('Average computation time for %s samples: %s', iterations,
                          self.detection_infrastructure.ids.metrics.get_avg_time())
 
-    def artificial_tuning(self):
-        self.detection_infrastructure.hp_tuner.tune()
-
     def run(self):
 
         # start the classification thread
@@ -82,71 +80,51 @@ class DetectionSystemLauncher:
             try:
                 # start the metrics monitor thread and watch for exceptions
                 self.infrastructure.ids.metrics.monitor_metrics()
-                time.sleep(3)
+
+                # analyze the metrics at time intervals
+                time.sleep(15)
 
             except accuracyException as e:
                 self.logger.exception(f"Caught accuracyException: {e}")
                 self.pause_classification_event.clear()    # pause the classification thread
+                self.infrastructure.hp_tuner.tune('accuracy', 'maximize')
 
             except precisionException as e:
                 self.logger.exception(f"Caught precisionException: {e}")
                 self.pause_classification_event.clear()
+                self.infrastructure.hp_tuner.tune('precision', 'maximize')
 
-            except f1Exception as e:
+            except fException as e:
                 self.logger.exception(f"Caught f1Exception: {e}")
                 self.pause_classification_event.clear()
+                self.infrastructure.hp_tuner.tune('fscore', 'maximize')
 
             except tprException as e:
                 self.logger.exception(f"Caught tprException: {e}")
                 self.pause_classification_event.clear()
+                self.infrastructure.hp_tuner.tune('tpr', 'maximize')
 
             except fprException as e:
                 self.logger.exception(f"Caught fprException: {e}")
                 self.pause_classification_event.clear()
+                self.infrastructure.hp_tuner.tune('fpr', 'maximize')
 
             except tnrException as e:
                 self.logger.exception(f"Caught tnrException: {e}")
                 self.pause_classification_event.clear()
+                self.infrastructure.hp_tuner.tune('tnr', 'maximize')
 
             except fnrException as e:
                 self.logger.exception(f"Caught fnrException: {e}")
                 self.pause_classification_event.clear()
+                self.infrastructure.hp_tuner.tune('fnr', 'maximize')
 
             except quarantineRatioException as e:
                 self.logger.exception(f"Caught quarantineRatioException: {e}")
                 self.pause_classification_event.clear()
+                self.infrastructure.hp_tuner.tune('quarantine_ratio', 'minimize')
 
             self.pause_classification_event.set()   # resume the classification thread
-
-        '''
-        self.launch_on_test()
-
-        self.detection_infrastructure.ids.train_accuracy()
-
-        test_acc = self.detection_infrastructure.ids.metrics.get_metrics('accuracy')
-        with open('Required Files/Results.txt', 'a') as f:
-            f.write('BEFORE TUNING FOR FALSE POSITIVES FP:\n')
-            f.write('\nSystem accuracy on the train set: ' + str(test_acc))
-
-        self.detection_infrastructure.ids.reset()
-        self.detection_infrastructure.ids.metrics.reset()
-
-        self.artificial_tuning()
-
-        self.launch_on_test()
-
-        self.detection_infrastructure.ids.train_accuracy()
-
-        test_acc = self.detection_infrastructure.ids.metrics.get_metrics('accuracy')
-        val_acc1 = self.detection_infrastructure.hp_tuner.best_acc1
-        val_acc2 = self.detection_infrastructure.hp_tuner.best_acc2
-        with open('Required Files/Results.txt', 'a') as f:
-            f.write('\n\nAFTER TUNING FOR FALSE POSITIVES FP:\n')
-            f.write('\nSystem accuracy on the train set: ' + str(test_acc))
-            f.write('\nSystem accuracy on the validation set: ' + str(val_acc1) + ', ' + str(val_acc2))
-        '''
-
-        return
 
 
 if __name__ == '__main__':

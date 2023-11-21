@@ -1,7 +1,0 @@
-
-Overall classification:
-Classified = ANOMALY, Actual = ANOMALY: tp -> 39
-Classified = ANOMALY, Actual = NORMAL: fp -> 3
-Classified = NORMAL, Actual = ANOMALY: fn -> 23
-Classified = NORMAL, Actual = NORMAL: tn -> 96
-

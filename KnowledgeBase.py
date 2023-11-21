@@ -109,6 +109,8 @@ class KnowledgeBase:
             self.logger.error('First program execution has no models, training them..')
             self.layer1, self.layer2 = self.__default_training()
 
+        self.show_info()
+
     def update_files(self, to_update):
         # reload the datasets/transformers/encoders from memory if they have been changed
         if to_update == 'train':
