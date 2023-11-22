@@ -1,6 +1,8 @@
 import time
 import numpy as np
 import pandas as pd
+
+import Metrics
 import Utils
 import threading
 
@@ -25,9 +27,12 @@ class DetectionSystemLauncher:
 
         # pause event for the threads
         self.pause_classification_event = threading.Event()
+        self.pause_monitor_event = threading.Event()
 
         # thread used to actually run the ids
         self.ids_thread = threading.Thread(target=self.read_packet, args=(self.pause_classification_event,))
+        self.monitor_thread = threading.Thread(target=self.monitor,
+                                               args=(self.pause_monitor_event, self.detection_infrastructure.metrics))
 
     def read_packet(self, pause_event: threading.Event, iterations=None):
 
@@ -38,7 +43,7 @@ class DetectionSystemLauncher:
             pause_event.wait()
 
             # portion the input for clarity
-            time.sleep(0)
+            time.sleep(0.15)
 
             if i >= iterations:
                 break
@@ -76,17 +81,17 @@ class DetectionSystemLauncher:
         # start the classification thread
         self.ids_thread.start()
 
+        # start the monitor thread
+        self.monitor_thread.start()
+
+    def monitor(self, pause_event: threading.Event, metrics: Metrics):
         while True:
             try:
-                # start the metrics monitor thread and watch for exceptions
-                self.infrastructure.ids.metrics.monitor_metrics()
-
-                # analyze the metrics at time intervals
-                time.sleep(15)
+                metrics.analyze_metrics()
 
             except accuracyException as e:
                 self.logger.exception(f"Caught accuracyException: {e}")
-                self.pause_classification_event.clear()    # pause the classification thread
+                self.pause_classification_event.clear()
                 self.infrastructure.hp_tuner.tune('accuracy', 'maximize')
 
             except precisionException as e:
@@ -124,7 +129,7 @@ class DetectionSystemLauncher:
                 self.pause_classification_event.clear()
                 self.infrastructure.hp_tuner.tune('quarantine_ratio', 'minimize')
 
-            self.pause_classification_event.set()   # resume the classification thread
+            self.pause_classification_event.set()  # resume the classification thread
 
 
 if __name__ == '__main__':

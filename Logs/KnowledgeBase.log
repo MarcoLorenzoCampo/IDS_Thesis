@@ -316,3 +316,60 @@ x_validate_l1 = (25195, 28)
 x_validate_l2 = (1624, 13)
 y_validate_l1 = 25195
 y_validate_l2 = 1624
+2023-11-22 16:44:24,286 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-22 16:44:24,288 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-22 16:44:24,374 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-22 16:44:24,397 - KnowledgeBase - INFO - Loading test sets.
+2023-11-22 16:44:24,558 - KnowledgeBase - INFO - Loading scalers.
+2023-11-22 16:44:24,565 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-22 16:44:24,570 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-22 16:44:24,574 - KnowledgeBase - INFO - Loading existing models.
+2023-11-22 16:44:24,582 - KnowledgeBase - INFO - Shapes and sized of the sets:
+2023-11-22 16:44:24,582 - KnowledgeBase - INFO - TRAIN:
+x_train_l1 = (100778, 28)
+x_train_l2 = (1624, 13)
+y_train_l1 = 100778
+y_train_l2 = 1624
+2023-11-22 16:44:24,583 - KnowledgeBase - INFO - VALIDATE:
+x_validate_l1 = (25195, 28)
+x_validate_l2 = (1624, 13)
+y_validate_l1 = 25195
+y_validate_l2 = 1624
+2023-11-22 19:30:14,105 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-22 19:30:14,105 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-22 19:30:14,118 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-22 19:30:14,123 - KnowledgeBase - INFO - Loading test sets.
+2023-11-22 19:30:14,184 - KnowledgeBase - INFO - Loading scalers.
+2023-11-22 19:30:14,186 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-22 19:30:14,187 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-22 19:30:14,189 - KnowledgeBase - INFO - Loading existing models.
+2023-11-22 19:30:14,190 - KnowledgeBase - INFO - Shapes and sized of the sets:
+2023-11-22 19:30:14,191 - KnowledgeBase - INFO - TRAIN:
+x_train_l1 = (100778, 28)
+x_train_l2 = (1624, 13)
+y_train_l1 = 100778
+y_train_l2 = 1624
+2023-11-22 19:30:14,191 - KnowledgeBase - INFO - VALIDATE:
+x_validate_l1 = (25195, 28)
+x_validate_l2 = (1624, 13)
+y_validate_l1 = 25195
+y_validate_l2 = 1624
+2023-11-22 19:33:32,150 - KnowledgeBase - INFO - Creating an instance of KnowledgeBase.
+2023-11-22 19:33:32,150 - KnowledgeBase - INFO - Loading the train sets.
+2023-11-22 19:33:32,161 - KnowledgeBase - INFO - Loading the validation sets.
+2023-11-22 19:33:32,165 - KnowledgeBase - INFO - Loading test sets.
+2023-11-22 19:33:32,219 - KnowledgeBase - INFO - Loading scalers.
+2023-11-22 19:33:32,221 - KnowledgeBase - INFO - Loading one hot encoders.
+2023-11-22 19:33:32,222 - KnowledgeBase - INFO - Loading test pca encoders.
+2023-11-22 19:33:32,223 - KnowledgeBase - INFO - Loading existing models.
+2023-11-22 19:33:32,225 - KnowledgeBase - INFO - Shapes and sized of the sets:
+2023-11-22 19:33:32,225 - KnowledgeBase - INFO - TRAIN:
+x_train_l1 = (100778, 28)
+x_train_l2 = (1624, 13)
+y_train_l1 = 100778
+y_train_l2 = 1624
+2023-11-22 19:33:32,225 - KnowledgeBase - INFO - VALIDATE:
+x_validate_l1 = (25195, 28)
+x_validate_l2 = (1624, 13)
+y_validate_l1 = 25195
+y_validate_l2 = 1624

@@ -315,3 +315,27 @@ Traceback (most recent call last):
   File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 183, in monitor_metrics
     raise accuracyException
 CustomExceptions.accuracyException
+2023-11-22 16:44:41,832 - Runner - INFO - At iterations #1:
+2023-11-22 16:44:54,756 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 85, in run
+    self.infrastructure.ids.metrics.monitor_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 183, in monitor_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-22 19:30:29,564 - Runner - INFO - At iterations #1:
+2023-11-22 19:30:44,250 - Runner - ERROR - Caught tprException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 85, in run
+    self.infrastructure.ids.metrics.monitor_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 195, in monitor_metrics
+    raise tprException
+CustomExceptions.tprException
+2023-11-22 19:33:47,614 - Runner - INFO - At iterations #1:
+2023-11-22 19:34:02,300 - Runner - ERROR - Caught tprException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 85, in run
+    self.infrastructure.ids.metrics.monitor_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 196, in monitor_metrics
+    raise tprException
+CustomExceptions.tprException

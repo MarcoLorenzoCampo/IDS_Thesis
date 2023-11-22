@@ -23,7 +23,7 @@ class Metrics:
                 self._max_clf_time = metrics_thresholds['max_clf_time']
                 self.logger.info("Metrics thresholds loaded from file.")
         except FileNotFoundError:
-            self.logger.warning(f"Metrics thresholds file not found: {file_path}")
+            self.logger.error(f"Metrics thresholds file not found: {file_path}")
 
         # count of the outputs for layer1
         self._count_1 = {
@@ -142,7 +142,8 @@ class Metrics:
             if all(value != 0 for value in self._count_1.values()):
                 self.__compute_performance_metrics(target=1)
             else:
-                self.logger.error('Not enough data for LAYER1, skipping metrics computation for now.')
+                # self.logger.error('Not enough data for LAYER1, skipping metrics computation for now.')
+                pass
 
         if layer == 2:
             self._count_2['all'] += value
@@ -152,7 +153,8 @@ class Metrics:
             if all(value != 0 for value in self._count_2.values()):
                 self.__compute_performance_metrics(target=2)
             else:
-                self.logger.error('Not enough data for LAYER2, skipping metrics computation for now.')
+                # self.logger.error('Not enough data for LAYER2, skipping metrics computation for now.')
+                pass
 
         self.__compute_classification_metrics()
 
@@ -175,8 +177,7 @@ class Metrics:
     def update_classifications(self, tag, value):
         self._overall[tag] += value
 
-    def monitor_metrics(self):
-
+    def analyze_metrics(self):
         if self.have_enough_data:
             if self._metrics_1['accuracy'] < self._metrics_thresh_1['accuracy_t']:
                 self.logger.info("Accuracy for Layer 1 fell below the threshold.")
@@ -205,6 +206,7 @@ class Metrics:
             if self._metrics_1['fnr'] < self._metrics_thresh_1['fnr_t']:
                 self.logger.info("Fnr for Layer 1 fell below the threshold.")
                 raise fnrException
+            time.sleep(5)   # wait a bit before assessing the metrics
 
     def show_metrics(self):
 
