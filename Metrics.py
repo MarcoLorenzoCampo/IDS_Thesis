@@ -12,7 +12,7 @@ class Metrics:
     def __init__(self):
         self.logger = Utils.set_logger(__name__)
 
-        file_path = 'Required Files/metrics_thresholds.json'
+        file_path = 'KB Process/Required Files/metrics_thresholds.json'
         try:
             with open(file_path, 'r') as file:
                 metrics_thresholds = json.load(file)

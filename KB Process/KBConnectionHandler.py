@@ -1,23 +1,25 @@
 # set an instance-level logger
 import functools
+import logging
+import KnowledgeBase
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
 
-import Utils
-
-LOGGER = Utils.set_logger(__name__)
+LOGGER = logging.getLogger(__name__)
+LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 LOGGER.info('Creating an instance of KnowledgeBase connection handler.')
 
-class Connector:
 
+class Connector:
     EXCHANGE = 'message'
     EXCHANGE_TYPE = ExchangeType.topic
-    QUEUE = 'text'
-    ROUTING_KEY = 'example.text'
+    QUEUE = 'test'
+    ROUTING_KEY = 'testing_key'
 
-    def __init__(self, ampq_url):
+    def __init__(self, kb: KnowledgeBase, ampq_url):
         # Set values for the pika connection
         self.should_reconnect = False
         self.was_consuming = False
@@ -30,20 +32,22 @@ class Connector:
         self._consuming = False
         self._prefetch_count = 1
 
+        # Set reference to the KnowledgeBase
+        self.kb = kb
+
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
-        When the connection is established, the on_connection_open method
-        will be invoked by pika.
+        When the connection is established, pika will invoke the on_connection_open method.
 
-        :rtype: pika.adapters.asyncio_connection.AsyncioConnection
-
+        :rtype: Pika.adapters.asyncio_connection.AsyncioConnection
         """
         LOGGER.info('Connecting to %s', self._url)
         return AsyncioConnection(
             parameters=pika.URLParameters(self._url),
             on_open_callback=self.on_connection_open,
             on_open_error_callback=self.on_connection_open_error,
-            on_close_callback=self.on_connection_closed)
+            on_close_callback=self.on_connection_closed
+        )
 
     def close_connection(self):
         self._consuming = False
@@ -54,7 +58,7 @@ class Connector:
             self._connection.close()
 
     def on_connection_open(self, _unused_connection):
-        """This method is called by pika once the connection to RabbitMQ has
+        """Pika calls this method once the connection to RabbitMQ has
         been established. It passes the handle to the connection object in
         case we need it, but in this case, we'll just mark it unused.
 
@@ -66,7 +70,7 @@ class Connector:
         self.open_channel()
 
     def on_connection_open_error(self, _unused_connection, err):
-        """This method is called by pika if the connection to RabbitMQ
+        """Pika calls this method if the connection to RabbitMQ
         can't be established.
 
         :param pika.adapters.asyncio_connection.AsyncioConnection _unused_connection:
@@ -78,7 +82,7 @@ class Connector:
         self.reconnect()
 
     def on_connection_closed(self, _unused_connection, reason):
-        """This method is invoked by pika when the connection to RabbitMQ is
+        """Pika invokes this method when the connection to RabbitMQ is
         closed unexpectedly. Since it is unexpected, we will reconnect to
         RabbitMQ if it disconnects.
 
@@ -105,15 +109,15 @@ class Connector:
 
     def open_channel(self):
         """Open a new channel with RabbitMQ by issuing the Channel.Open RPC
-        command. When RabbitMQ responds that the channel is open, the
-        on_channel_open callback will be invoked by pika.
+        command. When RabbitMQ responds that the channel is open, pika         will invoke the
+on_channel_open callback.
 
         """
         LOGGER.info('Creating a new channel')
         self._connection.channel(on_open_callback=self.on_channel_open)
 
     def on_channel_open(self, channel):
-        """This method is invoked by pika when the channel has been opened.
+        """Pika invokes this method when the channel has been opened.
         The channel object is passed in so we can make use of it.
 
         Since the channel is now open, we'll declare the exchange to use.
@@ -150,8 +154,8 @@ class Connector:
 
     def setup_exchange(self, exchange_name):
         """Setup the exchange on RabbitMQ by invoking the Exchange.Declare RPC
-        command. When it is complete, the on_exchange_declareok method will
-        be invoked by pika.
+        command. When it is complete, pika will
+        invoke the on_exchange_declareok method.
 
         :param str|unicode exchange_name: The name of the exchange to declare
 
@@ -159,8 +163,7 @@ class Connector:
         LOGGER.info('Declaring exchange: %s', exchange_name)
         # Note: using functools.partial is not required, it is demonstrating
         # how arbitrary data can be passed to the callback when it is called
-        cb = functools.partial(
-            self.on_exchange_declareok, userdata=exchange_name)
+        cb = functools.partial(self.on_exchange_declareok, userdata=exchange_name)
         self._channel.exchange_declare(
             exchange=exchange_name,
             exchange_type=self.EXCHANGE_TYPE,
@@ -179,8 +182,8 @@ class Connector:
 
     def setup_queue(self, queue_name):
         """Setup the queue on RabbitMQ by invoking the Queue.Declare RPC
-        command. When it is complete, the on_queue_declareok method will
-        be invoked by pika.
+        command. When it is complete, pika will
+        invoke the on_queue_declareok method.
 
         :param str|unicode queue_name: The name of the queue to declare.
 
@@ -193,8 +196,8 @@ class Connector:
         """Method invoked by pika when the Queue.Declare RPC call made in
         setup_queue has completed. In this method we will bind the queue
         and exchange together with the routing key by issuing the Queue.Bind
-        RPC command. When this command is complete, the on_bindok method will
-        be invoked by pika.
+        RPC command. When this command is complete, pika will
+        invoke the on_bindok method.
 
         :param pika.frame.Method _unused_frame: The Queue.DeclareOk frame
         :param str|unicode userdata: Extra user data (queue name)
@@ -282,8 +285,7 @@ class Connector:
 
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         """Invoked by pika when a message is delivered from RabbitMQ. The
-        channel is passed for your convenience. The basic_deliver object that
-        is passed in carries the exchange, routing key, delivery tag and
+        channel is passed for your convenience. The basic_deliver object passed in carries the exchange, routing key, delivery tag and
         a redelivered flag for the message. The properties passed in is an
         instance of BasicProperties with the message properties and the body
         is the message that was sent.
@@ -297,6 +299,7 @@ class Connector:
         LOGGER.info('Received message # %s from %s: %s',
                     basic_deliver.delivery_tag, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
+        self.kb.perform_query(str(body))
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
@@ -320,7 +323,7 @@ class Connector:
             self._channel.basic_cancel(self._consumer_tag, cb)
 
     def on_cancelok(self, _unused_frame, userdata):
-        """This method is invoked by pika when RabbitMQ acknowledges the
+        """Pika invokes this method when RabbitMQ acknowledges the
         cancellation of a consumer. At this point we will close the channel.
         This will invoke the on_channel_closed method once the channel has been
         closed, which will in-turn close the connection.
@@ -358,7 +361,7 @@ class Connector:
         connection. The IOLoop is started again because this method is invoked
         when CTRL-C is pressed raising a KeyboardInterrupt exception. This
         exception stops the IOLoop which needs to be running for pika to
-        communicate with RabbitMQ. All of the commands issued prior to starting
+        communicate with RabbitMQ. All the commands issued prior to starting
         the IOLoop will be buffered but not processed.
 
         """

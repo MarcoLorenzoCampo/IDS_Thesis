@@ -1,6 +1,5 @@
 import copy
 import time
-import threading
 
 import Metrics
 from Metrics import Metrics
@@ -223,7 +222,7 @@ class DetectionSystem:
         l2_accuracy = accuracy_score(self.kb.y_train_l2, l2_prediction)
 
         # write accuracy scores to file
-        with open('Required Files/Results.txt', 'a') as f:
+        with open('KB Process/Required Files/Results.txt', 'a') as f:
             f.write("\nLayer 1 accuracy on the train set:" + str(l1_accuracy))
             f.write("\nLayer 2 accuracy on the train set:" + str(l2_accuracy))
 
