@@ -1,16 +1,29 @@
 import copy
+import functools
 import os.path
 import pickle
-import torch
+import sqlite3
+import sys
+import threading
+import time
 
 import numpy as np
 import pandas as pd
 import joblib
+import pika
+
+from pika.adapters.asyncio_connection import AsyncioConnection
+from pika.exchange_type import ExchangeType
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 
+import KBConnectionHandler
 import Utils
 
+# set an instance-level logger
+LOGGER = Utils.set_logger(__name__)
+LOGGER.info('Creating an instance of KnowledgeBase.')
 
 class KnowledgeBase:
     """
@@ -18,33 +31,13 @@ class KnowledgeBase:
     also contains the metrics that are constantly updated after each classification attempt.
     This is 'unprotected' data that can be accessed from the outside classes.
     """
-    # global train, validation, test sets
-    x_train_l1, x_train_l2, y_train_l1, y_train_l2 = [], [], [], []
-    x_validate_l1, x_validate_l2, y_validate_l1, y_validate_l2 = [], [], [], []
-    x_test, y_test = [], []
 
-    # ICFS features, categorical features
-    features_l1, features_l2, cat_features = [], [], []
+    EXCHANGE = 'message'
+    EXCHANGE_TYPE = ExchangeType.topic
+    QUEUE = 'text'
+    ROUTING_KEY = 'example.text'
 
-    # scalers, one hot encoder
-    scaler1, scaler2, ohe1, ohe2 = [], [], [], []
-
-    # pca encoders
-    pca1, pca2 = [], []
-
-    # actual classifiers
-    layer1, layer2 = [], []
-
-    def __init__(self):
-        """
-        This is the initialization function for the class responsible for setting up the classifiers and
-        process data to make it ready for analysis.
-        Data is loaded when the class is initiated, then updated when necessary, calling the function
-        update_files(.)
-        """
-        # set an instance-level logger
-        self.logger = Utils.set_logger(__name__)
-        self.logger.info('Creating an instance of KnowledgeBase.')
+    def __init__(self, ampq_url, model_name1: str = None, model_name2: str = None):
 
         # manually set the detection thresholds
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
@@ -57,7 +50,7 @@ class KnowledgeBase:
             self.features_l2 = f.read().split(',')
 
         # Load completely processed datasets for training
-        self.logger.info('Loading the train sets.')
+        LOGGER.info('Loading the train sets.')
         self.x_train_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train1.pkl')
         self.x_train_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train2.pkl')
         self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy',
@@ -66,7 +59,7 @@ class KnowledgeBase:
                                   allow_pickle=True)
 
         # Load completely processed validations sets
-        self.logger.info('Loading the validation sets.')
+        LOGGER.info('Loading the validation sets.')
         self.x_validate_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate1.pkl')
         self.x_validate_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate2.pkl')
         self.y_validate_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDValidate+_l1_targets.npy',
@@ -75,7 +68,7 @@ class KnowledgeBase:
                                      allow_pickle=True)
 
         # Load completely processed test set
-        self.logger.info('Loading test sets.')
+        LOGGER.info('Loading test sets.')
         self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
         self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
@@ -83,17 +76,17 @@ class KnowledgeBase:
         self.cat_features = ['protocol_type', 'service', 'flag']
 
         # load the minmax scalers used in training
-        self.logger.info('Loading scalers.')
+        LOGGER.info('Loading scalers.')
         self.scaler1 = joblib.load('Required Files/scalers/scaler1.pkl')
         self.scaler2 = joblib.load('Required Files/scalers/scaler2.pkl')
 
         # load one hot encoder for processing according to layer
-        self.logger.info('Loading one hot encoders.')
+        LOGGER.info('Loading one hot encoders.')
         self.ohe1 = joblib.load('Required Files/one_hot_encoders/ohe1.pkl')
         self.ohe2 = joblib.load('Required Files/one_hot_encoders/ohe2.pkl')
 
         # load pca transformers to transform features according to layer
-        self.logger.info('Loading test pca encoders.')
+        LOGGER.info('Loading test pca encoders.')
         self.pca1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer1_transformer.pkl')
         self.pca2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer2_transformer.pkl')
 
@@ -101,18 +94,65 @@ class KnowledgeBase:
         if (os.path.exists('Models/Original models/NSL_l1_classifier_og.pkl') and
                 os.path.exists('Models/Original models/NSL_l2_classifier_og.pkl')):
 
-            self.logger.info('Loading existing models.')
+            LOGGER.info('Loading existing models.')
             with open('Models/Original models/NSL_l1_classifier_og.pkl', 'rb') as file:
                 self.layer1 = pickle.load(file)
             with open('Models/Original models/NSL_l2_classifier_og.pkl', 'rb') as file:
                 self.layer2 = pickle.load(file)
         else:
-            self.logger.error('First program execution has no models, training them..')
-            self.layer1, self.layer2 = self.__default_training()
+            LOGGER.error('First program execution has no models, training them..')
+            self.layer1, self.layer2 = self.__default_training(model_name1=model_name1, model_name2=model_name2)
 
-        self.show_info()
+        # Initialize an in-memory SQLite3 database
+        self.sql_connection = sqlite3.connect(':memory:')
+        self.cursor = self.sql_connection.cursor()
 
-    def update_files(self, to_update):
+        # Create tables in the in-memory database for your datasets
+        self.__fill_tables()
+        # Remove all the variables containing the dataframes
+        self.__clean()
+
+        # Component that handles connections
+        self.connection_handler = KBConnectionHandler.Connector(ampq_url)
+
+    def __fill_tables(self):
+        # create a table for each train set
+        self.x_train_l1.to_sql('x_train_l1', self.sql_connection, index=False, if_exists='replace')
+        self.x_train_l2.to_sql('x_train_l2', self.sql_connection, index=False, if_exists='replace')
+
+        # create a table for each validation set
+        self.x_validate_l1.to_sql('x_validate_l1', self.sql_connection, index=False, if_exists='replace')
+        self.x_validate_l2.to_sql('x_validate_l2', self.sql_connection, index=False, if_exists='replace')
+
+        # also for the test set since we may need it
+        self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')
+
+        # now append target variables as the last column of each table
+        self.__append_to_table('x_train_l1', 'target', self.y_train_l1)
+        self.__append_to_table('x_train_l2', 'target', self.y_train_l2)
+        self.__append_to_table('x_validate_l1', 'target', self.y_validate_l1)
+        self.__append_to_table('x_validate_l2', 'target', self.y_validate_l2)
+        self.__append_to_table('x_test', 'target', self.y_test)
+
+    def __append_to_table(self, table_name, column_name, target_values):
+        # Fetch the existing table from the in-memory database
+        existing_data = pd.read_sql_query(f'SELECT * FROM {table_name}', self.sql_connection)
+        # Append the target column to the existing table
+        existing_data[column_name] = target_values
+        # Update the table in the in-memory database
+        existing_data.to_sql(table_name, self.sql_connection, if_exists='replace', index=False)
+
+    def __clean(self):
+        # Remove instances of datasets to free up memory
+        del self.x_train_l1, self.x_train_l2, self.y_train_l1, self.y_train_l2
+        del self.x_validate_l1, self.x_validate_l2, self.y_validate_l1, self.y_validate_l2
+        del self.x_test, self.y_test
+
+    def __perform_query(self, sql_query):
+        result_df = pd.read_sql_query(sql_query, self.sql_connection)
+        return result_df
+
+    def __update_files(self, to_update):
         # reload the datasets/transformers/encoders from memory if they have been changed
         if to_update == 'train':
             self.x_train_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train1.pkl')
@@ -133,191 +173,176 @@ class KnowledgeBase:
             self.ohe1 = joblib.load('Required Files/one_hot_encoders/ohe1.pkl')
             self.ohe2 = joblib.load('Required Files/one_hot_encoders/ohe2.pkl')
 
-    def __default_training(self) -> (RandomForestClassifier, SVC):
+        # Create tables in the in-memory database for your datasets
+        self.__fill_tables()
+        # Remove all the variables containing the dataframes
+        self.__clean()
+
+    def __default_training(self, model_name1: str = None, model_name2: str = None):
         """
         Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
         For clarity, all the hyperparameters for random forest and svm are listed below.
         :return: Trained models for layer 1 and 2 respectively
         """
 
+        classifier1, classifier2 = None, None
+
         # Start with training classifier 1
-        classifier1 = (RandomForestClassifier(
-            n_estimators=25,
-            criterion='gini',
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
-            min_weight_fraction_leaf=0.0,
-            max_features='sqrt',
-            max_leaf_nodes=None,
-            min_impurity_decrease=0.0,
-            bootstrap=True,
-            oob_score=False,
-            n_jobs=None,
-            random_state=None,
-            verbose=0,
-            warm_start=False,
-            class_weight=None,
-            ccp_alpha=0.0,
-            max_samples=None
-        ).fit(self.x_train_l1, self.y_train_l1))
+        if model_name1 == 'NBC':
+            classifier1 = GaussianNB().fit(self.x_train_l1, self.y_train_l1)
+
+        if model_name1 == 'SVM':
+            classifier1 = (SVC(
+                C=0.1,
+                kernel='rbf',
+                degree=3,
+                gamma=0.01,
+                coef0=0.0,
+                shrinking=True,
+                probability=True,
+                tol=1e-3,
+                cache_size=200,
+                class_weight=None,
+                verbose=False,
+                max_iter=-1,
+                decision_function_shape='ovr'
+            ).fit(self.x_train_l2, self.y_train_l2))
 
         # Now train classifier 2
-        classifier2 = (SVC(
-            C=0.1,
-            kernel='rbf',
-            degree=3,
-            gamma=0.01,
-            coef0=0.0,
-            shrinking=True,
-            probability=True,
-            tol=1e-3,
-            cache_size=200,
-            class_weight=None,
-            verbose=False,
-            max_iter=-1,
-            decision_function_shape='ovr'
-        ).fit(self.x_train_l2, self.y_train_l2))
+        if model_name2 == 'NBC':
+            classifier2 = GaussianNB().fit(self.x_train_l2, self.y_train_l2)
 
-        # Save models to file
-        with open('Models/Original models/NSL_l1_classifier_og.pkl', 'wb') as model_file:
-            pickle.dump(classifier1, model_file)
-        with open('Models/Original models/NSL_l2_classifier_og.pkl', 'wb') as model_file:
-            pickle.dump(classifier2, model_file)
+        if model_name2 == 'RandomForest':
+            classifier2 = (RandomForestClassifier(
+                n_estimators=25,
+                criterion='gini',
+                max_depth=None,
+                min_samples_split=2,
+                min_samples_leaf=1,
+                min_weight_fraction_leaf=0.0,
+                max_features='sqrt',
+                max_leaf_nodes=None,
+                min_impurity_decrease=0.0,
+                bootstrap=True,
+                oob_score=False,
+                n_jobs=None,
+                random_state=None,
+                verbose=0,
+                warm_start=False,
+                class_weight=None,
+                ccp_alpha=0.0,
+                max_samples=None
+            ).fit(self.x_train_l1, self.y_train_l1))
 
-        return classifier1, classifier2
+        # Default case, no classifier is specified
+        if model_name1 is None:
+            classifier1 = (RandomForestClassifier(
+                n_estimators=25,
+                criterion='gini',
+                max_depth=None,
+                min_samples_split=2,
+                min_samples_leaf=1,
+                min_weight_fraction_leaf=0.0,
+                max_features='sqrt',
+                max_leaf_nodes=None,
+                min_impurity_decrease=0.0,
+                bootstrap=True,
+                oob_score=False,
+                n_jobs=None,
+                random_state=None,
+                verbose=0,
+                warm_start=False,
+                class_weight=None,
+                ccp_alpha=0.0,
+                max_samples=None
+            ).fit(self.x_train_l1, self.y_train_l1))
 
-    def show_info(self):
-        self.logger.info('Shapes and sized of the sets:')
-        self.logger.info(f'TRAIN:\n'
+        if model_name2 is None:
+            classifier2 = (SVC(
+                C=0.1,
+                kernel='rbf',
+                degree=3,
+                gamma=0.01,
+                coef0=0.0,
+                shrinking=True,
+                probability=True,
+                tol=1e-3,
+                cache_size=200,
+                class_weight=None,
+                verbose=False,
+                max_iter=-1,
+                decision_function_shape='ovr'
+            ).fit(self.x_train_l2, self.y_train_l2))
+
+        if classifier1 is None or classifier2 is None:
+            LOGGER.critical('Error in training classifiers.')
+        else:
+            # Save models to file
+            with open('Models/Original models/NSL_l1_classifier_og.pkl', 'wb') as model_file:
+                pickle.dump(classifier1, model_file)
+            with open('Models/Original models/NSL_l2_classifier_og.pkl', 'wb') as model_file:
+                pickle.dump(classifier2, model_file)
+
+            return classifier1, classifier2
+
+    def __show_info(self):
+        LOGGER.info('Shapes and sized of the sets:')
+        LOGGER.info(f'TRAIN:\n'
                          f'x_train_l1 = {self.x_train_l1.shape}\n'
                          f'x_train_l2 = {self.x_train_l2.shape}\n'
                          f'y_train_l1 = {len(self.y_train_l1)}\n'
                          f'y_train_l2 = {len(self.y_train_l2)}')
-        self.logger.info(f'VALIDATE:\n'
+        LOGGER.info(f'VALIDATE:\n'
                          f'x_validate_l1 = {self.x_validate_l1.shape}\n'
                          f'x_validate_l2 = {self.x_validate_l2.shape}\n'
                          f'y_validate_l1 = {len(self.y_validate_l1)}\n'
                          f'y_validate_l2 = {len(self.y_validate_l2)}')
 
+class ReconnectingConsumer:
+    """
+    Declares an instance of a knowledge base, and handles the setup of its component
+    connection_handler.
+    """
+    def __init__(self, amqp_url, model_name1: str = None, model_name2: str = None):
+        self._reconnect_delay = 0
+        self._amqp_url = amqp_url
+        self._consumer = KnowledgeBase(self._amqp_url, model_name1=model_name1, model_name2=model_name2)
 
-def __pearson_correlated_features(x, y, threshold):
-    y['target'] = y['target'].astype(int)
+    def run(self):
+        while True:
+            try:
+                self._consumer.connection_handler.run()
+            except KeyboardInterrupt:
+                self._consumer.connection_handler.stop()
+                break
+            self._maybe_reconnect()
 
-    for p in x.columns:
-        x[p] = x[p].astype(float)
+    def _maybe_reconnect(self):
+        if self._consumer.connection_handler.should_reconnect:
+            self._consumer.connection_handler.stop()
+            reconnect_delay = self._get_reconnect_delay()
+            LOGGER.info('Reconnecting after %d seconds', reconnect_delay)
+            time.sleep(reconnect_delay)
+            self._consumer = KnowledgeBase(self._amqp_url)
 
-    # Ensure y is a DataFrame for consistency
-    if isinstance(y, pd.Series):
-        y = pd.DataFrame(y, columns=['target'])
-
-    # Calculate the Pearson's correlation coefficients between features and the target variable(s)
-    corr_matrix = x.corrwith(y['target'])
-
-    # Select features with correlations above the threshold
-    selected_features = x.columns[corr_matrix.abs() > threshold].tolist()
-
-    return selected_features
-
-
-def __compute_set_difference(df1, df2):
-    # Create a new DataFrame containing the set difference of the two DataFrames.
-    df_diff = df1[~df1.index.isin(df2.index)]
-    # Return the DataFrame.
-    return df_diff
+    def _get_reconnect_delay(self):
+        if self._consumer.connection_handler.was_consuming:
+            self._reconnect_delay = 0
+        else:
+            self._reconnect_delay += 1
+        if self._reconnect_delay > 30:
+            self._reconnect_delay = 30
+        return self._reconnect_delay
 
 
-def perform_icfs(x_train):
-    # now ICFS only on the numerical features
-    num_train = copy.deepcopy(x_train)
-    del num_train['protocol_type']
-    del num_train['service']
-    del num_train['flag']
+def main():
+    ampq_url = sys.argv[1] if len(sys.argv) > 1 else 'localhost'
+    model1 = sys.argv[2] if len(sys.argv) > 2 else None
+    model2 = sys.argv[3] if len(sys.argv) > 3 else None
 
-    target = pd.DataFrame()
-    target['target'] = np.array([1 if x != 'normal' else 0 for x in num_train['label']])
-    num_train = pd.concat([num_train, target], axis=1)
+    consumer = ReconnectingConsumer(amqp_url=ampq_url, model_name1=model1, model_name2=model2)
+    consumer.run()
 
-    # These are how attacks are categorized in the trainset
-    dos_list = ['back', 'land', 'neptune', 'pod', 'smurf', 'teardrop']
-    probe_list = ['ipsweep', 'portsweep', 'satan', 'nmap']
-    u2r_list = ['loadmodule', 'perl', 'rootkit', 'buffer_overflow']
-    r2l_list = ['ftp_write', 'guess_passwd', 'imap', 'multihop', 'phf', 'spy', 'warezclient', 'warezmaster']
-    normal = ['normal']
 
-    # useful sub-sets
-    x_normal = num_train[num_train['label'].isin(normal)]
-    x_u2r = num_train[num_train['label'].isin(u2r_list)]
-    x_r2l = num_train[num_train['label'].isin(r2l_list)]
-    x_dos = num_train[num_train['label'].isin(dos_list)]
-    x_probe = num_train[num_train['label'].isin(probe_list)]
-
-    # start the ICFS with l1
-
-    # features for dos
-    dos = copy.deepcopy(num_train)
-    del dos['target']
-    y = np.array([1 if x in dos_list else 0 for x in dos['label']])
-    y_dos = pd.DataFrame(y, columns=['target'])
-    del dos['label']
-    dos_all = __pearson_correlated_features(dos, y_dos, 0.1)
-    print(dos_all)
-
-    # features for probe
-    probe = copy.deepcopy(num_train)
-    del probe['target']
-    y = np.array([1 if x in probe_list else 0 for x in probe['label']])
-    y_probe = pd.DataFrame(y, columns=['target'])
-    del probe['label']
-    probe_all = __pearson_correlated_features(probe, y_probe, 0.1)
-    print(probe_all)
-
-    # intersect for the optimal features
-    set_dos = set(dos_all)
-    set_probe = set(probe_all)
-
-    comm_features_l1 = set_probe & set_dos
-
-    print('common features to train l1: ', comm_features_l1)
-
-    # now l2 needs the features to describe the difference between rare attacks and normal traffic
-
-    # features for u2r
-    u2r = pd.concat([x_u2r, x_normal], axis=0)
-    del u2r['target']
-    y = np.array([1 if x in u2r_list else 0 for x in u2r['label']])
-    y_u2r = pd.DataFrame(y, columns=['target'])
-    del u2r['label']
-    u2r_all = __pearson_correlated_features(u2r, y_u2r, 0.01)
-    print(u2r_all)
-
-    # features for r2l
-    r2l = pd.concat([x_r2l, x_normal], axis=0)
-    del r2l['target']
-    y = np.array([1 if x in r2l_list else 0 for x in r2l['label']])
-    y_r2l = pd.DataFrame(y, columns=['target'])
-    del r2l['label']
-    r2l_all = __pearson_correlated_features(r2l, y_r2l, 0.01)
-    print(r2l_all)
-
-    # intersect for the optimal features
-    set_r2l = set(r2l_all)
-    set_u2r = set(u2r_all)
-
-    comm_features_l2 = set_r2l & set_u2r
-    # print('Common features to train l2: ', len(common_features_l2), common_features_l2)
-
-    with open('Required Files/test_l1.txt', 'w') as g:
-        for a, x in enumerate(comm_features_l1):
-            if a < len(comm_features_l1) - 1:
-                g.write(x + ',' + '\n')
-            else:
-                g.write(x)
-
-    # read the common features from file
-    with open('Required Files/test_l2.txt', 'w') as g:
-        for a, x in enumerate(comm_features_l2):
-            if a < len(comm_features_l2) - 1:
-                g.write(x + ',' + '\n')
-            else:
-                g.write(x)
+if __name__ == '__main__':
+    main()

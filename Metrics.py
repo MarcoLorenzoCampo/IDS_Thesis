@@ -86,7 +86,11 @@ class Metrics:
         self._fprs_1 = []
         self._tprs_2 = []
         self._fprs_2 = []
-        self.have_enough_data = False
+
+        # Event to signal when there's enough data for analysis
+        self.enough_data_event = threading.Event()
+        # unset the event because it starts with no data
+        self.enough_data_event.clear()
 
     def __compute_performance_metrics(self, target: int):
 
@@ -128,38 +132,26 @@ class Metrics:
         metrics['fscore'] = 2 * (metrics['precision'] * metrics['tpr']) / (
                 metrics['precision'] + metrics['tpr'])
 
+        # set the event, enough data has been collected
+        self.enough_data_event.set()
+
     def update_count(self, tag, value, layer: int):
-
         # increase the count of encountered traffic samples
-        self._overall['total'] = self._overall['total'] + 1
+        self._overall['total'] += 1
 
-        # what metrics we update
-        if layer == 1:
-            self._count_1['all'] += value
-            self._count_1[tag] += value
+        # Update metrics based on the specified layer
+        count_dict = self._count_1 if layer == 1 else self._count_2
 
-            # compute the metrics only if enough samples have been collected
-            if all(value != 0 for value in self._count_1.values()):
-                self.__compute_performance_metrics(target=1)
-            else:
-                # self.logger.error('Not enough data for LAYER1, skipping metrics computation for now.')
-                pass
+        count_dict['all'] += value
+        count_dict[tag] += value
 
-        if layer == 2:
-            self._count_2['all'] += value
-            self._count_2[tag] += value
-
-            # compute the metrics only if enough samples have been collected
-            if all(value != 0 for value in self._count_2.values()):
-                self.__compute_performance_metrics(target=2)
-            else:
-                # self.logger.error('Not enough data for LAYER2, skipping metrics computation for now.')
-                pass
+        # Compute metrics only if enough samples have been collected
+        if all(val != 0 for val in count_dict.values()):
+            self.__compute_performance_metrics(target=layer)
+        else:
+            self.logger.error(f'Not enough data for LAYER{layer}, skipping metrics computation for now.')
 
         self.__compute_classification_metrics()
-
-        # Runs only if no exception is raised, aka enough values have been encountered
-        self.have_enough_data = True
 
     def __compute_classification_metrics(self):
         # normal ratio computation
@@ -178,35 +170,39 @@ class Metrics:
         self._overall[tag] += value
 
     def analyze_metrics(self):
-        if self.have_enough_data:
-            if self._metrics_1['accuracy'] < self._metrics_thresh_1['accuracy_t']:
-                self.logger.info("Accuracy for Layer 1 fell below the threshold.")
-                raise accuracyException
 
-            if self._metrics_1['precision'] < self._metrics_thresh_1['precision_t']:
-                self.logger.info("Precision for Layer 1 fell below the threshold.")
-                raise precisionException
+        self.enough_data_event.wait()   # Wait for the event to be set
+        self.logger.info('Analyzing the metrics..')
 
-            if self._metrics_1['fscore'] < self._metrics_thresh_1['fscore_t']:
-                self.logger.info("Fscore for Layer 1 fell below the threshold.")
-                raise fException
+        if self._metrics_1['accuracy'] < self._metrics_thresh_1['accuracy_t']:
+            self.logger.info("Accuracy for Layer 1 fell below the threshold.")
+            raise accuracyException
 
-            if self._metrics_1['tpr'] < self._metrics_thresh_1['tpr_t']:
-                self.logger.info("Tpr for Layer 1 fell below the threshold.")
-                raise tprException
+        if self._metrics_1['precision'] < self._metrics_thresh_1['precision_t']:
+            self.logger.info("Precision for Layer 1 fell below the threshold.")
+            raise precisionException
 
-            if self._metrics_1['fpr'] < self._metrics_thresh_1['fpr_t']:
-                self.logger.info("Fpr for Layer 1 fell below the threshold.")
-                raise fprException
+        if self._metrics_1['fscore'] < self._metrics_thresh_1['fscore_t']:
+            self.logger.info("Fscore for Layer 1 fell below the threshold.")
+            raise fException
 
-            if self._metrics_1['tnr'] < self._metrics_thresh_1['tnr_t']:
-                self.logger.info("Tnr for Layer 1 fell below the threshold.")
-                raise tnrException
+        if self._metrics_1['tpr'] < self._metrics_thresh_1['tpr_t']:
+            self.logger.info("Tpr for Layer 1 fell below the threshold.")
+            raise tprException
 
-            if self._metrics_1['fnr'] < self._metrics_thresh_1['fnr_t']:
-                self.logger.info("Fnr for Layer 1 fell below the threshold.")
-                raise fnrException
-            time.sleep(5)   # wait a bit before assessing the metrics
+        if self._metrics_1['fpr'] < self._metrics_thresh_1['fpr_t']:
+            self.logger.info("Fpr for Layer 1 fell below the threshold.")
+            raise fprException
+
+        if self._metrics_1['tnr'] < self._metrics_thresh_1['tnr_t']:
+            self.logger.info("Tnr for Layer 1 fell below the threshold.")
+            raise tnrException
+
+        if self._metrics_1['fnr'] < self._metrics_thresh_1['fnr_t']:
+            self.logger.info("Fnr for Layer 1 fell below the threshold.")
+            raise fnrException
+
+        #time.sleep(5)   # wait a bit before assessing the metrics
 
     def show_metrics(self):
 

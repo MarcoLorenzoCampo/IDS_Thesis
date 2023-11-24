@@ -43,8 +43,9 @@ class DetectionSystemLauncher:
             pause_event.wait()
 
             # portion the input for clarity
-            time.sleep(0.15)
+            # time.sleep(0.15)
 
+            # for debugging purposes
             if i >= iterations:
                 break
 
@@ -56,6 +57,7 @@ class DetectionSystemLauncher:
                 self.logger.info('At iterations #%s:', i)
                 self.detection_infrastructure.ids.metrics.show_metrics()
 
+        # some classification metrics after the whole set has been processed
         self.logger.info('Classification of %s test samples:', iterations)
         self.logger.info('Anomalies by l1: %s', self.detection_infrastructure.ids.anomaly_by_l1.shape[0])
         self.logger.info('Anomalies by l2: %s', self.detection_infrastructure.ids.anomaly_by_l2.shape[0])
@@ -76,6 +78,62 @@ class DetectionSystemLauncher:
         self.logger.info('Average computation time for %s samples: %s', iterations,
                          self.detection_infrastructure.ids.metrics.get_avg_time())
 
+    def monitor(self, pause_event: threading.Event, metrics: Metrics):
+        while True:
+            try:
+                metrics.analyze_metrics()
+
+            except accuracyException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught accuracyException: {e}")
+                self.infrastructure.hp_tuner.tune('accuracy', 'maximize')
+
+            except precisionException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught precisionException: {e}")
+                self.infrastructure.hp_tuner.tune('precision', 'maximize')
+
+            except fException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught f1Exception: {e}")
+                self.infrastructure.hp_tuner.tune('fscore', 'maximize')
+
+            except tprException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught tprException: {e}")
+                self.infrastructure.hp_tuner.tune('tpr', 'maximize')
+
+            except fprException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught fprException: {e}")
+                self.infrastructure.hp_tuner.tune('fpr', 'maximize')
+
+            except tnrException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught tnrException: {e}")
+                self.infrastructure.hp_tuner.tune('tnr', 'maximize')
+
+            except fnrException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught fnrException: {e}")
+                self.infrastructure.hp_tuner.tune('fnr', 'maximize')
+
+            except quarantineRatioException as e:
+                # the .clear() event command
+                self.pause_classification_event.clear()
+                self.logger.exception(f"Caught quarantineRatioException: {e}")
+                self.infrastructure.hp_tuner.tune('quarantine_ratio', 'minimize')
+
+            # the classification resumes after handling the exception and tuning
+            self.pause_classification_event.set()
+
     def run(self):
 
         # start the classification thread
@@ -84,52 +142,11 @@ class DetectionSystemLauncher:
         # start the monitor thread
         self.monitor_thread.start()
 
-    def monitor(self, pause_event: threading.Event, metrics: Metrics):
-        while True:
-            try:
-                metrics.analyze_metrics()
+        # wait for the ids_thread to finish before returning
+        self.ids_thread.join()
 
-            except accuracyException as e:
-                self.logger.exception(f"Caught accuracyException: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('accuracy', 'maximize')
-
-            except precisionException as e:
-                self.logger.exception(f"Caught precisionException: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('precision', 'maximize')
-
-            except fException as e:
-                self.logger.exception(f"Caught f1Exception: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('fscore', 'maximize')
-
-            except tprException as e:
-                self.logger.exception(f"Caught tprException: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('tpr', 'maximize')
-
-            except fprException as e:
-                self.logger.exception(f"Caught fprException: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('fpr', 'maximize')
-
-            except tnrException as e:
-                self.logger.exception(f"Caught tnrException: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('tnr', 'maximize')
-
-            except fnrException as e:
-                self.logger.exception(f"Caught fnrException: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('fnr', 'maximize')
-
-            except quarantineRatioException as e:
-                self.logger.exception(f"Caught quarantineRatioException: {e}")
-                self.pause_classification_event.clear()
-                self.infrastructure.hp_tuner.tune('quarantine_ratio', 'minimize')
-
-            self.pause_classification_event.set()  # resume the classification thread
+        self.logger.info('No more input packets (test), closing.')
+        return
 
 
 if __name__ == '__main__':

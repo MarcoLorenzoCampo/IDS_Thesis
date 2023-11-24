@@ -339,3 +339,120 @@ Traceback (most recent call last):
   File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 196, in monitor_metrics
     raise tprException
 CustomExceptions.tprException
+2023-11-22 20:28:49,270 - Runner - INFO - At iterations #1:
+2023-11-22 20:29:26,930 - Runner - INFO - At iterations #1:
+2023-11-22 20:29:42,555 - Runner - INFO - At iterations #201:
+2023-11-22 20:30:07,782 - Runner - INFO - At iterations #401:
+2023-11-22 20:30:33,571 - Runner - INFO - At iterations #601:
+2023-11-22 20:31:02,917 - Runner - INFO - At iterations #1:
+2023-11-22 20:31:19,778 - Runner - INFO - At iterations #201:
+2023-11-22 20:31:47,301 - Runner - INFO - At iterations #401:
+2023-11-22 20:32:47,866 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 184, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-22 20:33:14,036 - Runner - INFO - At iterations #1:
+2023-11-22 20:33:29,915 - Runner - INFO - At iterations #201:
+2023-11-22 20:33:55,059 - Runner - INFO - At iterations #401:
+2023-11-22 20:36:01,632 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 184, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-22 20:36:34,278 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 187, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-22 20:37:30,357 - Runner - INFO - At iterations #1:
+2023-11-22 20:37:51,181 - Runner - INFO - At iterations #201:
+2023-11-22 20:38:15,871 - Runner - INFO - At iterations #401:
+2023-11-22 20:38:27,411 - Runner - INFO - At iterations #1:
+2023-11-22 20:39:03,643 - Runner - INFO - At iterations #1:
+2023-11-22 20:39:22,816 - Runner - INFO - At iterations #201:
+2023-11-22 20:39:46,565 - Runner - INFO - At iterations #401:
+2023-11-22 20:40:10,852 - Runner - INFO - At iterations #601:
+2023-11-22 20:40:36,978 - Runner - INFO - At iterations #801:
+2023-11-22 20:41:30,485 - Runner - INFO - At iterations #1:
+2023-11-22 20:41:48,693 - Runner - INFO - At iterations #201:
+2023-11-22 20:42:13,911 - Runner - INFO - At iterations #401:
+2023-11-22 20:42:37,285 - Runner - INFO - At iterations #1:
+2023-11-22 20:42:38,840 - Runner - INFO - At iterations #201:
+2023-11-22 20:42:40,370 - Runner - INFO - At iterations #401:
+2023-11-22 20:42:41,977 - Runner - INFO - At iterations #601:
+2023-11-22 20:42:44,087 - Runner - INFO - At iterations #801:
+2023-11-22 20:43:00,543 - Runner - INFO - At iterations #1:
+2023-11-22 20:43:20,784 - Runner - INFO - At iterations #201:
+2023-11-22 20:47:05,775 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 187, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-22 20:50:54,926 - Runner - INFO - At iterations #1:
+2023-11-22 20:51:13,233 - Runner - INFO - At iterations #201:
+2023-11-22 20:51:36,177 - Runner - INFO - At iterations #401:
+2023-11-22 20:52:02,560 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 186, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-22 23:56:31,883 - Runner - INFO - At iterations #1:
+2023-11-22 23:56:39,213 - Runner - INFO - At iterations #201:
+2023-11-22 23:56:44,736 - Runner - INFO - At iterations #401:
+2023-11-22 23:56:49,872 - Runner - INFO - At iterations #601:
+2023-11-22 23:56:55,072 - Runner - INFO - At iterations #801:
+2023-11-22 23:57:00,129 - Runner - INFO - At iterations #1001:
+2023-11-22 23:57:04,969 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 186, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-23 00:05:10,991 - Runner - INFO - At iterations #1:
+2023-11-23 00:05:19,762 - Runner - INFO - At iterations #201:
+2023-11-23 00:05:29,137 - Runner - INFO - At iterations #401:
+2023-11-23 00:05:39,188 - Runner - INFO - At iterations #601:
+2023-11-23 00:06:23,771 - Runner - INFO - At iterations #1:
+2023-11-23 00:11:22,963 - Runner - INFO - At iterations #1:
+2023-11-23 00:11:38,766 - Runner - INFO - At iterations #201:
+2023-11-23 00:12:17,510 - Runner - INFO - At iterations #1:
+2023-11-23 00:12:19,697 - Runner - INFO - At iterations #201:
+2023-11-23 00:13:37,845 - Runner - INFO - At iterations #1:
+2023-11-23 00:13:54,890 - Runner - INFO - At iterations #201:
+2023-11-23 00:24:02,519 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 176, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
+2023-11-23 00:25:40,112 - Runner - INFO - At iterations #1:
+2023-11-23 00:25:42,899 - Runner - INFO - At iterations #201:
+2023-11-23 00:25:45,380 - Runner - INFO - At iterations #401:
+2023-11-23 00:25:47,494 - Runner - INFO - At iterations #601:
+2023-11-23 00:25:49,711 - Runner - INFO - At iterations #801:
+2023-11-23 00:25:51,885 - Runner - INFO - At iterations #1001:
+2023-11-23 00:25:54,161 - Runner - INFO - At iterations #1201:
+2023-11-23 00:25:56,402 - Runner - INFO - At iterations #1401:
+2023-11-23 00:25:58,696 - Runner - INFO - At iterations #1601:
+2023-11-23 00:26:50,512 - Runner - INFO - At iterations #1:
+2023-11-23 00:27:05,697 - Runner - INFO - At iterations #201:
+2023-11-23 00:46:47,620 - Runner - ERROR - Caught accuracyException: 
+Traceback (most recent call last):
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Runner.py", line 84, in monitor
+    metrics.analyze_metrics()
+  File "C:\Users\marco\PycharmProjects\IDS_Thesis\Metrics.py", line 179, in analyze_metrics
+    raise accuracyException
+CustomExceptions.accuracyException
