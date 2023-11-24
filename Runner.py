@@ -1,4 +1,3 @@
-import time
 import numpy as np
 import pandas as pd
 
@@ -18,11 +17,11 @@ class DetectionSystemLauncher:
         self.infrastructure = infrastructure
 
         # load the test sets as simulated traffic samples
-        self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
-        self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
+        self.x_test = pd.read_csv('KB Process/NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
+        self.y_test = np.load('KB Process/NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
 
         # clean the output files before a new execution
-        with open('Required Files/Results.txt', 'w'):
+        with open('KB Process/Required Files/Results.txt', 'w'):
             pass
 
         # pause event for the threads
@@ -64,7 +63,7 @@ class DetectionSystemLauncher:
         self.logger.info('Normal traffic: %s', self.detection_infrastructure.ids.normal_traffic.shape[0])
         self.logger.info('Quarantined samples: %s', self.detection_infrastructure.ids.quarantine_samples.shape[0])
 
-        with open('Required Files/Results.txt', 'a') as file:
+        with open('KB Process/Required Files/Results.txt', 'a') as file:
             file.write('\nOverall classification:\n')
             file.write('Classified = ANOMALY, Actual = ANOMALY: tp -> ' + str(
                 self.detection_infrastructure.ids.metrics.get_counts('tp')) + '\n')

@@ -1,29 +1,25 @@
 import copy
-import functools
+import json
+import logging
 import os.path
 import pickle
 import sqlite3
 import sys
-import threading
 import time
 
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-import pika
-
-from pika.adapters.asyncio_connection import AsyncioConnection
-from pika.exchange_type import ExchangeType
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 
 import KBConnectionHandler
-import Utils
 
 # set an instance-level logger
-LOGGER = Utils.set_logger(__name__)
-LOGGER.info('Creating an instance of KnowledgeBase.')
+LOGGER = logging.getLogger('KnowledgeBase')
+LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 class KnowledgeBase:
     """
@@ -32,88 +28,80 @@ class KnowledgeBase:
     This is 'unprotected' data that can be accessed from the outside classes.
     """
 
-    EXCHANGE = 'message'
-    EXCHANGE_TYPE = ExchangeType.topic
-    QUEUE = 'text'
-    ROUTING_KEY = 'example.text'
-
     def __init__(self, ampq_url, model_name1: str = None, model_name2: str = None):
 
-        # manually set the detection thresholds
+        LOGGER.info('Creating an instance of KnowledgeBase.')
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
 
-        # load the features obtained with ICFS for both layer 1 and layer 2
-        with open('Required Files/NSL_features_l1.txt', 'r') as f:
-            self.features_l1 = f.read().split(',')
+        LOGGER.info('Loading minimal features.')
+        self.features_l1 = self.__load_features('Required Files/NSL_features_l1.txt')
+        self.features_l2 = self.__load_features('Required Files/NSL_features_l2.txt')
 
-        with open('Required Files/NSL_features_l2.txt', 'r') as f:
-            self.features_l2 = f.read().split(',')
+        LOGGER.info('Loading train sets.')
+        self.x_train_l1, self.y_train_l1 = self.__load_dataset('pca_train1.pkl', 'KDDTrain+_l1_targets.npy')
+        self.x_train_l2, self.y_train_l2 = self.__load_dataset('pca_train2.pkl', 'KDDTrain+_l2_targets.npy')
 
-        # Load completely processed datasets for training
-        LOGGER.info('Loading the train sets.')
-        self.x_train_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train1.pkl')
-        self.x_train_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_train2.pkl')
-        self.y_train_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l1_targets.npy',
-                                  allow_pickle=True)
-        self.y_train_l2 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDTrain+_l2_targets.npy',
-                                  allow_pickle=True)
+        LOGGER.info('Loading validation sets.')
+        self.x_validate_l1, self.y_validate_l1 = self.__load_dataset('pca_validate1.pkl', 'KDDValidate+_l1_targets.npy')
+        self.x_validate_l2, self.y_validate_l2 = self.__load_dataset('pca_validate2.pkl', 'KDDValidate+_l2_targets.npy')
 
-        # Load completely processed validations sets
-        LOGGER.info('Loading the validation sets.')
-        self.x_validate_l1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate1.pkl')
-        self.x_validate_l2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/pca_validate2.pkl')
-        self.y_validate_l1 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDValidate+_l1_targets.npy',
-                                     allow_pickle=True)
-        self.y_validate_l2 = np.load('NSL-KDD Encoded Datasets/before_pca/KDDValidate+_l2_targets.npy',
-                                     allow_pickle=True)
-
-        # Load completely processed test set
         LOGGER.info('Loading test sets.')
-        self.x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
-        self.y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
+        self.x_test, self.y_test = self.__load_test_set()
 
-        # set the categorical features
         self.cat_features = ['protocol_type', 'service', 'flag']
 
-        # load the minmax scalers used in training
         LOGGER.info('Loading scalers.')
-        self.scaler1 = joblib.load('Required Files/scalers/scaler1.pkl')
-        self.scaler2 = joblib.load('Required Files/scalers/scaler2.pkl')
+        self.scaler1, self.scaler2 = self.__load_scalers('scaler1.pkl', 'scaler2.pkl')
 
-        # load one hot encoder for processing according to layer
         LOGGER.info('Loading one hot encoders.')
-        self.ohe1 = joblib.load('Required Files/one_hot_encoders/ohe1.pkl')
-        self.ohe2 = joblib.load('Required Files/one_hot_encoders/ohe2.pkl')
+        self.ohe1, self.ohe2 = self.__load_encoders('ohe1.pkl', 'ohe2.pkl')
 
-        # load pca transformers to transform features according to layer
-        LOGGER.info('Loading test pca encoders.')
-        self.pca1 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer1_transformer.pkl')
-        self.pca2 = joblib.load('NSL-KDD Encoded Datasets/pca_transformed/layer2_transformer.pkl')
+        LOGGER.info('Loading pca transformers.')
+        self.pca1, self.pca2 = self.__load_pca_transformers('layer1_transformer.pkl', 'layer2_transformer.pkl')
 
-        # load or train the classifiers
-        if (os.path.exists('Models/Original models/NSL_l1_classifier_og.pkl') and
-                os.path.exists('Models/Original models/NSL_l2_classifier_og.pkl')):
+        LOGGER.info('Loading models.')
+        self.layer1, self.layer2 = self.__load_or_train(model_name1=model_name1, model_name2=model_name2)
 
-            LOGGER.info('Loading existing models.')
-            with open('Models/Original models/NSL_l1_classifier_og.pkl', 'rb') as file:
-                self.layer1 = pickle.load(file)
-            with open('Models/Original models/NSL_l2_classifier_og.pkl', 'rb') as file:
-                self.layer2 = pickle.load(file)
-        else:
-            LOGGER.error('First program execution has no models, training them..')
-            self.layer1, self.layer2 = self.__default_training(model_name1=model_name1, model_name2=model_name2)
-
-        # Initialize an in-memory SQLite3 database
+        LOGGER.info('Connecting to sqlite3 in memory database.')
         self.sql_connection = sqlite3.connect(':memory:')
         self.cursor = self.sql_connection.cursor()
 
-        # Create tables in the in-memory database for your datasets
         self.__fill_tables()
-        # Remove all the variables containing the dataframes
         self.__clean()
+        LOGGER.info('Completed sqlite3 in memory databases setup.')
 
-        # Component that handles connections
-        self.connection_handler = KBConnectionHandler.Connector(ampq_url)
+        # Instance of KBConnectionHandler with a reference to the knowledge base itself
+        self.connection_handler = KBConnectionHandler.Connector(self, ampq_url)
+
+    def __load_features(self, file_path):
+        with open(file_path, 'r') as f:
+            return f.read().split(',')
+
+    def __load_dataset(self, pca_file, targets_file):
+        x = joblib.load(f'NSL-KDD Encoded Datasets/pca_transformed/{pca_file}')
+        x_df = pd.DataFrame(x, columns=[f'feature_{i}' for i in range(x.shape[1])])
+        y = np.load(f'NSL-KDD Encoded Datasets/before_pca/{targets_file}', allow_pickle=True)
+        return x_df, y
+
+    def __load_test_set(self):
+        x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
+        y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
+        return x_test, y_test
+
+    def __load_scalers(self, scaler1_file, scaler2_file):
+        scaler1 = joblib.load(f'Required Files/scalers/{scaler1_file}')
+        scaler2 = joblib.load(f'Required Files/scalers/{scaler2_file}')
+        return scaler1, scaler2
+
+    def __load_encoders(self, ohe1_file, ohe2_file):
+        ohe1 = joblib.load(f'Required Files/one_hot_encoders/{ohe1_file}')
+        ohe2 = joblib.load(f'Required Files/one_hot_encoders/{ohe2_file}')
+        return ohe1, ohe2
+
+    def __load_pca_transformers(self, pca1_file, pca2_file):
+        pca1 = joblib.load(f'NSL-KDD Encoded Datasets/pca_transformed/{pca1_file}')
+        pca2 = joblib.load(f'NSL-KDD Encoded Datasets/pca_transformed/{pca2_file}')
+        return pca1, pca2
 
     def __fill_tables(self):
         # create a table for each train set
@@ -148,8 +136,33 @@ class KnowledgeBase:
         del self.x_validate_l1, self.x_validate_l2, self.y_validate_l1, self.y_validate_l2
         del self.x_test, self.y_test
 
-    def __perform_query(self, sql_query):
-        result_df = pd.read_sql_query(sql_query, self.sql_connection)
+    def perform_query(self, received):
+        LOGGER.info(f'Received a query.')
+
+        message = copy.deepcopy(received)
+
+        try:
+            # Parse the content using json and dictionaries
+            message_data = json.loads(message)
+
+            select_clause = message_data.get("select")
+            from_clause = message_data.get("from")
+            where_clause = message_data.get("where")
+
+            if where_clause == "":
+                sql_query = f'SELECT {select_clause} FROM {from_clause}'
+            else:
+                sql_query = f'SELECT {select_clause} FROM {from_clause} WHERE {where_clause}'
+
+            LOGGER.info(f'Executing the query: {sql_query}')
+
+            result_df = pd.read_sql_query(sql_query, self.sql_connection)
+
+        except pd.errors.DatabaseError:
+            LOGGER.error('Could not fulfill the requests.')
+            return None
+
+        LOGGER.info('Query was executed correctly.')
         return result_df
 
     def __update_files(self, to_update):
@@ -178,13 +191,30 @@ class KnowledgeBase:
         # Remove all the variables containing the dataframes
         self.__clean()
 
-    def __default_training(self, model_name1: str = None, model_name2: str = None):
+    def __load_or_train(self, model_name1: str = None, model_name2: str = None):
         """
         Train models using the default hyperparameters set by researchers prior to hyperparameter tuning.
         For clarity, all the hyperparameters for random forest and svm are listed below.
         :return: Trained models for layer 1 and 2 respectively
         """
+        can_load = (os.path.exists('Models/Original models/NSL_l1_classifier_og.pkl') and
+                    os.path.exists('Models/Original models/NSL_l2_classifier_og.pkl'))
 
+        new_requests = model_name1 is not None or model_name2 is not None
+
+        # if the models already exist and no specific model is required, load the sets
+        if can_load or not new_requests:
+
+            LOGGER.info('Loading existing models.')
+            with open('Models/Original models/NSL_l1_classifier_og.pkl', 'rb') as file:
+                layer1 = pickle.load(file)
+            with open('Models/Original models/NSL_l2_classifier_og.pkl', 'rb') as file:
+                layer2 = pickle.load(file)
+
+            return layer1, layer2
+
+        # we reach this branch is there are no models to load or some specific model is required
+        LOGGER.info('Training new models.')
         classifier1, classifier2 = None, None
 
         # Start with training classifier 1
@@ -336,9 +366,9 @@ class ReconnectingConsumer:
 
 
 def main():
-    ampq_url = sys.argv[1] if len(sys.argv) > 1 else 'localhost'
-    model1 = sys.argv[2] if len(sys.argv) > 2 else None
-    model2 = sys.argv[3] if len(sys.argv) > 3 else None
+    model1 = sys.argv[1] if len(sys.argv) > 1 else None
+    model2 = sys.argv[2] if len(sys.argv) > 2 else None
+    ampq_url = sys.argv[3] if len(sys.argv) > 3 else "amqp://guest:guest@host:5672/"
 
     consumer = ReconnectingConsumer(amqp_url=ampq_url, model_name1=model1, model_name2=model2)
     consumer.run()

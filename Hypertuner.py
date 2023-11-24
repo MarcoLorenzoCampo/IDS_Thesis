@@ -1,10 +1,8 @@
 import copy
-import pickle
 import optuna
 
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
+from sklearn.metrics import accuracy_score, precision_score
 from sklearn.svm import SVC
 
 from KnowledgeBase import KnowledgeBase

@@ -1,23 +1,29 @@
 # set an instance-level logger
 import functools
+import logging
+import KnowledgeBase
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
 
-import Utils
-
-LOGGER = Utils.set_logger(__name__)
+LOGGER = logging.getLogger('KBConnectionHandler')
+LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 LOGGER.info('Creating an instance of KnowledgeBase connection handler.')
 
-class Connector:
 
+class Connector:
     EXCHANGE = 'message'
     EXCHANGE_TYPE = ExchangeType.topic
-    QUEUE = 'text'
-    ROUTING_KEY = 'example.text'
 
-    def __init__(self, ampq_url):
+    CLASS_QUEUE_ROUTING_KEYS = {
+        'clf_queue': 'clf_key',
+        'tuner_queue': 'tuner_key',
+        'test_queue': 'test_key'
+    }
+
+    def __init__(self, kb: KnowledgeBase, ampq_url):
         # Set values for the pika connection
         self.should_reconnect = False
         self.was_consuming = False
@@ -30,20 +36,22 @@ class Connector:
         self._consuming = False
         self._prefetch_count = 1
 
+        # Set reference to the KnowledgeBase
+        self.kb = kb
+
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
-        When the connection is established, the on_connection_open method
-        will be invoked by pika.
+        When the connection is established, pika will invoke the on_connection_open method.
 
-        :rtype: pika.adapters.asyncio_connection.AsyncioConnection
-
+        :rtype: Pika.adapters.asyncio_connection.AsyncioConnection
         """
         LOGGER.info('Connecting to %s', self._url)
         return AsyncioConnection(
             parameters=pika.URLParameters(self._url),
             on_open_callback=self.on_connection_open,
             on_open_error_callback=self.on_connection_open_error,
-            on_close_callback=self.on_connection_closed)
+            on_close_callback=self.on_connection_closed
+        )
 
     def close_connection(self):
         self._consuming = False
@@ -54,7 +62,7 @@ class Connector:
             self._connection.close()
 
     def on_connection_open(self, _unused_connection):
-        """This method is called by pika once the connection to RabbitMQ has
+        """Pika calls this method once the connection to RabbitMQ has
         been established. It passes the handle to the connection object in
         case we need it, but in this case, we'll just mark it unused.
 
@@ -66,7 +74,7 @@ class Connector:
         self.open_channel()
 
     def on_connection_open_error(self, _unused_connection, err):
-        """This method is called by pika if the connection to RabbitMQ
+        """Pika calls this method if the connection to RabbitMQ
         can't be established.
 
         :param pika.adapters.asyncio_connection.AsyncioConnection _unused_connection:
@@ -78,7 +86,7 @@ class Connector:
         self.reconnect()
 
     def on_connection_closed(self, _unused_connection, reason):
-        """This method is invoked by pika when the connection to RabbitMQ is
+        """Pika invokes this method when the connection to RabbitMQ is
         closed unexpectedly. Since it is unexpected, we will reconnect to
         RabbitMQ if it disconnects.
 
@@ -105,15 +113,15 @@ class Connector:
 
     def open_channel(self):
         """Open a new channel with RabbitMQ by issuing the Channel.Open RPC
-        command. When RabbitMQ responds that the channel is open, the
-        on_channel_open callback will be invoked by pika.
+        command. When RabbitMQ responds that the channel is open, pika will invoke the
+        on_channel_open callback.
 
         """
         LOGGER.info('Creating a new channel')
         self._connection.channel(on_open_callback=self.on_channel_open)
 
     def on_channel_open(self, channel):
-        """This method is invoked by pika when the channel has been opened.
+        """Pika invokes this method when the channel has been opened.
         The channel object is passed in so we can make use of it.
 
         Since the channel is now open, we'll declare the exchange to use.
@@ -150,8 +158,8 @@ class Connector:
 
     def setup_exchange(self, exchange_name):
         """Setup the exchange on RabbitMQ by invoking the Exchange.Declare RPC
-        command. When it is complete, the on_exchange_declareok method will
-        be invoked by pika.
+        command. When it is complete, pika will
+        invoke the on_exchange_declareok method.
 
         :param str|unicode exchange_name: The name of the exchange to declare
 
@@ -159,8 +167,7 @@ class Connector:
         LOGGER.info('Declaring exchange: %s', exchange_name)
         # Note: using functools.partial is not required, it is demonstrating
         # how arbitrary data can be passed to the callback when it is called
-        cb = functools.partial(
-            self.on_exchange_declareok, userdata=exchange_name)
+        cb = functools.partial(self.on_exchange_declareok, userdata=exchange_name)
         self._channel.exchange_declare(
             exchange=exchange_name,
             exchange_type=self.EXCHANGE_TYPE,
@@ -175,39 +182,40 @@ class Connector:
 
         """
         LOGGER.info('Exchange declared: %s', userdata)
-        self.setup_queue(self.QUEUE)
+
+        for queue_name, routing_key in self.CLASS_QUEUE_ROUTING_KEYS.items():
+            self.setup_queue(queue_name)
 
     def setup_queue(self, queue_name):
         """Setup the queue on RabbitMQ by invoking the Queue.Declare RPC
-        command. When it is complete, the on_queue_declareok method will
-        be invoked by pika.
+        command. When it is complete, pika will
+        invoke the on_queue_declareok method.
 
         :param str|unicode queue_name: The name of the queue to declare.
 
         """
         LOGGER.info('Declaring queue %s', queue_name)
-        cb = functools.partial(self.on_queue_declareok, userdata=queue_name)
-        self._channel.queue_declare(queue=queue_name, callback=cb)
+        self._channel.queue_declare(queue=queue_name, callback=lambda frame: self.on_queue_declareok(frame, queue_name))
 
     def on_queue_declareok(self, _unused_frame, userdata):
         """Method invoked by pika when the Queue.Declare RPC call made in
         setup_queue has completed. In this method we will bind the queue
         and exchange together with the routing key by issuing the Queue.Bind
-        RPC command. When this command is complete, the on_bindok method will
-        be invoked by pika.
+        RPC command. When this command is complete, pika will
+        invoke the on_bindok method.
 
         :param pika.frame.Method _unused_frame: The Queue.DeclareOk frame
         :param str|unicode userdata: Extra user data (queue name)
 
         """
         queue_name = userdata
-        LOGGER.info('Binding %s to %s with %s', self.EXCHANGE, queue_name,
-                    self.ROUTING_KEY)
+        key = self.CLASS_QUEUE_ROUTING_KEYS[queue_name]
+        LOGGER.info('Binding %s to %s with %s', self.EXCHANGE, queue_name, key)
         cb = functools.partial(self.on_bindok, userdata=queue_name)
         self._channel.queue_bind(
             queue_name,
             self.EXCHANGE,
-            routing_key=self.ROUTING_KEY,
+            routing_key=key,
             callback=cb)
 
     def on_bindok(self, _unused_frame, userdata):
@@ -219,30 +227,33 @@ class Connector:
 
         """
         LOGGER.info('Queue bound: %s', userdata)
-        self.set_qos()
+        self.set_qos(userdata)
 
-    def set_qos(self):
+    def set_qos(self, userdata):
         """This method sets up the consumer prefetch to only be delivered
         one message at a time. The consumer must acknowledge this message
         before RabbitMQ will deliver another one. You should experiment
         with different prefetch values to achieve desired performance.
 
         """
-        self._channel.basic_qos(
-            prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok)
+        def callback(_unused_frame):
+            self.on_basic_qos_ok(_unused_frame, userdata)
 
-    def on_basic_qos_ok(self, _unused_frame):
+        self._channel.basic_qos(prefetch_count=self._prefetch_count, callback=callback)
+
+    def on_basic_qos_ok(self, _unused_frame, userdata):
         """Invoked by pika when the Basic.QoS method has completed. At this
         point we will start consuming messages by calling start_consuming
         which will invoke the needed RPC commands to start the process.
 
+        :param userdata:
         :param pika.frame.Method _unused_frame: The Basic.QosOk response frame
 
         """
         LOGGER.info('QOS set to: %d', self._prefetch_count)
-        self.start_consuming()
+        self.start_consuming(userdata)
 
-    def start_consuming(self):
+    def start_consuming(self, userdata):
         """This method sets up the consumer by first calling
         add_on_cancel_callback so that the object is notified if RabbitMQ
         cancels the consumer. It then issues the Basic.Consume RPC command
@@ -250,12 +261,12 @@ class Connector:
         consumer with RabbitMQ. We keep the value to use it when we want to
         cancel consuming. The on_message method is passed in as a callback pika
         will invoke when a message is fully received.
-
         """
+        queue_name = userdata
         LOGGER.info('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
         self._consumer_tag = self._channel.basic_consume(
-            self.QUEUE, self.on_message)
+            queue_name, self.on_message)
         self.was_consuming = True
         self._consuming = True
 
@@ -282,8 +293,7 @@ class Connector:
 
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         """Invoked by pika when a message is delivered from RabbitMQ. The
-        channel is passed for your convenience. The basic_deliver object that
-        is passed in carries the exchange, routing key, delivery tag and
+        channel is passed for your convenience. The basic_deliver object passed in carries the exchange, routing key, delivery tag and
         a redelivered flag for the message. The properties passed in is an
         instance of BasicProperties with the message properties and the body
         is the message that was sent.
@@ -297,6 +307,7 @@ class Connector:
         LOGGER.info('Received message # %s from %s: %s',
                     basic_deliver.delivery_tag, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
+        result = self.kb.perform_query(body)
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
@@ -320,7 +331,7 @@ class Connector:
             self._channel.basic_cancel(self._consumer_tag, cb)
 
     def on_cancelok(self, _unused_frame, userdata):
-        """This method is invoked by pika when RabbitMQ acknowledges the
+        """Pika invokes this method when RabbitMQ acknowledges the
         cancellation of a consumer. At this point we will close the channel.
         This will invoke the on_channel_closed method once the channel has been
         closed, which will in-turn close the connection.
@@ -358,7 +369,7 @@ class Connector:
         connection. The IOLoop is started again because this method is invoked
         when CTRL-C is pressed raising a KeyboardInterrupt exception. This
         exception stops the IOLoop which needs to be running for pika to
-        communicate with RabbitMQ. All of the commands issued prior to starting
+        communicate with RabbitMQ. All the commands issued prior to starting
         the IOLoop will be buffered but not processed.
 
         """

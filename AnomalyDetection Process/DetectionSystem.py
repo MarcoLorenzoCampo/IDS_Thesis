@@ -1,29 +1,25 @@
 import copy
+import logging
 import time
-import threading
 
 import Metrics
 from Metrics import Metrics
-import Utils
 
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
 import DataProcessor
-from KnowledgeBase import KnowledgeBase
 from typing import Union
 
 
+LOGGER = logging.getLogger('DetectionSystem')
+LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+LOGGER.info('Creating an instance of DetectionSystem.')
+
 class DetectionSystem:
 
-    def __init__(self, kb: KnowledgeBase):
-
-        # set up an instance-level logger to report on the classification performance
-        self.logger = Utils.set_logger(__name__)
-        self.logger.debug('Launching the DetectionSystem.')
-
-        # set new knowledge base
-        self.kb = kb
+    def __init__(self):
 
         # set the metrics from the class Metrics
         self.metrics = Metrics()
@@ -35,7 +31,7 @@ class DetectionSystem:
         self.normal_traffic = pd.DataFrame(columns=self.kb.x_test.columns)
 
         # set the classifiers
-        self.layer1, self.layer2 = self.kb.layer1, self.kb.layer2
+        self.layer1, self.layer2 = self.__load_classifiers()
 
         # dictionary for classification functions
         self.clf_switcher = {
@@ -57,6 +53,9 @@ class DetectionSystem:
             ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1, 2),
             ('L2_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1, 2),
         }
+
+    def __load_classifiers(self):
+        pass
 
     def classify(self, incoming_data, actual: int = None):
         """
@@ -223,7 +222,7 @@ class DetectionSystem:
         l2_accuracy = accuracy_score(self.kb.y_train_l2, l2_prediction)
 
         # write accuracy scores to file
-        with open('Required Files/Results.txt', 'a') as f:
+        with open('../KB Process/Required Files/Results.txt', 'a') as f:
             f.write("\nLayer 1 accuracy on the train set:" + str(l1_accuracy))
             f.write("\nLayer 2 accuracy on the train set:" + str(l2_accuracy))
 

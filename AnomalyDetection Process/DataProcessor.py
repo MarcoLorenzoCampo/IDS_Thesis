@@ -1,6 +1,3 @@
-import os
-
-import DetectionSystem
 import copy
 import pandas as pd
 
@@ -23,7 +20,7 @@ def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
 
 
 class DataPreprocessingComponent:
-    features = pd.read_csv('NSL-KDD Original Datasets/Field Names.csv', header=None)
+    features = pd.read_csv('../NSL-KDD Original Datasets/Field Names.csv', header=None)
 
     def traffic_quality_check(self, incoming_data):
         """
