@@ -110,7 +110,7 @@ def perform_icfs(x_train):
     comm_features_l2 = set_r2l & set_u2r
     # print('Common features to train l2: ', len(common_features_l2), common_features_l2)
 
-    with open('Required Files/test_l1.txt', 'w') as g:
+    with open('KB Process/Required Files/test_l1.txt', 'w') as g:
         for a, x in enumerate(comm_features_l1):
             if a < len(comm_features_l1) - 1:
                 g.write(x + ',' + '\n')
@@ -118,7 +118,7 @@ def perform_icfs(x_train):
                 g.write(x)
 
     # read the common features from file
-    with open('Required Files/test_l2.txt', 'w') as g:
+    with open('KB Process/Required Files/test_l2.txt', 'w') as g:
         for a, x in enumerate(comm_features_l2):
             if a < len(comm_features_l2) - 1:
                 g.write(x + ',' + '\n')
