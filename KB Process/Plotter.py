@@ -3,9 +3,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, roc_auc_score
 import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 
 
 def roc_example():
@@ -58,5 +55,3 @@ class Plotter:
 
         # Display the plot
         plt.show()
-
-two_d_pca_plot()
