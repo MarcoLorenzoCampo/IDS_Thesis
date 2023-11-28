@@ -16,14 +16,16 @@ LOGGER = logging.getLogger('KnowledgeBase')
 LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
+
 class KnowledgeBase:
     def __init__(self, ampq_url):
 
         LOGGER.info('Creating an instance of KnowledgeBase.')
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
+        self.cat_features = ['flag', 'protocol_type', 'service']
 
-        self.__aws_s3_load()
-        self.__load_data_in_memory()
+        self.__s3_setup_and_load()
+        self.__load_data_instances()
         self.__sqlite3_setup()
 
         self.connection_handler = KBConnectionHandler.Connector(self, ampq_url)
@@ -41,14 +43,14 @@ class KnowledgeBase:
 
         LOGGER.info('Completed sqlite3 in memory databases setup.')
 
-    def __aws_s3_load(self):
+    def __s3_setup_and_load(self):
         self.s3_resource = boto3.client('s3')
         self.loader = Loader(s3_resource=self.s3_resource)
         self.loader.s3_load()
 
         LOGGER.info('Loading from S3 bucket complete.')
 
-    def __load_data_in_memory(self):
+    def __load_data_instances(self):
         LOGGER.info('Loading original train set.')
         self.x_train = self.loader.load_og_dataset('KDDTrain+_with_labels.txt')
         LOGGER.info('Loading original reduced train set.')
@@ -83,6 +85,10 @@ class KnowledgeBase:
         LOGGER.info('Loading pca transformers.')
         self.pca1, self.pca2 = self.loader.load_pca_transformers('layer1_pca_transformer.pkl',
                                                                  'layer2_pca_transformer.pkl')
+
+        LOGGER.info('Loading models.')
+        self.pca1, self.pca2 = self.loader.load_models('NSL_l1_classifier.pkl',
+                                                       'NSL_l2_classifier.pkl')
 
         LOGGER.info('Loading minimal features.')
         self.features_l1 = self.loader.load_features('Required Files/NSL_features_l1.txt')
@@ -171,7 +177,7 @@ class ReconnectingConsumer:
     connection_handler.
     """
 
-    def __init__(self, amqp_url, model_name1: str = None, model_name2: str = None):
+    def __init__(self, amqp_url):
         self._reconnect_delay = 0
         self._amqp_url = amqp_url
         self._consumer = KnowledgeBase(self._amqp_url)
@@ -208,7 +214,7 @@ def main():
     model2 = sys.argv[2] if len(sys.argv) > 2 else None
     ampq_url = sys.argv[3] if len(sys.argv) > 3 else "amqp://guest:guest@host:5672/"
 
-    consumer = ReconnectingConsumer(amqp_url=ampq_url, model_name1=model1, model_name2=model2)
+    consumer = ReconnectingConsumer(amqp_url=ampq_url)
     consumer.run()
 
 

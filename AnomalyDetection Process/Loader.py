@@ -17,20 +17,6 @@ class Loader:
     def s3_load(self):
         LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
 
-        LOGGER.info('Loading set of minimal features.')
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='AdditionalFiles/MinimalFeatures',
-            file_name='NSL_features_l1.txt',
-            download_path="AWS Downloads/MinimalFeatures/"
-        )
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='AdditionalFiles/MinimalFeatures',
-            file_name='NSL_features_l2.txt',
-            download_path="AWS Downloads/MinimalFeatures/"
-        )
-
         LOGGER.info('Loading set of one hot encoders.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -87,76 +73,6 @@ class Loader:
             download_path="AWS Downloads/Models/StartingModels/"
         )
 
-        LOGGER.info('Loading fully processed train sets.')
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
-            file_name='KDDTrain+_l1_pca.pkl',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
-            file_name='KDDTrain+_l2_pca.pkl',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-
-        LOGGER.info('Loading target variables for train sets.')
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
-            file_name='KDDTrain+_l1_targets.npy',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
-            file_name='KDDTrain+_l2_targets.npy',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-
-        LOGGER.info('Loading fully processed validation sets.')
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
-            file_name='KDDValidate+_l1_pca.pkl',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
-            file_name='KDDValidate+_l2_pca.pkl',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-
-        LOGGER.info('Loading target variables for validation sets.')
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
-            file_name='KDDValidate+_l1_targets.npy',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
-            file_name='KDDValidate+_l2_targets.npy',
-            download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-
-        LOGGER.info('Loading original data sets.')
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='OriginalDatasets',
-            file_name='KDDTrain+_with_labels.txt',
-            download_path='AWS Downloads/Datasets/OriginalDatasets/'
-        )
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='OriginalDatasets',
-            file_name='KDDTrain+20_percent_with_labels.txt',
-            download_path='AWS Downloads/Datasets/OriginalDatasets/'
-        )
-
     def __aws_download(self, bucket_name: str, folder_name: str, file_name: str, download_path: str):
         local_file_path = os.path.join(download_path, file_name)
         self.s3_resource.download_file(
@@ -178,6 +94,7 @@ class Loader:
     def load_models(self, model1, model2):
         model1 = joblib.load(f'AWS Downloads/Models/StartingModels/{model1}')
         model2 = joblib.load(f'AWS Downloads/Models/StartingModels/{model2}')
+        return model1, model2
 
     def load_encoders(self, ohe1_file, ohe2_file):
         ohe1 = joblib.load(f'AWS Downloads/OneHotEncoders/{ohe1_file}')
@@ -193,16 +110,6 @@ class Loader:
         x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
         y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
         return x_test, y_test
-
-    def load_og_dataset(self, file):
-        x_df = pd.read_csv(f'AWS Downloads/Datasets/OriginalDatasets/{file}')
-        return x_df
-
-    def load_dataset(self, pca_file, targets_file):
-        x = joblib.load(f'AWS Downloads/Datasets/PCAEncoded/{pca_file}')
-        x_df = pd.DataFrame(x, columns=[f'feature_{i}' for i in range(x.shape[1])])
-        y = np.load(f'AWS Downloads/Datasets/PCAEncoded/{targets_file}', allow_pickle=True)
-        return x_df, y
 
     def load_features(self, file_path: str):
         with open(file_path, 'r') as f:

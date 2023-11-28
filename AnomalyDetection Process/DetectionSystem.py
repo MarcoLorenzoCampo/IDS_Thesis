@@ -2,6 +2,9 @@ import copy
 import logging
 import time
 
+import boto3
+import joblib
+
 import Metrics
 from Metrics import Metrics
 
@@ -10,28 +13,34 @@ from sklearn.metrics import accuracy_score
 
 import DataProcessor
 from typing import Union
-
+from Loader import Loader
 
 LOGGER = logging.getLogger('DetectionSystem')
 LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 LOGGER.info('Creating an instance of DetectionSystem.')
 
+
 class DetectionSystem:
 
     def __init__(self):
+
+        self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
+        self.cat_features = ['flag', 'protocol_type', 'service']
+
+        # Load necessary data from AWS s3
+        self.__s3_setup_and_load()
+
+        self.__load_data_instances()
 
         # set the metrics from the class Metrics
         self.metrics = Metrics()
 
         # set up the dataframes containing the analyzed data
-        self.quarantine_samples = pd.DataFrame(columns=self.kb.x_test.columns)
-        self.anomaly_by_l1 = pd.DataFrame(columns=self.kb.x_test.columns)
-        self.anomaly_by_l2 = pd.DataFrame(columns=self.kb.x_test.columns)
-        self.normal_traffic = pd.DataFrame(columns=self.kb.x_test.columns)
-
-        # set the classifiers
-        self.layer1, self.layer2 = self.__load_classifiers()
+        self.quarantine_samples = pd.DataFrame(columns=None)
+        self.anomaly_by_l1 = pd.DataFrame(columns=None)
+        self.anomaly_by_l2 = pd.DataFrame(columns=None)
+        self.normal_traffic = pd.DataFrame(columns=None)
 
         # dictionary for classification functions
         self.clf_switcher = {
@@ -54,8 +63,34 @@ class DetectionSystem:
             ('L2_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1, 2),
         }
 
-    def __load_classifiers(self):
-        pass
+    def __s3_setup_and_load(self):
+        self.s3_resource = boto3.client('s3')
+        self.loader = Loader(s3_resource=self.s3_resource)
+
+        LOGGER.info('Loading models.')
+        self.loader.s3_load()
+
+        LOGGER.info('Loading from S3 bucket complete.')
+
+    def __load_data_instances(self):
+
+        LOGGER.info('Loading one hot encoders.')
+        self.ohe1, self.ohe2 = self.loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
+
+        LOGGER.info('Loading scalers.')
+        self.scaler1, self.scaler2 = self.loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
+
+        LOGGER.info('Loading pca transformers.')
+        self.pca1, self.pca2 = self.loader.load_pca_transformers('layer1_pca_transformer.pkl',
+                                                                 'layer2_pca_transformer.pkl')
+
+        LOGGER.info('Loading models.')
+        self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
+                                                           'NSL_l2_classifier.pkl')
+
+        LOGGER.info('Loading minimal features.')
+        self.features_l1 = self.loader.load_features('Required Files/NSL_features_l1.txt')
+        self.features_l2 = self.loader.load_features('Required Files/NSL_features_l2.txt')
 
     def classify(self, incoming_data, actual: int = None):
         """
@@ -93,12 +128,12 @@ class DetectionSystem:
             benign_confidence_2 = 1 - anomaly_confidence[0, 1]
 
             # anomaly identified by layer2
-            if anomaly_confidence[0, 1] >= self.kb.ANOMALY_THRESHOLD2:
+            if anomaly_confidence[0, 1] >= self.ANOMALY_THRESHOLD2:
                 self.__finalize_clf(incoming_data, [anomaly_confidence, 'L2_ANOMALY'], actual)
                 return
 
             # not an anomaly identified by layer2
-            if benign_confidence_2 >= self.kb.BENIGN_THRESHOLD:
+            if benign_confidence_2 >= self.BENIGN_THRESHOLD:
                 self.__finalize_clf(incoming_data, [benign_confidence_2, 'NOT_ANOMALY2'], actual)
                 return
 
@@ -106,8 +141,8 @@ class DetectionSystem:
         self.__finalize_clf(incoming_data, [0, 'QUARANTINE'], actual)
 
     def __clf_layer1(self, unprocessed_sample):
-        sample = (DataProcessor.data_process(unprocessed_sample, self.kb.scaler1, self.kb.ohe1,
-                                             self.kb.pca1, self.kb.features_l1, self.kb.cat_features))
+        sample = (DataProcessor.data_process(unprocessed_sample, self.scaler1, self.ohe1,
+                                             self.pca1, self.features_l1, self.cat_features))
 
         # evaluate cpu_usage and time before classification
         # cpu_usage_before = psutil.cpu_percent(interval=1)
@@ -127,8 +162,8 @@ class DetectionSystem:
         return prediction1, computation_time, cpu_usage
 
     def __clf_layer2(self, unprocessed_sample):
-        sample = (DataProcessor.data_process(unprocessed_sample, self.kb.scaler2, self.kb.ohe2,
-                                             self.kb.pca2, self.kb.features_l2, self.kb.cat_features))
+        sample = (DataProcessor.data_process(unprocessed_sample, self.scaler2, self.ohe2,
+                                             self.pca2, self.features_l2, self.cat_features))
 
         # evaluate cpu_usage and time before classification
         # cpu_usage_before = psutil.cpu_percent(interval=1)
@@ -207,33 +242,12 @@ class DetectionSystem:
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
 
-    def train_accuracy(self) -> list[float, float]:
-        """
-        Function to see how the IDS performs on training data, useful to see if over fitting happens
-        """
-
-        l1_prediction = self.layer1.predict(self.kb.x_train_l1)
-        l2_prediction = self.layer2.predict(self.kb.x_train_l2)
-
-        # Calculate the accuracy score for layer 1.
-        l1_accuracy = accuracy_score(self.kb.y_train_l1, l1_prediction)
-
-        # Calculate the accuracy score for layer 2.
-        l2_accuracy = accuracy_score(self.kb.y_train_l2, l2_prediction)
-
-        # write accuracy scores to file
-        with open('../KB Process/Required Files/Results.txt', 'a') as f:
-            f.write("\nLayer 1 accuracy on the train set:" + str(l1_accuracy))
-            f.write("\nLayer 2 accuracy on the train set:" + str(l2_accuracy))
-
-        return [l1_accuracy, l2_accuracy]
-
     def reset(self):
         # reset the output storages
-        self.quarantine_samples = pd.DataFrame(columns=self.kb.x_test.columns)
-        self.anomaly_by_l1 = pd.DataFrame(columns=self.kb.x_test.columns)
-        self.anomaly_by_l2 = pd.DataFrame(columns=self.kb.x_test.columns)
-        self.normal_traffic = pd.DataFrame(columns=self.kb.x_test.columns)
+        self.quarantine_samples = pd.DataFrame(columns=None)
+        self.anomaly_by_l1 = pd.DataFrame(columns=None)
+        self.anomaly_by_l2 = pd.DataFrame(columns=None)
+        self.normal_traffic = pd.DataFrame(columns=None)
 
     def metrics(self) -> Metrics:
         return self.metrics
@@ -249,3 +263,6 @@ class DetectionSystem:
 
     def normal(self) -> pd.DataFrame:
         return self.normal_traffic
+
+
+det = DetectionSystem()

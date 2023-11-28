@@ -1,15 +1,17 @@
 import json
+import logging
 import threading
 
 import numpy as np
-import Utils
 from CustomExceptions import accuracyException, precisionException, fException, tprException, fprException, \
     tnrException, fnrException
 
+LOGGER = logging.getLogger('DetectionSystem')
+LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 class Metrics:
     def __init__(self):
-        self.logger = Utils.set_logger(__name__)
 
         file_path = '../KB Process/Required Files/metrics_thresholds.json'
         try:
@@ -20,9 +22,9 @@ class Metrics:
                 self._time_interval = metrics_thresholds['time_interval']
                 self._max_usage = metrics_thresholds['max_usage']
                 self._max_clf_time = metrics_thresholds['max_clf_time']
-                self.logger.info("Metrics thresholds loaded from file.")
+                LOGGER.info("Metrics thresholds loaded from file.")
         except FileNotFoundError:
-            self.logger.error(f"Metrics thresholds file not found: {file_path}")
+            LOGGER.error(f"Metrics thresholds file not found: {file_path}")
 
         # count of the outputs for layer1
         self._count_1 = {
@@ -148,7 +150,7 @@ class Metrics:
         if all(val != 0 for val in count_dict.values()):
             self.__compute_performance_metrics(target=layer)
         else:
-            self.logger.error(f'Not enough data for LAYER{layer}, skipping metrics computation for now.')
+            LOGGER.error(f'Not enough data for LAYER{layer}, skipping metrics computation for now.')
 
         self.__compute_classification_metrics()
 
@@ -171,62 +173,62 @@ class Metrics:
     def analyze_metrics(self):
 
         self.enough_data_event.wait()   # Wait for the event to be set
-        self.logger.info('Analyzing the metrics..')
+        LOGGER.info('Analyzing the metrics..')
 
         if self._metrics_1['accuracy'] < self._metrics_thresh_1['accuracy_t']:
-            self.logger.info("Accuracy for Layer 1 fell below the threshold.")
+            LOGGER.info("Accuracy for Layer 1 fell below the threshold.")
             raise accuracyException
 
         if self._metrics_1['precision'] < self._metrics_thresh_1['precision_t']:
-            self.logger.info("Precision for Layer 1 fell below the threshold.")
+            LOGGER.info("Precision for Layer 1 fell below the threshold.")
             raise precisionException
 
         if self._metrics_1['fscore'] < self._metrics_thresh_1['fscore_t']:
-            self.logger.info("Fscore for Layer 1 fell below the threshold.")
+            LOGGER.info("Fscore for Layer 1 fell below the threshold.")
             raise fException
 
         if self._metrics_1['tpr'] < self._metrics_thresh_1['tpr_t']:
-            self.logger.info("Tpr for Layer 1 fell below the threshold.")
+            LOGGER.info("Tpr for Layer 1 fell below the threshold.")
             raise tprException
 
         if self._metrics_1['fpr'] < self._metrics_thresh_1['fpr_t']:
-            self.logger.info("Fpr for Layer 1 fell below the threshold.")
+            LOGGER.info("Fpr for Layer 1 fell below the threshold.")
             raise fprException
 
         if self._metrics_1['tnr'] < self._metrics_thresh_1['tnr_t']:
-            self.logger.info("Tnr for Layer 1 fell below the threshold.")
+            LOGGER.info("Tnr for Layer 1 fell below the threshold.")
             raise tnrException
 
         if self._metrics_1['fnr'] < self._metrics_thresh_1['fnr_t']:
-            self.logger.info("Fnr for Layer 1 fell below the threshold.")
+            LOGGER.info("Fnr for Layer 1 fell below the threshold.")
             raise fnrException
 
         #time.sleep(5)   # wait a bit before assessing the metrics
 
     def show_metrics(self):
 
-        self.logger.info('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
-        self.logger.info('Precision for layer 1: %s', self._metrics_1['precision'])
-        self.logger.info('F-score for layer 1: %s', self._metrics_1['fscore'])
-        self.logger.info('TPR for layer 1: %s', self._metrics_1['tpr'])
-        self.logger.info('FPR for layer 1: %s', self._metrics_1['fpr'])
-        self.logger.info('TNR for layer 1: %s', self._metrics_1['tnr'])
-        self.logger.info('FNR for layer 1: %s', self._metrics_1['fnr'])
-        self.logger.info('\n')
+        LOGGER.info('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
+        LOGGER.info('Precision for layer 1: %s', self._metrics_1['precision'])
+        LOGGER.info('F-score for layer 1: %s', self._metrics_1['fscore'])
+        LOGGER.info('TPR for layer 1: %s', self._metrics_1['tpr'])
+        LOGGER.info('FPR for layer 1: %s', self._metrics_1['fpr'])
+        LOGGER.info('TNR for layer 1: %s', self._metrics_1['tnr'])
+        LOGGER.info('FNR for layer 1: %s', self._metrics_1['fnr'])
+        LOGGER.info('\n')
 
-        self.logger.info('Accuracy for layer 2: %s', self._metrics_2['accuracy'])
-        self.logger.info('Precision for layer 2: %s', self._metrics_2['precision'])
-        self.logger.info('F-score for layer 2: %s', self._metrics_2['fscore'])
-        self.logger.info('TPR for layer 2: %s', self._metrics_2['tpr'])
-        self.logger.info('FPR for layer 2: %s', self._metrics_2['fpr'])
-        self.logger.info('TNR for layer 2: %s', self._metrics_2['tnr'])
-        self.logger.info('FNR for layer 2: %s', self._metrics_2['fnr'])
-        self.logger.info('\n')
+        LOGGER.info('Accuracy for layer 2: %s', self._metrics_2['accuracy'])
+        LOGGER.info('Precision for layer 2: %s', self._metrics_2['precision'])
+        LOGGER.info('F-score for layer 2: %s', self._metrics_2['fscore'])
+        LOGGER.info('TPR for layer 2: %s', self._metrics_2['tpr'])
+        LOGGER.info('FPR for layer 2: %s', self._metrics_2['fpr'])
+        LOGGER.info('TNR for layer 2: %s', self._metrics_2['tnr'])
+        LOGGER.info('FNR for layer 2: %s', self._metrics_2['fnr'])
+        LOGGER.info('\n')
 
-        self.logger.info('Normal ratio: %s', self._classification_metrics['normal_ratio'])
-        self.logger.info('L1 anomalies ratio: %s', self._classification_metrics['l1_anomaly_ratio'])
-        self.logger.info('L2 anomalies ratio: %s', self._classification_metrics['l2_anomaly_ratio'])
-        self.logger.info('Quarantined ratio: %s', self._classification_metrics['quarantine_ratio'])
+        LOGGER.info('Normal ratio: %s', self._classification_metrics['normal_ratio'])
+        LOGGER.info('L1 anomalies ratio: %s', self._classification_metrics['l1_anomaly_ratio'])
+        LOGGER.info('L2 anomalies ratio: %s', self._classification_metrics['l2_anomaly_ratio'])
+        LOGGER.info('Quarantined ratio: %s', self._classification_metrics['quarantine_ratio'])
 
     def reset(self):
         # reset the metrics and counts
