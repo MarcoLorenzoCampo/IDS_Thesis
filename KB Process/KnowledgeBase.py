@@ -6,10 +6,12 @@ import pickle
 import sqlite3
 import sys
 import time
+import boto3
 
 import joblib
 import numpy as np
 import pandas as pd
+from s3transfer import TransferConfig
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
@@ -20,6 +22,11 @@ import KBConnectionHandler
 LOGGER = logging.getLogger('KnowledgeBase')
 LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
+# Set the desired multipart threshold value (5GB)
+GB = 1024 ** 3
+config = TransferConfig(multipart_threshold=5 * GB)
+
 
 class KnowledgeBase:
     """
@@ -33,10 +40,153 @@ class KnowledgeBase:
         LOGGER.info('Creating an instance of KnowledgeBase.')
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
 
-        LOGGER.info('Loading minimal features.')
-        self.features_l1 = self.__load_features('Required Files/NSL_features_l1.txt')
-        self.features_l2 = self.__load_features('Required Files/NSL_features_l2.txt')
+        LOGGER.info('Loading data from S3.')
+        self.s3_resource = boto3.client('s3')
+        self.bucket_name = 'nsl-kdd-datasets'
 
+        LOGGER.info('Loading set of minimal features.')
+        self.features_l1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/MinimalFeatures',
+            file_name='NSL_features_l1.txt',
+            download_path="AWS Downloads/MinimalFeatures/"
+        )
+        self.features_l2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/MinimalFeatures',
+            file_name='NSL_features_l2.txt',
+            download_path="AWS Downloads/MinimalFeatures/"
+        )
+
+        LOGGER.info('Loading set of one hot encoders.')
+        self.ohe1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/OneHotEncoders',
+            file_name='OneHotEncoder_l1.pkl',
+            download_path="AWS Downloads/OneHotEncoders/"
+        )
+        self.ohe2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/OneHotEncoders',
+            file_name='OneHotEncoder_l2.pkl',
+            download_path="AWS Downloads/OneHotEncoders/"
+        )
+
+        LOGGER.info('Loading set of PCA encoders.')
+        self.pca1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/PCAEncoders',
+            file_name='layer1_pca_transformer.pkl',
+            download_path="AWS Downloads/PCAEncoders/"
+        )
+        self.pca2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/PCAEncoders',
+            file_name='layer2_pca_transformer.pkl',
+            download_path="AWS Downloads/PCAEncoders/"
+        )
+
+        LOGGER.info('Loading set of scalers.')
+        self.scaler1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/Scalers',
+            file_name='Scaler_l1.pkl',
+            download_path="AWS Downloads/Scalers/"
+        )
+        self.scaler2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/Scalers',
+            file_name='Scaler_l2.pkl',
+            download_path="AWS Downloads/Scalers/"
+        )
+
+        LOGGER.info('Loading models.')
+        self.layer1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='Models/StartingModels',
+            file_name='NSL_l1_classifier.pkl',
+            download_path="AWS Downloads/Models/StartingModels/"
+        )
+        self.layer2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='Models/StartingModels',
+            file_name='NSL_l2_classifier.pkl',
+            download_path="AWS Downloads/Models/StartingModels/"
+        )
+
+        LOGGER.info('Loading fully processed train sets.')
+        self.x_train_l1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/PCAEncoded',
+            file_name='KDDTrain+_l1_pca.pkl',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+        self.x_train_l2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/PCAEncoded',
+            file_name='KDDTrain+_l2_pca.pkl',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+
+        LOGGER.info('Loading target variables for train sets.')
+        self.y_train_l1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            file_name='KDDTrain+_l1_targets.npy',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+        self.y_train_l2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            file_name='KDDTrain+_l2_targets.npy',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+
+        LOGGER.info('Loading fully processed validation sets.')
+        self.x_validate_l1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/PCAEncoded',
+            file_name='KDDValidate+_l1_pca.pkl',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+        self.x_validate_l2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/PCAEncoded',
+            file_name='KDDValidate+_l1_pca.pkl',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+
+        LOGGER.info('Loading target variables for validation sets.')
+        self.y_validate_l1 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            file_name='KDDValidate+_l1_targets.npy',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+        self.y_validate_l2 = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            file_name='KDDValidate+_l2_targets.npy',
+            download_path='AWS Downloads/Datasets/PCAEncoded/'
+        )
+
+        LOGGER.info('Loading original data sets.')
+        self.x_train = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='OriginalDatasets',
+            file_name='KDDTrain+_with_labels.pkl',
+            download_path='AWS Downloads/Datasets/OriginalDatasets/'
+        )
+        self.x_train_20p = self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='ProcessedDatasets',
+            file_name='KDDTrain+20_percent_with_labels.pkl',
+            download_path='AWS Downloads/Datasets/OriginalDatasets/'
+        )
+
+        self.cat_features = ['protocol_type', 'service', 'flag']
+
+        """
         LOGGER.info('Loading train sets.')
         self.x_train_l1, self.y_train_l1 = self.__load_dataset('pca_train1.pkl', 'KDDTrain+_l1_targets.npy')
         self.x_train_l2, self.y_train_l2 = self.__load_dataset('pca_train2.pkl', 'KDDTrain+_l2_targets.npy')
@@ -47,8 +197,6 @@ class KnowledgeBase:
 
         LOGGER.info('Loading test sets.')
         self.x_test, self.y_test = self.__load_test_set()
-
-        self.cat_features = ['protocol_type', 'service', 'flag']
 
         LOGGER.info('Loading scalers.')
         self.scaler1, self.scaler2 = self.__load_scalers('scaler1.pkl', 'scaler2.pkl')
@@ -62,6 +210,11 @@ class KnowledgeBase:
         LOGGER.info('Loading models.')
         self.layer1, self.layer2 = self.__load_or_train(model_name1=model_name1, model_name2=model_name2)
 
+        LOGGER.info('Loading minimal features.')
+        self.features_l1 = self.__load_features('Required Files/NSL_features_l1.txt')
+        self.features_l2 = self.__load_features('Required Files/NSL_features_l2.txt')
+        """
+
         LOGGER.info('Connecting to sqlite3 in memory database.')
         self.sql_connection = sqlite3.connect(':memory:')
         self.cursor = self.sql_connection.cursor()
@@ -72,6 +225,19 @@ class KnowledgeBase:
 
         # Instance of KBConnectionHandler with a reference to the knowledge base itself
         self.connection_handler = KBConnectionHandler.Connector(self, ampq_url)
+
+    def __aws_download(self, bucket_name: str, folder_name: str, file_name: str, download_path: str):
+
+        local_file_path = os.path.join(download_path, file_name)
+        return self.s3_resource.download_file(
+            bucket_name,
+            f'{folder_name}/{file_name}',
+            local_file_path,
+            Callback=self.__aws_download_callback
+        )
+
+    def __aws_download_callback(self, bytes):
+        LOGGER.info(f'Downloaded {bytes} bytes')
 
     def __load_features(self, file_path):
         with open(file_path, 'r') as f:
@@ -108,19 +274,23 @@ class KnowledgeBase:
         self.x_train_l1.to_sql('x_train_l1', self.sql_connection, index=False, if_exists='replace')
         self.x_train_l2.to_sql('x_train_l2', self.sql_connection, index=False, if_exists='replace')
 
+        # create a table for each train set
+        self.x_train.to_sql('x_train', self.sql_connection, index=False, if_exists='replace')
+        self.x_train_20p.to_sql('x_train_20p', self.sql_connection, index=False, if_exists='replace')
+
         # create a table for each validation set
         self.x_validate_l1.to_sql('x_validate_l1', self.sql_connection, index=False, if_exists='replace')
         self.x_validate_l2.to_sql('x_validate_l2', self.sql_connection, index=False, if_exists='replace')
 
         # also for the test set since we may need it
-        self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')
+        # self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')
 
         # now append target variables as the last column of each table
         self.__append_to_table('x_train_l1', 'target', self.y_train_l1)
         self.__append_to_table('x_train_l2', 'target', self.y_train_l2)
         self.__append_to_table('x_validate_l1', 'target', self.y_validate_l1)
         self.__append_to_table('x_validate_l2', 'target', self.y_validate_l2)
-        self.__append_to_table('x_test', 'target', self.y_test)
+        # self.__append_to_table('x_test', 'target', self.y_test)
 
     def __append_to_table(self, table_name, column_name, target_values):
         # Fetch the existing table from the in-memory database
@@ -134,7 +304,7 @@ class KnowledgeBase:
         # Remove instances of datasets to free up memory
         del self.x_train_l1, self.x_train_l2, self.y_train_l1, self.y_train_l2
         del self.x_validate_l1, self.x_validate_l2, self.y_validate_l1, self.y_validate_l2
-        del self.x_test, self.y_test
+        # del self.x_test, self.y_test
 
     def perform_query(self, received):
         LOGGER.info(f'Received a query.')
@@ -204,7 +374,6 @@ class KnowledgeBase:
 
         # if the models already exist and no specific model is required, load the sets
         if can_load or not new_requests:
-
             LOGGER.info('Loading existing models.')
             with open('Models/Original models/NSL_l1_classifier_og.pkl', 'rb') as file:
                 layer1 = pickle.load(file)
@@ -318,21 +487,23 @@ class KnowledgeBase:
     def __show_info(self):
         LOGGER.info('Shapes and sized of the sets:')
         LOGGER.info(f'TRAIN:\n'
-                         f'x_train_l1 = {self.x_train_l1.shape}\n'
-                         f'x_train_l2 = {self.x_train_l2.shape}\n'
-                         f'y_train_l1 = {len(self.y_train_l1)}\n'
-                         f'y_train_l2 = {len(self.y_train_l2)}')
+                    f'x_train_l1 = {self.x_train_l1.shape}\n'
+                    f'x_train_l2 = {self.x_train_l2.shape}\n'
+                    f'y_train_l1 = {len(self.y_train_l1)}\n'
+                    f'y_train_l2 = {len(self.y_train_l2)}')
         LOGGER.info(f'VALIDATE:\n'
-                         f'x_validate_l1 = {self.x_validate_l1.shape}\n'
-                         f'x_validate_l2 = {self.x_validate_l2.shape}\n'
-                         f'y_validate_l1 = {len(self.y_validate_l1)}\n'
-                         f'y_validate_l2 = {len(self.y_validate_l2)}')
+                    f'x_validate_l1 = {self.x_validate_l1.shape}\n'
+                    f'x_validate_l2 = {self.x_validate_l2.shape}\n'
+                    f'y_validate_l1 = {len(self.y_validate_l1)}\n'
+                    f'y_validate_l2 = {len(self.y_validate_l2)}')
+
 
 class ReconnectingConsumer:
     """
     Declares an instance of a knowledge base, and handles the setup of its component
     connection_handler.
     """
+
     def __init__(self, amqp_url, model_name1: str = None, model_name2: str = None):
         self._reconnect_delay = 0
         self._amqp_url = amqp_url

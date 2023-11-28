@@ -8,3 +8,4 @@ matplotlib~=3.8.0
 psutil~=5.9.6
 optuna~=3.4.0
 pika~=1.3.2
+boto3~=1.33.0
