@@ -228,7 +228,7 @@ class DetectionSystem:
 
     def __add_to_normal1(self, sample: pd.DataFrame) -> None:
         """
-        Add a normal sample to the list
+        Add a normal sample to the correspondant list
         :param sample: incoming traffic
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
