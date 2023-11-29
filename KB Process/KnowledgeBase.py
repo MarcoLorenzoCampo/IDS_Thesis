@@ -7,6 +7,7 @@ import time
 import boto3
 
 import pandas as pd
+
 from Loader import Loader
 
 import KBConnectionHandler
@@ -27,7 +28,6 @@ class KnowledgeBase:
         self.__s3_setup_and_load()
         self.__load_data_instances()
         self.__sqlite3_setup()
-
         self.connection_handler = KBConnectionHandler.Connector(self, ampq_url)
 
     def __sqlite3_setup(self):
@@ -91,8 +91,8 @@ class KnowledgeBase:
                                                        'NSL_l2_classifier.pkl')
 
         LOGGER.info('Loading minimal features.')
-        self.features_l1 = self.loader.load_features('Required Files/NSL_features_l1.txt')
-        self.features_l2 = self.loader.load_features('Required Files/NSL_features_l2.txt')
+        self.features_l1 = self.loader.load_features('AWS Downloads/MinimalFeatures/NSL_features_l1.txt')
+        self.features_l2 = self.loader.load_features('AWS Downloads/MinimalFeatures/NSL_features_l2.txt')
 
     def __fill_tables(self):
         # create a table for each train set
@@ -169,7 +169,6 @@ class KnowledgeBase:
                     f'x_validate_l2 = {self.x_validate_l2.shape}\n'
                     f'y_validate_l1 = {len(self.y_validate_l1)}\n'
                     f'y_validate_l2 = {len(self.y_validate_l2)}')
-
 
 class ReconnectingConsumer:
     """

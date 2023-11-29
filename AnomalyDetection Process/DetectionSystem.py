@@ -1,16 +1,14 @@
 import copy
 import logging
+import sqlite3
 import time
 
 import boto3
-import joblib
 
 import Metrics
 from Metrics import Metrics
 
 import pandas as pd
-from sklearn.metrics import accuracy_score
-
 import DataProcessor
 from typing import Union
 from Loader import Loader
@@ -28,21 +26,84 @@ class DetectionSystem:
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
         self.cat_features = ['flag', 'protocol_type', 'service']
 
-        # Load necessary data from AWS s3
         self.__s3_setup_and_load()
-
         self.__load_data_instances()
-
-        # set the metrics from the class Metrics
+        self.__set_local_storage()
+        self.__sqlite3_setup()
+        self.__set_switchers()
         self.metrics = Metrics()
 
-        # set up the dataframes containing the analyzed data
-        self.quarantine_samples = pd.DataFrame(columns=None)
-        self.anomaly_by_l1 = pd.DataFrame(columns=None)
-        self.anomaly_by_l2 = pd.DataFrame(columns=None)
-        self.normal_traffic = pd.DataFrame(columns=None)
+    def __s3_setup_and_load(self):
+        self.s3_resource = boto3.client('s3')
+        self.loader = Loader(s3_resource=self.s3_resource)
 
-        # dictionary for classification functions
+        LOGGER.info('Loading models.')
+        self.loader.s3_load()
+
+        LOGGER.info('Loading from S3 bucket complete.')
+
+    def __load_data_instances(self):
+
+        LOGGER.info('Loading test set.')
+        self.x_test, self.y_test = self.loader.load_testset('KDDTest+.txt', 'KDDTest+_targets.npy')
+
+        LOGGER.info('Loading one hot encoders.')
+        self.ohe1, self.ohe2 = self.loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
+
+        LOGGER.info('Loading scalers.')
+        self.scaler1, self.scaler2 = self.loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
+
+        LOGGER.info('Loading pca transformers.')
+        self.pca1, self.pca2 = self.loader.load_pca_transformers('layer1_pca_transformer.pkl',
+                                                                 'layer2_pca_transformer.pkl')
+
+        LOGGER.info('Loading models.')
+        self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
+                                                           'NSL_l2_classifier.pkl')
+
+        LOGGER.info('Loading minimal features.')
+        self.features_l1 = self.loader.load_features('NSL_features_l1.txt')
+        self.features_l2 = self.loader.load_features('NSL_features_l2.txt')
+
+    def __set_local_storage(self):
+        # set up the dataframes containing the analyzed data
+        self.quarantine_samples = pd.DataFrame(columns=self.x_test.columns)
+        self.anomaly_by_l1 = pd.DataFrame(columns=self.x_test.columns)
+        self.anomaly_by_l2 = pd.DataFrame(columns=self.x_test.columns)
+        self.normal_traffic = pd.DataFrame(columns=self.x_test.columns)
+
+    def __sqlite3_setup(self):
+        LOGGER.info('Connecting to sqlite3 in memory database.')
+        self.sql_connection = sqlite3.connect(':memory:')
+        self.cursor = self.sql_connection.cursor()
+
+        LOGGER.info('Instantiating the needed SQL in memory tables.')
+        self.__fill_tables()
+
+        LOGGER.info('Removing local instances.')
+        self.__clean()
+
+        LOGGER.info('Completed sqlite3 in memory databases setup.')
+
+    def __fill_tables(self):
+        # create a table for each validation set
+        self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')
+        self.__append_to_table('x_test', 'target', self.y_test)
+
+    def __append_to_table(self, table_name, column_name, target_values):
+        # Fetch the existing table from the in-memory database
+        existing_data = pd.read_sql_query(f'SELECT * FROM {table_name}', self.sql_connection)
+        # Append the target column to the existing table
+        existing_data[column_name] = target_values
+        # Update the table in the in-memory database
+        existing_data.to_sql(table_name, self.sql_connection, if_exists='replace', index=False)
+
+    def __clean(self):
+        del self.x_test
+
+    def __set_switchers(self):
+
+        LOGGER.info('Loading the switch cases.')
         self.clf_switcher = {
             'QUARANTINE': self.__add_to_quarantine,
             'L1_ANOMALY': self.__add_to_anomaly1,
@@ -62,35 +123,6 @@ class DetectionSystem:
             ('L2_ANOMALY', 0): lambda: self.metrics.update_count('fp', 1, 2),
             ('L2_ANOMALY', 1): lambda: self.metrics.update_count('tp', 1, 2),
         }
-
-    def __s3_setup_and_load(self):
-        self.s3_resource = boto3.client('s3')
-        self.loader = Loader(s3_resource=self.s3_resource)
-
-        LOGGER.info('Loading models.')
-        self.loader.s3_load()
-
-        LOGGER.info('Loading from S3 bucket complete.')
-
-    def __load_data_instances(self):
-
-        LOGGER.info('Loading one hot encoders.')
-        self.ohe1, self.ohe2 = self.loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
-
-        LOGGER.info('Loading scalers.')
-        self.scaler1, self.scaler2 = self.loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
-
-        LOGGER.info('Loading pca transformers.')
-        self.pca1, self.pca2 = self.loader.load_pca_transformers('layer1_pca_transformer.pkl',
-                                                                 'layer2_pca_transformer.pkl')
-
-        LOGGER.info('Loading models.')
-        self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
-                                                           'NSL_l2_classifier.pkl')
-
-        LOGGER.info('Loading minimal features.')
-        self.features_l1 = self.loader.load_features('Required Files/NSL_features_l1.txt')
-        self.features_l2 = self.loader.load_features('Required Files/NSL_features_l2.txt')
 
     def classify(self, incoming_data, actual: int = None):
         """
@@ -241,28 +273,6 @@ class DetectionSystem:
         """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
-
-    def reset(self):
-        # reset the output storages
-        self.quarantine_samples = pd.DataFrame(columns=None)
-        self.anomaly_by_l1 = pd.DataFrame(columns=None)
-        self.anomaly_by_l2 = pd.DataFrame(columns=None)
-        self.normal_traffic = pd.DataFrame(columns=None)
-
-    def metrics(self) -> Metrics:
-        return self.metrics
-
-    def quarantine(self) -> pd.DataFrame:
-        return self.quarantine_samples
-
-    def anomaly_l1(self) -> pd.DataFrame:
-        return self.anomaly_by_l1
-
-    def anomaly_l2(self) -> pd.DataFrame:
-        return self.anomaly_by_l2
-
-    def normal(self) -> pd.DataFrame:
-        return self.normal_traffic
 
 
 det = DetectionSystem()

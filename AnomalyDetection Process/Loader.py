@@ -17,6 +17,20 @@ class Loader:
     def s3_load(self):
         LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
 
+        LOGGER.info('Loading minimal features.')
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/MinimalFeatures',
+            file_name='NSL_features_l1.txt',
+            download_path="AWS Downloads/MinimalFeatures/"
+        )
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='AdditionalFiles/MinimalFeatures',
+            file_name='NSL_features_l2.txt',
+            download_path="AWS Downloads/MinimalFeatures/"
+        )
+
         LOGGER.info('Loading set of one hot encoders.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -73,6 +87,20 @@ class Loader:
             download_path="AWS Downloads/Models/StartingModels/"
         )
 
+        LOGGER.info('Loading the test set.')
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='OriginalDatasets',
+            file_name='KDDTest+.txt',
+            download_path="AWS Downloads/Test Set/"
+        )
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='OriginalDatasets',
+            file_name='KDDTest+_targets.npy',
+            download_path="AWS Downloads/Test Set/"
+        )
+
     def __aws_download(self, bucket_name: str, folder_name: str, file_name: str, download_path: str):
         local_file_path = os.path.join(download_path, file_name)
         self.s3_resource.download_file(
@@ -91,6 +119,11 @@ class Loader:
         pca2 = joblib.load(f'AWS Downloads/PCAEncoders/{pca2_file}')
         return pca1, pca2
 
+    def load_testset(self, test_set, targets):
+        x_test = pd.read_csv(f'AWS Downloads/Test Set/{test_set}', sep=",", header=0)
+        y_test = np.load(f'AWS Downloads/Test Set/{targets}', allow_pickle=True)
+        return x_test, y_test
+
     def load_models(self, model1, model2):
         model1 = joblib.load(f'AWS Downloads/Models/StartingModels/{model1}')
         model2 = joblib.load(f'AWS Downloads/Models/StartingModels/{model2}')
@@ -106,11 +139,7 @@ class Loader:
         scaler2 = joblib.load(f'AWS Downloads/Scalers/{scaler2_file}')
         return scaler1, scaler2
 
-    def load_test_set(self):
-        x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
-        y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
-        return x_test, y_test
-
-    def load_features(self, file_path: str):
-        with open(file_path, 'r') as f:
+    def load_features(self, file_name: str):
+        path = 'AWS Downloads/MinimalFeatures/'+file_name
+        with open(path, 'r') as f:
             return f.read().split(',')
