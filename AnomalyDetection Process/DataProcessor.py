@@ -17,22 +17,3 @@ def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
     pca_transformed = pca.transform(processed)
 
     return pca_transformed
-
-
-class DataPreprocessingComponent:
-    features = pd.read_csv('../KB Process/NSL-KDD Original Datasets/Field Names.csv', header=None)
-
-    def traffic_quality_check(self, incoming_data):
-        """
-        This function checks if the incoming traffic has the correct features to be analyzed.
-        Parameters:
-        incoming_data (DataFrame): The incoming data to be checked.
-        Returns:
-        int: Returns 1 if all features match, otherwise returns 0.
-        """
-
-        for index, feature in enumerate(incoming_data.columns):
-            if self.features[index] != feature:
-                return 0
-
-        return 1

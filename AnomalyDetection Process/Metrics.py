@@ -1,19 +1,20 @@
 import json
 import logging
 import threading
+import time
 
 import numpy as np
 from CustomExceptions import accuracyException, precisionException, fException, tprException, fprException, \
     tnrException, fnrException
 
-LOGGER = logging.getLogger('DetectionSystem')
-LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOGGER = logging.getLogger('Metrics')
+LOG_FORMAT = '%(asctime)-10s %(levelname)-10s %(name)-45s %(funcName)-35s %(lineno)-5d: %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 class Metrics:
     def __init__(self):
 
-        file_path = '../KB Process/Required Files/metrics_thresholds.json'
+        file_path = 'metrics_thresholds.json'
         try:
             with open(file_path, 'r') as file:
                 metrics_thresholds = json.load(file)
@@ -172,7 +173,6 @@ class Metrics:
 
     def analyze_metrics(self):
 
-        self.enough_data_event.wait()   # Wait for the event to be set
         LOGGER.info('Analyzing the metrics..')
 
         if self._metrics_1['accuracy'] < self._metrics_thresh_1['accuracy_t']:
@@ -202,8 +202,6 @@ class Metrics:
         if self._metrics_1['fnr'] < self._metrics_thresh_1['fnr_t']:
             LOGGER.info("Fnr for Layer 1 fell below the threshold.")
             raise fnrException
-
-        #time.sleep(5)   # wait a bit before assessing the metrics
 
     def show_metrics(self):
 

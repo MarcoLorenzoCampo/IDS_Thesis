@@ -6,8 +6,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 
 # set an instance-level logger
-LOGGER = logging.getLogger('KnowledgeBase')
-LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOGGER = logging.getLogger('Trainer')
+LOG_FORMAT = '%(levelname)-10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 def train_models(self, model_name1: str, model_name2: str):
     # we reach this branch is there are no models to load or some specific model is required

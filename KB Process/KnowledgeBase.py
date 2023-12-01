@@ -8,13 +8,13 @@ import boto3
 
 import pandas as pd
 
-from Loader import Loader
+from KBLoader import Loader
 
 import KBConnectionHandler
 
 # set an instance-level logger
 LOGGER = logging.getLogger('KnowledgeBase')
-LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOG_FORMAT = '%(asctime)-10s -%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 
@@ -28,6 +28,7 @@ class KnowledgeBase:
         self.__s3_setup_and_load()
         self.__load_data_instances()
         self.__sqlite3_setup()
+
         self.connection_handler = KBConnectionHandler.Connector(self, ampq_url)
 
     def __sqlite3_setup(self):

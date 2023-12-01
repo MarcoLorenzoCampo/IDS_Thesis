@@ -3,20 +3,18 @@ import logging
 import sqlite3
 import sys
 import time
+from typing import Union
 
 import boto3
+import pandas as pd
 
 import DSConnectionHandler
-import Metrics
+from LoaderDetectionSystem import Loader
 from Metrics import Metrics
-
-import pandas as pd
 import DataProcessor
-from typing import Union
-from Loader import Loader
 
 LOGGER = logging.getLogger('DetectionSystem')
-LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOG_FORMAT = '%(asctime) -10s %(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 LOGGER.info('Creating an instance of DetectionSystem.')
 
@@ -24,14 +22,14 @@ LOGGER.info('Creating an instance of DetectionSystem.')
 class DetectionSystem:
 
     def __init__(self, ampq_url: str):
-
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
         self.cat_features = ['flag', 'protocol_type', 'service']
 
         self.__s3_setup_and_load()
         self.__load_data_instances()
-        self.__set_local_storage()
         self.__sqlite3_setup()
+
+        self.__set_local_storage()
         self.__set_switchers()
         self.metrics = Metrics()
 
@@ -47,7 +45,6 @@ class DetectionSystem:
         LOGGER.info('Loading from S3 bucket complete.')
 
     def __load_data_instances(self):
-
         LOGGER.info('Loading test set.')
         self.x_test, self.y_test = self.loader.load_testset('KDDTest+.txt', 'KDDTest+_targets.npy')
 
@@ -70,43 +67,37 @@ class DetectionSystem:
         self.features_l2 = self.loader.load_features('NSL_features_l2.txt')
 
     def __set_local_storage(self):
-        # set up the dataframes containing the analyzed data
         self.quarantine_samples = pd.DataFrame(columns=self.x_test.columns)
         self.anomaly_by_l1 = pd.DataFrame(columns=self.x_test.columns)
         self.anomaly_by_l2 = pd.DataFrame(columns=self.x_test.columns)
         self.normal_traffic = pd.DataFrame(columns=self.x_test.columns)
 
     def __sqlite3_setup(self):
-        LOGGER.info('Connecting to sqlite3 in memory database.')
+        LOGGER.info('Connecting to sqlite3 in-memory database.')
         self.sql_connection = sqlite3.connect(':memory:')
         self.cursor = self.sql_connection.cursor()
 
-        LOGGER.info('Instantiating the needed SQL in memory tables.')
+        LOGGER.info('Instantiating the needed SQL in-memory tables.')
         self.__fill_tables()
 
         LOGGER.info('Removing local instances.')
         self.__clean()
 
-        LOGGER.info('Completed sqlite3 in memory databases setup.')
+        LOGGER.info('Completed sqlite3 in-memory databases setup.')
 
     def __fill_tables(self):
-        # create a table for each validation set
         self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')
         self.__append_to_table('x_test', 'target', self.y_test)
 
     def __append_to_table(self, table_name, column_name, target_values):
-        # Fetch the existing table from the in-memory database
         existing_data = pd.read_sql_query(f'SELECT * FROM {table_name}', self.sql_connection)
-        # Append the target column to the existing table
         existing_data[column_name] = target_values
-        # Update the table in the in-memory database
         existing_data.to_sql(table_name, self.sql_connection, if_exists='replace', index=False)
 
     def __clean(self):
         del self.x_test
 
     def __set_switchers(self):
-
         LOGGER.info('Loading the switch cases.')
         self.clf_switcher = {
             'QUARANTINE': self.__add_to_quarantine,
@@ -116,7 +107,6 @@ class DetectionSystem:
             'NOT_ANOMALY2': self.__add_to_normal2
         }
 
-        # dictionary for metrics functions
         self.metrics_switcher = {
             ('NOT_ANOMALY1', 1): lambda: self.metrics.update_count('fn', 1, 1),
             ('NOT_ANOMALY1', 0): lambda: self.metrics.update_count('tn', 1, 1),
@@ -129,104 +119,57 @@ class DetectionSystem:
         }
 
     def classify(self, incoming_data, actual: int = None):
-        """
-      Args:
-        incoming_data: A NumPy array containing the sample to test.
-        actual: Optional argument containing the label the incoming traffic data, if available
-      """
-
-        # Copy of the original sample
         unprocessed_sample = copy.deepcopy(incoming_data)
-
-        # Classification for layer 1
         prediction1, computation_time, cpu_usage = self.__clf_layer1(unprocessed_sample)
 
-        # add cpu_usage and computation_time to metrics
         self.metrics.add_cpu_usage(cpu_usage)
         self.metrics.add_classification_time(computation_time)
 
         if prediction1:
-            # anomaly identified by layer1
             self.__finalize_clf(incoming_data, [1, 'L1_ANOMALY'], actual)
             return
-
         else:
-            # considered as normal by layer1
             self.__finalize_clf(incoming_data, [0, 'NOT_ANOMALY1'], actual)
-
-            # Continue with layer 2 if layer 1 does not detect anomalies
             anomaly_confidence, computation_time, cpu_usage = self.__clf_layer2(unprocessed_sample)
 
-            # add cpu_usage and computation_time to metrics
             self.metrics.add_cpu_usage(cpu_usage)
             self.metrics.add_classification_time(computation_time)
 
             benign_confidence_2 = 1 - anomaly_confidence[0, 1]
 
-            # anomaly identified by layer2
             if anomaly_confidence[0, 1] >= self.ANOMALY_THRESHOLD2:
                 self.__finalize_clf(incoming_data, [anomaly_confidence, 'L2_ANOMALY'], actual)
                 return
 
-            # not an anomaly identified by layer2
             if benign_confidence_2 >= self.BENIGN_THRESHOLD:
                 self.__finalize_clf(incoming_data, [benign_confidence_2, 'NOT_ANOMALY2'], actual)
                 return
 
-        # has not been classified yet, it's not decided
         self.__finalize_clf(incoming_data, [0, 'QUARANTINE'], actual)
 
     def __clf_layer1(self, unprocessed_sample):
-        sample = (DataProcessor.data_process(unprocessed_sample, self.scaler1, self.ohe1,
-                                             self.pca1, self.features_l1, self.cat_features))
+        sample = DataProcessor.data_process(unprocessed_sample, self.scaler1, self.ohe1,
+                                            self.pca1, self.features_l1, self.cat_features)
 
-        # evaluate cpu_usage and time before classification
-        # cpu_usage_before = psutil.cpu_percent(interval=1)
         start = time.time()
-
-        # predict using the classifier for layer 1
         prediction1 = self.layer1.predict(sample)
-
-        # evaluate cpu_usage and time immediately after classification
-        # cpu_usage_after = psutil.cpu_percent(interval=1)
-
-        # metrics to return
         cpu_usage = 0
-        # cpu_usage = cpu_usage_after - cpu_usage_before
         computation_time = time.time() - start
 
         return prediction1, computation_time, cpu_usage
 
     def __clf_layer2(self, unprocessed_sample):
-        sample = (DataProcessor.data_process(unprocessed_sample, self.scaler2, self.ohe2,
-                                             self.pca2, self.features_l2, self.cat_features))
+        sample = DataProcessor.data_process(unprocessed_sample, self.scaler2, self.ohe2,
+                                            self.pca2, self.features_l2, self.cat_features)
 
-        # evaluate cpu_usage and time before classification
-        # cpu_usage_before = psutil.cpu_percent(interval=1)
         start = time.time()
-
-        # we are interested in anomaly_confidence[0, 1], meaning the first sample and class 1 (the anomaly class)
         anomaly_confidence = self.layer2.predict_proba(sample)
-
-        # evaluate cpu_usage and time immediately after classification
-        # cpu_usage_after = psutil.cpu_percent(interval=1)
-
-        # metrics to return
         cpu_usage = 0
-        # cpu_usage = cpu_usage_after - cpu_usage_before
         computation_time = time.time() - start
 
         return anomaly_confidence, computation_time, cpu_usage
 
     def __finalize_clf(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int = None):
-        """
-        This function is used to evaluate whether the prediction made by the IDS itself is correct or not
-        and acts accordingly
-        :param actual: optional parameter, it's None in real application but not in testing
-        :param sample: Traffic data to store
-        :param output: What to classify
-        :return:
-        """
         if actual is None:
             switch_function = self.clf_switcher.get(output[1], lambda: "Invalid value")
             switch_function(sample)
@@ -239,52 +182,27 @@ class DetectionSystem:
         switch_function()
 
     def __add_to_quarantine(self, sample: pd.DataFrame) -> None:
-        """
-        Add an unsure traffic sample to quarantine
-        :param sample: incoming traffic
-        """
         self.quarantine_samples = pd.concat([self.quarantine_samples, sample], axis=0)
         self.metrics.update_classifications('quarantine', 1)
 
     def __add_to_anomaly1(self, sample: pd.DataFrame) -> None:
-        """
-        Add an anomalous sample by layer1 to the list
-        :param sample: incoming traffic
-        """
         self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
         self.metrics.update_classifications(tag='l1_anomaly', value=1)
 
     def __add_to_anomaly2(self, sample: pd.DataFrame) -> None:
-        """
-        Add an anomalous sample by layer2 to the list
-        :param sample: incoming traffic
-        """
         self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
         self.metrics.update_classifications('l2_anomaly', 1)
 
     def __add_to_normal1(self, sample: pd.DataFrame) -> None:
-        """
-        Add a normal sample to the correspondant list
-        :param sample: incoming traffic
-        """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
 
     def __add_to_normal2(self, sample: pd.DataFrame) -> None:
-        """
-        Add a normal sample to the list
-        :param sample: incoming traffic
-        """
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
 
 
 class ReconnectingConsumer:
-    """
-    Declares an instance of a knowledge base, and handles the setup of its component
-    connection_handler.
-    """
-
     def __init__(self, amqp_url):
         self._reconnect_delay = 0
         self._amqp_url = amqp_url
