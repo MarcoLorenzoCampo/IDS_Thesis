@@ -1,10 +1,12 @@
 import copy
 import logging
 import sqlite3
+import sys
 import time
 
 import boto3
 
+import DSConnectionHandler
 import Metrics
 from Metrics import Metrics
 
@@ -21,7 +23,7 @@ LOGGER.info('Creating an instance of DetectionSystem.')
 
 class DetectionSystem:
 
-    def __init__(self):
+    def __init__(self, ampq_url: str):
 
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
         self.cat_features = ['flag', 'protocol_type', 'service']
@@ -32,6 +34,8 @@ class DetectionSystem:
         self.__sqlite3_setup()
         self.__set_switchers()
         self.metrics = Metrics()
+
+        self.connection_handler = DSConnectionHandler.Connector(self, ampq_url)
 
     def __s3_setup_and_load(self):
         self.s3_resource = boto3.client('s3')
@@ -275,4 +279,52 @@ class DetectionSystem:
         self.metrics.update_classifications('normal_traffic', 1)
 
 
-det = DetectionSystem()
+class ReconnectingConsumer:
+    """
+    Declares an instance of a knowledge base, and handles the setup of its component
+    connection_handler.
+    """
+
+    def __init__(self, amqp_url):
+        self._reconnect_delay = 0
+        self._amqp_url = amqp_url
+        self._consumer = DetectionSystem(self._amqp_url)
+
+    def run(self):
+        while True:
+            try:
+                self._consumer.connection_handler.run()
+            except KeyboardInterrupt:
+                self._consumer.connection_handler.stop()
+                break
+            self._maybe_reconnect()
+
+    def _maybe_reconnect(self):
+        if self._consumer.connection_handler.should_reconnect:
+            self._consumer.connection_handler.stop()
+            reconnect_delay = self._get_reconnect_delay()
+            LOGGER.info('Reconnecting after %d seconds', reconnect_delay)
+            time.sleep(reconnect_delay)
+            self._consumer = DetectionSystem(self._amqp_url)
+
+    def _get_reconnect_delay(self):
+        if self._consumer.connection_handler.was_consuming:
+            self._reconnect_delay = 0
+        else:
+            self._reconnect_delay += 1
+        if self._reconnect_delay > 30:
+            self._reconnect_delay = 30
+        return self._reconnect_delay
+
+
+def main():
+    param1 = sys.argv[1] if len(sys.argv) > 1 else None
+    param2 = sys.argv[2] if len(sys.argv) > 2 else None
+    ampq_url = sys.argv[3] if len(sys.argv) > 3 else "amqp://guest:guest@host:5672/"
+
+    consumer = ReconnectingConsumer(amqp_url=ampq_url)
+    consumer.run()
+
+
+if __name__ == '__main__':
+    main()

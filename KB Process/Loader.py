@@ -170,40 +170,49 @@ class Loader:
         # LOGGER.info(f'Downloaded {bytes} bytes')
         pass
 
-    def load_pca_transformers(self, pca1_file, pca2_file):
+    @staticmethod
+    def load_pca_transformers(pca1_file, pca2_file):
         pca1 = joblib.load(f'AWS Downloads/PCAEncoders/{pca1_file}')
         pca2 = joblib.load(f'AWS Downloads/PCAEncoders/{pca2_file}')
         return pca1, pca2
 
-    def load_models(self, model1, model2):
+    @staticmethod
+    def load_models(model1, model2):
         model1 = joblib.load(f'AWS Downloads/Models/StartingModels/{model1}')
         model2 = joblib.load(f'AWS Downloads/Models/StartingModels/{model2}')
+        return model1, model2
 
-    def load_encoders(self, ohe1_file, ohe2_file):
+    @staticmethod
+    def load_encoders(ohe1_file, ohe2_file):
         ohe1 = joblib.load(f'AWS Downloads/OneHotEncoders/{ohe1_file}')
         ohe2 = joblib.load(f'AWS Downloads/OneHotEncoders/{ohe2_file}')
         return ohe1, ohe2
 
-    def load_scalers(self, scaler1_file, scaler2_file):
+    @staticmethod
+    def load_scalers(scaler1_file, scaler2_file):
         scaler1 = joblib.load(f'AWS Downloads/Scalers/{scaler1_file}')
         scaler2 = joblib.load(f'AWS Downloads/Scalers/{scaler2_file}')
         return scaler1, scaler2
 
-    def load_test_set(self):
+    @staticmethod
+    def load_test_set():
         x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
         y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
         return x_test, y_test
 
-    def load_og_dataset(self, file):
+    @staticmethod
+    def load_og_dataset(file):
         x_df = pd.read_csv(f'AWS Downloads/Datasets/OriginalDatasets/{file}')
         return x_df
 
-    def load_dataset(self, pca_file, targets_file):
+    @staticmethod
+    def load_dataset(pca_file, targets_file):
         x = joblib.load(f'AWS Downloads/Datasets/PCAEncoded/{pca_file}')
         x_df = pd.DataFrame(x, columns=[f'feature_{i}' for i in range(x.shape[1])])
         y = np.load(f'AWS Downloads/Datasets/PCAEncoded/{targets_file}', allow_pickle=True)
         return x_df, y
 
-    def load_features(self, file_path: str):
+    @staticmethod
+    def load_features(file_path: str):
         with open(file_path, 'r') as f:
             return f.read().split(',')

@@ -8,7 +8,8 @@ from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
 
 LOGGER = logging.getLogger('KBConnectionHandler')
-LOG_FORMAT = '%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOG_FORMAT = '%(asctime)s - %(levelname)-10s %(name)-45s %(funcName)-35s %(lineno)-5d: %(message)s'
+
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 LOGGER.info('Creating an instance of KnowledgeBase connection handler.')
 
