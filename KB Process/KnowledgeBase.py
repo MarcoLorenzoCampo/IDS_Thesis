@@ -2,24 +2,25 @@ import copy
 import json
 import logging
 import sqlite3
-import sys
 import time
 import boto3
 
 import pandas as pd
 
 from KBLoader import Loader
+from KBConnector import Connector
+import FeaturesSelector
 
-import KBConnectionHandler
+import LoggerConfig
 
-# set an instance-level logger
+logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 LOGGER = logging.getLogger('KnowledgeBase')
-LOG_FORMAT = '%(asctime)-10s -%(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 
 class KnowledgeBase:
-    def __init__(self, ampq_url):
+    FULL_CLOSE = False
+
+    def __init__(self):
 
         LOGGER.info('Creating an instance of KnowledgeBase.')
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
@@ -28,8 +29,14 @@ class KnowledgeBase:
         self.__s3_setup_and_load()
         self.__load_data_instances()
         self.__sqlite3_setup()
+        self.__sqs_setup()
 
-        self.connection_handler = KBConnectionHandler.Connector(self, ampq_url)
+    def __sqs_setup(self):
+        self.sqs_resource = boto3.resource('sqs')
+        self.connector = Connector(sqs=self.sqs_resource)
+
+    def terminate(self):
+        self.connector.close()
 
     def __sqlite3_setup(self):
         LOGGER.info('Connecting to sqlite3 in memory database.')
@@ -132,17 +139,12 @@ class KnowledgeBase:
     def perform_query(self, received):
         LOGGER.info(f'Received a query.')
 
-        message = copy.deepcopy(received)
-
         try:
-            # Parse the content using json and dictionaries
-            message_data = json.loads(message)
+            select_clause = received.get("select")
+            from_clause = received.get("from")
+            where_clause = received.get("where")
 
-            select_clause = message_data.get("select")
-            from_clause = message_data.get("from")
-            where_clause = message_data.get("where")
-
-            if where_clause == "":
+            if where_clause is None:
                 sql_query = f'SELECT {select_clause} FROM {from_clause}'
             else:
                 sql_query = f'SELECT {select_clause} FROM {from_clause} WHERE {where_clause}'
@@ -152,71 +154,77 @@ class KnowledgeBase:
             result_df = pd.read_sql_query(sql_query, self.sql_connection)
 
         except pd.errors.DatabaseError:
-            LOGGER.error('Could not fulfill the requests.')
+            LOGGER.exception('Could not fulfill the requests.')
             return None
 
         LOGGER.info('Query was executed correctly.')
         return result_df
 
-    def __show_info(self):
-        LOGGER.info('Shapes and sized of the sets:')
-        LOGGER.info(f'TRAIN:\n'
-                    f'x_train_l1 = {self.x_train_l1.shape}\n'
-                    f'x_train_l2 = {self.x_train_l2.shape}\n'
-                    f'y_train_l1 = {len(self.y_train_l1)}\n'
-                    f'y_train_l2 = {len(self.y_train_l2)}')
-        LOGGER.info(f'VALIDATE:\n'
-                    f'x_validate_l1 = {self.x_validate_l1.shape}\n'
-                    f'x_validate_l2 = {self.x_validate_l2.shape}\n'
-                    f'y_validate_l1 = {len(self.y_validate_l1)}\n'
-                    f'y_validate_l2 = {len(self.y_validate_l2)}')
+    def __select_features_procedure(self, feature_selection_func):
 
-class ReconnectingConsumer:
-    """
-    Declares an instance of a knowledge base, and handles the setup of its component
-    connection_handler.
-    """
+        query_dict = {
+            "select": "*",
+            "from": "x_train"
+        }
+        if feature_selection_func(self.perform_query(query_dict)):
 
-    def __init__(self, amqp_url):
-        self._reconnect_delay = 0
-        self._amqp_url = amqp_url
-        self._consumer = KnowledgeBase(self._amqp_url)
+            update_msg = 'UPDATED FEATURES'
+            self.connector.fanout_send_message(update_msg, None)
 
-    def run(self):
-        while True:
-            try:
-                self._consumer.connection_handler.run()
-            except KeyboardInterrupt:
-                self._consumer.connection_handler.stop()
-                break
-            self._maybe_reconnect()
-
-    def _maybe_reconnect(self):
-        if self._consumer.connection_handler.should_reconnect:
-            self._consumer.connection_handler.stop()
-            reconnect_delay = self._get_reconnect_delay()
-            LOGGER.info('Reconnecting after %d seconds', reconnect_delay)
-            time.sleep(reconnect_delay)
-            self._consumer = KnowledgeBase(self._amqp_url)
-
-    def _get_reconnect_delay(self):
-        if self._consumer.connection_handler.was_consuming:
-            self._reconnect_delay = 0
         else:
-            self._reconnect_delay += 1
-        if self._reconnect_delay > 30:
-            self._reconnect_delay = 30
-        return self._reconnect_delay
+            LOGGER.error('Feature selection function failed. Retry.')
 
+    def run_tasks(self):
 
-def main():
-    model1 = sys.argv[1] if len(sys.argv) > 1 else None
-    model2 = sys.argv[2] if len(sys.argv) > 2 else None
-    ampq_url = sys.argv[3] if len(sys.argv) > 3 else "amqp://guest:guest@host:5672/"
+        action_mapping = {
+            1: FeaturesSelector.perform_icfs,
+            2: FeaturesSelector.perform_sfs,
+            3: FeaturesSelector.perform_bfs,
+            4: FeaturesSelector.perform_fisher
+        }
 
-    consumer = ReconnectingConsumer(amqp_url=ampq_url)
-    consumer.run()
+        LOGGER.info('Running background tasks..')
+        time.sleep(5)
+
+        # infinite loop
+        while True:
+            print("\nSelect the number of the action to perform:"
+                  "\n1. ICFS feature selection"
+                  "\n2. SFS feature selection"
+                  "\n3. BFS feature selection"
+                  "\n4. Fisher feature selection"
+                  "\n5. Analyze the dataset for changes"
+                  "\n'exit' to quit to program.")
+
+            choice = input('>> ')
+
+            if choice.lower() == 'exit':
+                break
+
+            try:
+                action_number = int(choice)
+                selected_function = action_mapping.get(action_number)
+                if selected_function:
+                    self.__select_features_procedure(selected_function)
+                else:
+                    print("Invalid action number. Please enter a number between 1 and 4.")
+                    continue
+
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+                continue
+
+            time.sleep(3)
+
+        raise KeyboardInterrupt
 
 
 if __name__ == '__main__':
-    main()
+    kb = KnowledgeBase()
+
+    try:
+        kb.run_tasks()
+    except KeyboardInterrupt:
+        if kb.FULL_CLOSE:
+            kb.terminate()
+        LOGGER.info('Received keyboard interrupt. Terminating knowledge base instance.')

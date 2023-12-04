@@ -5,9 +5,10 @@ import joblib
 import numpy as np
 import pandas as pd
 
-LOGGER = logging.getLogger('KnowledgeBase')
-LOG_FORMAT = '%(levelname)-10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+import LoggerConfig
+
+LOGGER = logging.getLogger('KBLoader')
+logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 
 class Loader:
     def __init__(self, s3_resource):
@@ -16,6 +17,20 @@ class Loader:
 
     def s3_load(self):
         LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
+
+        LOGGER.info('Loading original data sets.')
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='OriginalDatasets',
+            file_name='KDDTrain+_with_labels.txt',
+            download_path='AWS Downloads/Datasets/OriginalDatasets/'
+        )
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='OriginalDatasets',
+            file_name='KDDTrain+20_percent_with_labels.txt',
+            download_path='AWS Downloads/Datasets/OriginalDatasets/'
+        )
 
         LOGGER.info('Loading set of minimal features.')
         self.__aws_download(
@@ -141,20 +156,6 @@ class Loader:
             folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
             file_name='KDDValidate+_l2_targets.npy',
             download_path='AWS Downloads/Datasets/PCAEncoded/'
-        )
-
-        LOGGER.info('Loading original data sets.')
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='OriginalDatasets',
-            file_name='KDDTrain+_with_labels.txt',
-            download_path='AWS Downloads/Datasets/OriginalDatasets/'
-        )
-        self.__aws_download(
-            bucket_name=self.bucket_name,
-            folder_name='OriginalDatasets',
-            file_name='KDDTrain+20_percent_with_labels.txt',
-            download_path='AWS Downloads/Datasets/OriginalDatasets/'
         )
 
     def __aws_download(self, bucket_name: str, folder_name: str, file_name: str, download_path: str):

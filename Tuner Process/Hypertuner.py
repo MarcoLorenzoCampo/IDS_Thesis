@@ -608,7 +608,7 @@ class Hypertuner:
         self.val_accuracy_l2 = []
 
 
-class ReconnectingConsumer:
+class ReconnectingConsumerProducer:
     def __init__(self, amqp_url):
         self._reconnect_delay = 0
         self._amqp_url = amqp_url
@@ -646,7 +646,7 @@ def main():
     param2 = sys.argv[2] if len(sys.argv) > 2 else None
     ampq_url = sys.argv[3] if len(sys.argv) > 3 else "amqp://guest:guest@host:5672/"
 
-    consumer = ReconnectingConsumer(amqp_url=ampq_url)
+    consumer = ReconnectingConsumerProducer(amqp_url=ampq_url)
     consumer.run()
 
 
