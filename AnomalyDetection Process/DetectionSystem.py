@@ -1,11 +1,14 @@
 import copy
 import logging
+import re
 import sqlite3
 import time
 from typing import Union
+import threading
 
 import boto3
 import pandas as pd
+from botocore.exceptions import ClientError
 
 from DSConnectionHandler import Connector
 from LoaderDetectionSystem import Loader
@@ -24,11 +27,11 @@ class DetectionSystem:
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
         self.cat_features = ['flag', 'protocol_type', 'service']
 
-        self.__s3_setup_and_load()
-        self.__load_data_instances()
-        self.__set_local_storage()
+        #self.__s3_setup_and_load()
+        #self.__load_data_instances()
+        #self.__set_local_storage()
 
-        self.__sqlite3_setup()
+        #self.__sqlite3_setup()
         self.__set_switchers()
         self.metrics = Metrics()
 
@@ -36,8 +39,8 @@ class DetectionSystem:
 
     def __sqs_setup(self):
         queue_url = 'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo'
-        self.sqs_resource = boto3.resource('sqs')
-        self.connector = Connector(sqs=self.sqs_resource, queue_url=queue_url)
+        self.sqs_client = boto3.client('sqs')
+        self.connector = Connector(sqs_client=self.sqs_client, queue_url=queue_url)
 
     def __s3_setup_and_load(self):
         self.s3_resource = boto3.client('s3')
@@ -205,24 +208,68 @@ class DetectionSystem:
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
 
-    def __parse_messages(self, messages):
-        pass
+    def __parse_message_body(self, message):
+        LOGGER.info('Received messages: %s', message)
+
+        pattern = re.compile(r'^UPDATE\s+([^,]+(?:,\s*[^,]+)*)\s*$', re.IGNORECASE)
+
+        # Example usage
+        input_string = message
+        match = pattern.match(input_string)
+
+        if match:
+            columns = match.group(1).split(', ')
+            LOGGER.info(f"Attributes to update: {columns}")
+        else:
+            LOGGER.error("Message body does not match the required syntax. Discarding it.")
 
     def poll_queues(self):
         while True:
-            messages = self.connector.receive_messages(100, 0)
+            LOGGER.info('Fetching messages..')
 
-            if messages:
-                for message in messages:
-                    LOGGER.info(f'Parsing message: {message}'.format(message=message))
-                    self.__parse_messages(message)
+            try:
+                msg_body = self.connector.receive_messages()
+            except ClientError:
+                LOGGER.error("Couldn't fetch messages from queue. Restarting the program.")
+                raise KeyboardInterrupt
 
+            if msg_body:
+                LOGGER.info(f'Parsing message: {msg_body}')
+                self.__parse_message_body(msg_body)
+
+            time.sleep(1.5)
+
+    def run_classification(self):
+        while True:
+            try:
+                LOGGER.info('Classifying data..')
+            except KeyboardInterrupt:
+                LOGGER.info('Closing the instance.')
+                raise KeyboardInterrupt
+            except Exception as e:
+                LOGGER.error(e)
+                LOGGER.info('Closing the instance.')
+                raise KeyboardInterrupt
+
+            time.sleep(1.5)
 
 def main():
     ds = DetectionSystem()
 
-    while True:
-        ds.poll_queues()
+    queue_reading_thread = threading.Thread(target=ds.poll_queues)
+    classification_thread = threading.Thread(target=ds.run_classification)
+
+    try:
+        queue_reading_thread.start()
+    except KeyboardInterrupt:
+        LOGGER.info('Closing the instance.')
+
+    try:
+        classification_thread.start()
+    except KeyboardInterrupt:
+        LOGGER.info('Closing the instance.')
+
+    classification_thread.join()
 
 
 if __name__ == '__main__':

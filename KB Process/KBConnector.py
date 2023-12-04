@@ -14,6 +14,8 @@ class Connector:
     prefix = '-update'
     suffix = '.fifo'
 
+    msg_counter = 1
+
     def __init__(self, sqs):
         self.sqs = sqs
 
@@ -83,13 +85,16 @@ class Connector:
         if not message_attributes:
             message_attributes = {}
 
+        deduplication_id = self.__gen_random_id()
         try:
             response = queue.send_message(
                 MessageBody=message_body,
-                MessageGroupId=self.__gen_random_id(),
-                MessageAttributes=message_attributes
+                MessageGroupId=queue_name,
+                MessageAttributes=message_attributes,
+                MessageDeduplicationId=deduplication_id,
             )
-            LOGGER.info("Sent message: '%s' to '%s'.", message_body, queue_name)
+            LOGGER.info("Sent message #%d: '%s' to '%s'.", self.msg_counter, message_body, queue_name)
+            self.msg_counter += 1
 
         except ClientError as error:
             LOGGER.exception("Send message failed: %s", message_body)
@@ -99,7 +104,7 @@ class Connector:
 
     @staticmethod
     def __gen_random_id():
-        x = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(8))
+        x = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(20))
         return str(x)
 
     def get_queues(self, prefix=None):
@@ -120,7 +125,8 @@ class Connector:
             LOGGER.info("Got queues: %s", ", ".join([q.url for q in queues]))
         else:
             LOGGER.warning("No queues found.")
-        return queues
+
+        return self.queues
 
     def close(self):
         """
@@ -130,7 +136,7 @@ class Connector:
         :param queue: The queue to delete.
         :return: None
         """
-        for queue in self.get_queues():
+        for queue in self.queues.values():
             try:
                 queue.delete()
                 LOGGER.info("Deleted queue with URL=%s.", queue.url)

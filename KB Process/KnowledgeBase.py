@@ -23,7 +23,6 @@ class KnowledgeBase:
     def __init__(self):
 
         LOGGER.info('Creating an instance of KnowledgeBase.')
-        self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
         self.cat_features = ['flag', 'protocol_type', 'service']
 
         self.__s3_setup_and_load()
@@ -174,6 +173,9 @@ class KnowledgeBase:
         else:
             LOGGER.error('Feature selection function failed. Retry.')
 
+    def __test(self):
+        self.connector.fanout_send_message('UPDATE FEATURES,TRAIN,VALIDATE', None)
+
     def run_tasks(self):
 
         action_mapping = {
@@ -188,6 +190,7 @@ class KnowledgeBase:
 
         # infinite loop
         while True:
+
             print("\nSelect the number of the action to perform:"
                   "\n1. ICFS feature selection"
                   "\n2. SFS feature selection"
@@ -214,7 +217,8 @@ class KnowledgeBase:
                 print("Invalid input. Please enter a valid number.")
                 continue
 
-            time.sleep(3)
+            #self.__test()
+            time.sleep(1.5)
 
         raise KeyboardInterrupt
 
@@ -227,4 +231,5 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         if kb.FULL_CLOSE:
             kb.terminate()
+            LOGGER.info('Deleting queues..')
         LOGGER.info('Received keyboard interrupt. Terminating knowledge base instance.')
