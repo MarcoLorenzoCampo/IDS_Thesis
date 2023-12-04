@@ -11,15 +11,15 @@ LOGGER = logging.getLogger('KnowledgeBase')
 
 
 class Connector:
-    prefix = 'update-'
+    prefix = '-update'
     suffix = '.fifo'
 
     def __init__(self, sqs):
         self.sqs = sqs
 
         self.queue_names = [
-            self.prefix+'tuner'+self.suffix,
-            self.prefix+'detection-system'+self.suffix]
+            'tuner'+self.prefix+self.suffix,
+            'detection-system'+self.prefix+self.suffix]
 
         self.queues = {}
 
@@ -113,7 +113,7 @@ class Connector:
         if prefix:
             queue_iter = self.sqs.queue_names.filter(QueueNamePrefix=prefix)
         else:
-            queue_iter = self.sqs.queues.all()
+            queue_iter = self.sqs.receiver_queues.all()
 
         queues = list(queue_iter)
         if queues:

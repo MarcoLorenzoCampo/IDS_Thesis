@@ -2,14 +2,14 @@ import json
 import logging
 import threading
 import time
+import LoggerConfig
 
 import numpy as np
 from CustomExceptions import accuracyException, precisionException, fException, tprException, fprException, \
     tnrException, fnrException
 
 LOGGER = logging.getLogger('Metrics')
-LOG_FORMAT = '%(asctime)-10s %(levelname)-10s %(name)-45s %(funcName)-35s %(lineno)-5d: %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 
 class Metrics:
     def __init__(self):

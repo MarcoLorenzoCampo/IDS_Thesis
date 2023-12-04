@@ -5,9 +5,10 @@ import joblib
 import numpy as np
 import pandas as pd
 
+import LoggerConfig
+
 LOGGER = logging.getLogger('KnowledgeBase')
-LOG_FORMAT = '%(asctime)-10s %(levelname)-10s %(name)-45s %(funcName)-35s %(lineno)-5d: %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 
 class Loader:
     def __init__(self, s3_resource):
@@ -110,36 +111,43 @@ class Loader:
             Callback=self.__aws_download_callback
         )
 
-    def __aws_download_callback(self, bytes):
-        # LOGGER.info(f'Downloaded {bytes} bytes')
+    @staticmethod
+    def __aws_download_callback(downloaded_bytes):
+        LOGGER.info(f'Downloaded {downloaded_bytes} bytes')
         pass
 
-    def load_pca_transformers(self, pca1_file, pca2_file):
+    @staticmethod
+    def load_pca_transformers(pca1_file, pca2_file):
         pca1 = joblib.load(f'AWS Downloads/PCAEncoders/{pca1_file}')
         pca2 = joblib.load(f'AWS Downloads/PCAEncoders/{pca2_file}')
         return pca1, pca2
 
-    def load_testset(self, test_set, targets):
+    @staticmethod
+    def load_testset(test_set, targets):
         x_test = pd.read_csv(f'AWS Downloads/Test Set/{test_set}', sep=",", header=0)
         y_test = np.load(f'AWS Downloads/Test Set/{targets}', allow_pickle=True)
         return x_test, y_test
 
-    def load_models(self, model1, model2):
+    @staticmethod
+    def load_models(model1, model2):
         model1 = joblib.load(f'AWS Downloads/Models/StartingModels/{model1}')
         model2 = joblib.load(f'AWS Downloads/Models/StartingModels/{model2}')
         return model1, model2
 
-    def load_encoders(self, ohe1_file, ohe2_file):
+    @staticmethod
+    def load_encoders(ohe1_file, ohe2_file):
         ohe1 = joblib.load(f'AWS Downloads/OneHotEncoders/{ohe1_file}')
         ohe2 = joblib.load(f'AWS Downloads/OneHotEncoders/{ohe2_file}')
         return ohe1, ohe2
 
-    def load_scalers(self, scaler1_file, scaler2_file):
+    @staticmethod
+    def load_scalers(scaler1_file, scaler2_file):
         scaler1 = joblib.load(f'AWS Downloads/Scalers/{scaler1_file}')
         scaler2 = joblib.load(f'AWS Downloads/Scalers/{scaler2_file}')
         return scaler1, scaler2
 
-    def load_features(self, file_name: str):
+    @staticmethod
+    def load_features(file_name: str):
         path = 'AWS Downloads/MinimalFeatures/'+file_name
         with open(path, 'r') as f:
             return f.read().split(',')

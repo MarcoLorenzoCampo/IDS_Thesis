@@ -1,39 +1,43 @@
 import copy
 import logging
 import sqlite3
-import sys
 import time
 from typing import Union
 
 import boto3
 import pandas as pd
 
-import DSConnectionHandler
+from DSConnectionHandler import Connector
 from LoaderDetectionSystem import Loader
 from Metrics import Metrics
 import DataProcessor
+import LoggerConfig
 
 LOGGER = logging.getLogger('DetectionSystem')
-LOG_FORMAT = '%(asctime) -10s %(levelname) -10s %(name) -45s %(funcName) -35s %(lineno) -5d: %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 LOGGER.info('Creating an instance of DetectionSystem.')
 
 
 class DetectionSystem:
 
-    def __init__(self, ampq_url: str):
+    def __init__(self):
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
         self.cat_features = ['flag', 'protocol_type', 'service']
 
         self.__s3_setup_and_load()
         self.__load_data_instances()
-        self.__sqlite3_setup()
-
         self.__set_local_storage()
+
+        self.__sqlite3_setup()
         self.__set_switchers()
         self.metrics = Metrics()
 
-        self.connection_handler = DSConnectionHandler.Connector(self, ampq_url)
+        self.__sqs_setup()
+
+    def __sqs_setup(self):
+        queue_url = 'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo'
+        self.sqs_resource = boto3.resource('sqs')
+        self.connector = Connector(sqs=self.sqs_resource, queue_url=queue_url)
 
     def __s3_setup_and_load(self):
         self.s3_resource = boto3.client('s3')
@@ -201,47 +205,24 @@ class DetectionSystem:
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
 
+    def __parse_messages(self, messages):
+        pass
 
-class ReconnectingConsumer:
-    def __init__(self, amqp_url):
-        self._reconnect_delay = 0
-        self._amqp_url = amqp_url
-        self._consumer = DetectionSystem(self._amqp_url)
-
-    def run(self):
+    def poll_queues(self):
         while True:
-            try:
-                self._consumer.connection_handler.run()
-            except KeyboardInterrupt:
-                self._consumer.connection_handler.stop()
-                break
-            self._maybe_reconnect()
+            messages = self.connector.receive_messages(100, 0)
 
-    def _maybe_reconnect(self):
-        if self._consumer.connection_handler.should_reconnect:
-            self._consumer.connection_handler.stop()
-            reconnect_delay = self._get_reconnect_delay()
-            LOGGER.info('Reconnecting after %d seconds', reconnect_delay)
-            time.sleep(reconnect_delay)
-            self._consumer = DetectionSystem(self._amqp_url)
-
-    def _get_reconnect_delay(self):
-        if self._consumer.connection_handler.was_consuming:
-            self._reconnect_delay = 0
-        else:
-            self._reconnect_delay += 1
-        if self._reconnect_delay > 30:
-            self._reconnect_delay = 30
-        return self._reconnect_delay
+            if messages:
+                for message in messages:
+                    LOGGER.info(f'Parsing message: {message}'.format(message=message))
+                    self.__parse_messages(message)
 
 
 def main():
-    param1 = sys.argv[1] if len(sys.argv) > 1 else None
-    param2 = sys.argv[2] if len(sys.argv) > 2 else None
-    ampq_url = sys.argv[3] if len(sys.argv) > 3 else "amqp://guest:guest@host:5672/"
+    ds = DetectionSystem()
 
-    consumer = ReconnectingConsumer(amqp_url=ampq_url)
-    consumer.run()
+    while True:
+        ds.poll_queues()
 
 
 if __name__ == '__main__':
