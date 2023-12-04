@@ -1,7 +1,6 @@
 import copy
 import logging
 import re
-import sqlite3
 import time
 from typing import Union
 import threading
@@ -10,8 +9,8 @@ import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
 
+from LocalDataStorage import Data
 from DSConnectionHandler import Connector
-from LoaderDetectionSystem import Loader
 from Metrics import Metrics
 import DataProcessor
 import LoggerConfig
@@ -27,82 +26,14 @@ class DetectionSystem:
         self.ANOMALY_THRESHOLD1, self.ANOMALY_THRESHOLD2, self.BENIGN_THRESHOLD = 0.9, 0.8, 0.6
         self.cat_features = ['flag', 'protocol_type', 'service']
 
-        #self.__s3_setup_and_load()
-        #self.__load_data_instances()
-        #self.__set_local_storage()
-
-        #self.__sqlite3_setup()
-        self.__set_switchers()
+        self.storage = Data()
         self.metrics = Metrics()
-
         self.__sqs_setup()
 
     def __sqs_setup(self):
         queue_url = 'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo'
         self.sqs_client = boto3.client('sqs')
         self.connector = Connector(sqs_client=self.sqs_client, queue_url=queue_url)
-
-    def __s3_setup_and_load(self):
-        self.s3_resource = boto3.client('s3')
-        self.loader = Loader(s3_resource=self.s3_resource)
-
-        LOGGER.info('Loading models.')
-        self.loader.s3_load()
-
-        LOGGER.info('Loading from S3 bucket complete.')
-
-    def __load_data_instances(self):
-        LOGGER.info('Loading test set.')
-        self.x_test, self.y_test = self.loader.load_testset('KDDTest+.txt', 'KDDTest+_targets.npy')
-
-        LOGGER.info('Loading one hot encoders.')
-        self.ohe1, self.ohe2 = self.loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
-
-        LOGGER.info('Loading scalers.')
-        self.scaler1, self.scaler2 = self.loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
-
-        LOGGER.info('Loading pca transformers.')
-        self.pca1, self.pca2 = self.loader.load_pca_transformers('layer1_pca_transformer.pkl',
-                                                                 'layer2_pca_transformer.pkl')
-
-        LOGGER.info('Loading models.')
-        self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
-                                                           'NSL_l2_classifier.pkl')
-
-        LOGGER.info('Loading minimal features.')
-        self.features_l1 = self.loader.load_features('NSL_features_l1.txt')
-        self.features_l2 = self.loader.load_features('NSL_features_l2.txt')
-
-    def __set_local_storage(self):
-        self.quarantine_samples = pd.DataFrame(columns=self.x_test.columns)
-        self.anomaly_by_l1 = pd.DataFrame(columns=self.x_test.columns)
-        self.anomaly_by_l2 = pd.DataFrame(columns=self.x_test.columns)
-        self.normal_traffic = pd.DataFrame(columns=self.x_test.columns)
-
-    def __sqlite3_setup(self):
-        LOGGER.info('Connecting to sqlite3 in-memory database.')
-        self.sql_connection = sqlite3.connect(':memory:')
-        self.cursor = self.sql_connection.cursor()
-
-        LOGGER.info('Instantiating the needed SQL in-memory tables.')
-        self.__fill_tables()
-
-        LOGGER.info('Removing local instances.')
-        self.__clean()
-
-        LOGGER.info('Completed sqlite3 in-memory databases setup.')
-
-    def __fill_tables(self):
-        self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')
-        self.__append_to_table('x_test', 'target', self.y_test)
-
-    def __append_to_table(self, table_name, column_name, target_values):
-        existing_data = pd.read_sql_query(f'SELECT * FROM {table_name}', self.sql_connection)
-        existing_data[column_name] = target_values
-        existing_data.to_sql(table_name, self.sql_connection, if_exists='replace', index=False)
-
-    def __clean(self):
-        del self.x_test
 
     def __set_switchers(self):
         LOGGER.info('Loading the switch cases.')
@@ -155,22 +86,22 @@ class DetectionSystem:
         self.__finalize_clf(incoming_data, [0, 'QUARANTINE'], actual)
 
     def __clf_layer1(self, unprocessed_sample):
-        sample = DataProcessor.data_process(unprocessed_sample, self.scaler1, self.ohe1,
-                                            self.pca1, self.features_l1, self.cat_features)
+        sample = DataProcessor.data_process(unprocessed_sample, self.storage.scaler1, self.storage.ohe1,
+                                            self.storage.pca1, self.storage.features_l1, self.cat_features)
 
         start = time.time()
-        prediction1 = self.layer1.predict(sample)
+        prediction1 = self.storage.layer1.predict(sample)
         cpu_usage = 0
         computation_time = time.time() - start
 
         return prediction1, computation_time, cpu_usage
 
     def __clf_layer2(self, unprocessed_sample):
-        sample = DataProcessor.data_process(unprocessed_sample, self.scaler2, self.ohe2,
-                                            self.pca2, self.features_l2, self.cat_features)
+        sample = DataProcessor.data_process(unprocessed_sample, self.storage.scaler2, self.storage.ohe2,
+                                            self.storage.pca2, self.storage.features_l2, self.cat_features)
 
         start = time.time()
-        anomaly_confidence = self.layer2.predict_proba(sample)
+        anomaly_confidence = self.storage.layer2.predict_proba(sample)
         cpu_usage = 0
         computation_time = time.time() - start
 
@@ -189,15 +120,15 @@ class DetectionSystem:
         switch_function()
 
     def __add_to_quarantine(self, sample: pd.DataFrame) -> None:
-        self.quarantine_samples = pd.concat([self.quarantine_samples, sample], axis=0)
+        self.quarantine_samples = pd.concat([self.storage.quarantine_samples, sample], axis=0)
         self.metrics.update_classifications('quarantine', 1)
 
     def __add_to_anomaly1(self, sample: pd.DataFrame) -> None:
-        self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
+        self.anomaly_by_l1 = pd.concat([self.storage.anomaly_by_l1, sample], axis=0)
         self.metrics.update_classifications(tag='l1_anomaly', value=1)
 
     def __add_to_anomaly2(self, sample: pd.DataFrame) -> None:
-        self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
+        self.anomaly_by_l2 = pd.concat([self.storage.anomaly_by_l2, sample], axis=0)
         self.metrics.update_classifications('l2_anomaly', 1)
 
     def __add_to_normal1(self, sample: pd.DataFrame) -> None:
@@ -207,21 +138,6 @@ class DetectionSystem:
     def __add_to_normal2(self, sample: pd.DataFrame) -> None:
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         self.metrics.update_classifications('normal_traffic', 1)
-
-    def __parse_message_body(self, message):
-        LOGGER.info('Received messages: %s', message)
-
-        pattern = re.compile(r'^UPDATE\s+([^,]+(?:,\s*[^,]+)*)\s*$', re.IGNORECASE)
-
-        # Example usage
-        input_string = message
-        match = pattern.match(input_string)
-
-        if match:
-            columns = match.group(1).split(', ')
-            LOGGER.info(f"Attributes to update: {columns}")
-        else:
-            LOGGER.error("Message body does not match the required syntax. Discarding it.")
 
     def poll_queues(self):
         while True:
@@ -235,7 +151,7 @@ class DetectionSystem:
 
             if msg_body:
                 LOGGER.info(f'Parsing message: {msg_body}')
-                self.__parse_message_body(msg_body)
+                parsed = DataProcessor.parse_message_body(msg_body)
 
             time.sleep(1.5)
 

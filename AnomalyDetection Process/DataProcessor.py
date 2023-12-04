@@ -1,6 +1,12 @@
 import copy
-import pandas as pd
+import logging
 
+import pandas as pd
+import LoggerConfig
+
+LOGGER = logging.getLogger('DataProcessor')
+logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
+LOGGER.info('Creating an instance of DetectionSystem.')
 
 def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
 
@@ -17,3 +23,19 @@ def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
     pca_transformed = pca.transform(processed)
 
     return pca_transformed
+
+def parse_message_body(message):
+    LOGGER.info('Received messages: %s', message)
+
+    pattern = re.compile(r'^UPDATE\s+([^,]+(?:,\s*[^,]+)*)\s*$', re.IGNORECASE)
+
+    # Example usage
+    input_string = message
+    match = pattern.match(input_string)
+
+    if match:
+        columns = match.group(1).split(', ')
+        LOGGER.info(f"Attributes to update: {columns}")
+        return columns
+    else:
+        LOGGER.error("Message body does not match the required syntax. Discarding it.")
