@@ -5,19 +5,17 @@ import joblib
 import numpy as np
 import pandas as pd
 
-import LoggerConfig
+from KBProcess import LoggerConfig
 
 LOGGER = logging.getLogger('KBLoader')
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 
 class Loader:
-    def __init__(self, s3_resource):
-        self.bucket_name = 'nsl-kdd-datasets'
+    def __init__(self, s3_resource, bucket_name: str):
+        self.bucket_name = bucket_name
         self.s3_resource = s3_resource
 
-    def s3_load(self):
-        LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
-
+    def s3_original_sets(self):
         LOGGER.info('Loading original data sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -32,6 +30,22 @@ class Loader:
             download_path='AWS Downloads/Datasets/OriginalDatasets/'
         )
 
+    def s3_original_test_set(self):
+        LOGGER.info('Loading the test set.')
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='OriginalDatasets',
+            file_name='KDDTest+.txt',
+            download_path="AWS Downloads/Datasets/OriginalDatasets/"
+        )
+        self.__aws_download(
+            bucket_name=self.bucket_name,
+            folder_name='OriginalDatasets',
+            file_name='KDDTest+_targets.npy',
+            download_path="AWS Downloads/Datasets/OriginalDatasets/"
+        )
+
+    def s3_min_features(self):
         LOGGER.info('Loading set of minimal features.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -46,6 +60,7 @@ class Loader:
             download_path="AWS Downloads/MinimalFeatures/"
         )
 
+    def s3_one_hot_encoders(self):
         LOGGER.info('Loading set of one hot encoders.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -60,6 +75,7 @@ class Loader:
             download_path="AWS Downloads/OneHotEncoders/"
         )
 
+    def s3_pca_encoders(self):
         LOGGER.info('Loading set of PCA encoders.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -74,6 +90,7 @@ class Loader:
             download_path="AWS Downloads/PCAEncoders/"
         )
 
+    def s3_scalers(self):
         LOGGER.info('Loading set of scalers.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -88,6 +105,7 @@ class Loader:
             download_path="AWS Downloads/Scalers/"
         )
 
+    def s3_models(self):
         LOGGER.info('Loading models.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -102,6 +120,7 @@ class Loader:
             download_path="AWS Downloads/Models/StartingModels/"
         )
 
+    def s3_processed_train_sets(self):
         LOGGER.info('Loading fully processed train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -115,7 +134,6 @@ class Loader:
             file_name='KDDTrain+_l2_pca.pkl',
             download_path='AWS Downloads/Datasets/PCAEncoded/'
         )
-
         LOGGER.info('Loading target variables for train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -130,6 +148,7 @@ class Loader:
             download_path='AWS Downloads/Datasets/PCAEncoded/'
         )
 
+    def s3_processed_validation_sets(self):
         LOGGER.info('Loading fully processed validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -143,7 +162,6 @@ class Loader:
             file_name='KDDValidate+_l2_pca.pkl',
             download_path='AWS Downloads/Datasets/PCAEncoded/'
         )
-
         LOGGER.info('Loading target variables for validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
@@ -198,8 +216,8 @@ class Loader:
 
     @staticmethod
     def load_test_set():
-        x_test = pd.read_csv('NSL-KDD Encoded Datasets/before_pca/KDDTest+', sep=",", header=0)
-        y_test = np.load('NSL-KDD Encoded Datasets/before_pca/y_test.npy', allow_pickle=True)
+        x_test = pd.read_csv('AWS Downloads/Datasets/OriginalDatasets/KDDTest+.txt', sep=",", header=0)
+        y_test = np.load('AWS Downloads/Datasets/OriginalDatasets/KDDTest+_targets.npy', allow_pickle=True)
         return x_test, y_test
 
     @staticmethod
@@ -215,6 +233,6 @@ class Loader:
         return x_df, y
 
     @staticmethod
-    def load_features(file_path: str):
-        with open(file_path, 'r') as f:
+    def load_features(file_name: str):
+        with open('AWS Downloads/MinimalFeatures/'+file_name, 'r') as f:
             return f.read().split(',')

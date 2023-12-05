@@ -1,0 +1,6 @@
+{
+    "ANOMALY_THRESHOLD1":  0.9,
+    "ANOMALY_THRESHOLD2":  0.8,
+    "BENIGN_THRESHOLD": 0.6,
+    "cat_features": ["protocol_type", "service", "flag"]
+}

@@ -1,30 +1,17 @@
-import json
 import logging
+import os
 import threading
-import LoggerConfig
 
-from CustomExceptions import accuracyException, precisionException, fException, tprException, fprException, \
-    tnrException, fnrException
+from KBProcess import LoggerConfig
 
-
-LOGGER = logging.getLogger('Metrics')
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
+filename = os.path.splitext(os.path.basename(__file__))[0]
+LOGGER = logging.getLogger(filename)
 
 class Metrics:
     def __init__(self):
 
         self.metrics_lock = threading.Lock()
-
-        file_path = 'utils.json'
-        try:
-            with open(file_path, 'r') as file:
-                metrics_thresholds = json.load(file)
-                self._metrics_thresh_1 = metrics_thresholds['_metrics_thresh_1']
-                self._metrics_thresh_2 = metrics_thresholds['_metrics_thresh_2']
-                self._time_interval = metrics_thresholds['time_interval']
-                LOGGER.info("Metrics thresholds loaded from file.")
-        except FileNotFoundError:
-            LOGGER.error(f"Metrics thresholds file not found: {file_path}")
 
         # count of the outputs for layer1
         self._count_1 = {
@@ -168,38 +155,6 @@ class Metrics:
     def update_classifications(self, tag, value):
         self._overall[tag] += value
 
-    def analyze_metrics(self):
-
-        LOGGER.info('Analyzing the metrics..')
-
-        if self._metrics_1['accuracy'] < self._metrics_thresh_1['accuracy_t']:
-            LOGGER.info("Accuracy for Layer 1 fell below the threshold.")
-            raise accuracyException
-
-        if self._metrics_1['precision'] < self._metrics_thresh_1['precision_t']:
-            LOGGER.info("Precision for Layer 1 fell below the threshold.")
-            raise precisionException
-
-        if self._metrics_1['fscore'] < self._metrics_thresh_1['fscore_t']:
-            LOGGER.info("Fscore for Layer 1 fell below the threshold.")
-            raise fException
-
-        if self._metrics_1['tpr'] < self._metrics_thresh_1['tpr_t']:
-            LOGGER.info("Tpr for Layer 1 fell below the threshold.")
-            raise tprException
-
-        if self._metrics_1['fpr'] < self._metrics_thresh_1['fpr_t']:
-            LOGGER.info("Fpr for Layer 1 fell below the threshold.")
-            raise fprException
-
-        if self._metrics_1['tnr'] < self._metrics_thresh_1['tnr_t']:
-            LOGGER.info("Tnr for Layer 1 fell below the threshold.")
-            raise tnrException
-
-        if self._metrics_1['fnr'] < self._metrics_thresh_1['fnr_t']:
-            LOGGER.info("Fnr for Layer 1 fell below the threshold.")
-            raise fnrException
-
     def get_lock(self):
         return self.metrics_lock
 
@@ -249,3 +204,30 @@ class Metrics:
 
     def snapshot_metrics(self):
         LOGGER.info('Building a json snapshot of current metrics')
+
+        return {
+            "metrics1": {
+                "accuracy": self._metrics_1['accuracy'],
+                "precision": self._metrics_1['precision'],
+                "fscore": self._metrics_1['fscore'],
+                "tpr": self._metrics_1['tpr'],
+                "fpr": self._metrics_1['fpr'],
+                "tnr": self._metrics_1['tnr'],
+                "fnr": self._metrics_1['fnr']
+            },
+            "metrics_2": {
+                "accuracy": self._metrics_2['accuracy'],
+                "precision": self._metrics_2['precision'],
+                "fscore": self._metrics_2['fscore'],
+                "tpr": self._metrics_2['tpr'],
+                "fpr": self._metrics_2['fpr'],
+                "tnr": self._metrics_2['tnr'],
+                "fnr": self._metrics_2['fnr']
+            },
+            "classification_metrics": {
+                "normal_ratio": self._classification_metrics['normal_ratio'],
+                "l1_anomaly_ratio": self._classification_metrics['l1_anomaly_ratio'],
+                "l2_anomaly_ratio": self._classification_metrics['l2_anomaly_ratio'],
+                "quarantined_ratio": self._classification_metrics['quarantine_ratio']
+            }
+        }

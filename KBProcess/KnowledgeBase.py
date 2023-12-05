@@ -1,21 +1,21 @@
-import copy
-import json
 import logging
+import os
 import sqlite3
 import time
 import boto3
 
 import pandas as pd
 
-from KBLoader import Loader
-from KBConnWrapper import Connector
+from S3Downloader import Loader
+from AnomalyDetectionProcess import SQSWrapper
 import FeaturesSelector
 
 import LoggerConfig
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-LOGGER = logging.getLogger('KnowledgeBase')
 
+logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
+filename = os.path.splitext(os.path.basename(__file__))[0]
+LOGGER = logging.getLogger(filename)
 
 class KnowledgeBase:
     FULL_CLOSE = False
@@ -23,7 +23,6 @@ class KnowledgeBase:
     def __init__(self):
 
         LOGGER.info('Creating an instance of KnowledgeBase.')
-        self.cat_features = ['flag', 'protocol_type', 'service']
 
         self.__s3_setup_and_load()
         self.__load_data_instances()
@@ -32,7 +31,10 @@ class KnowledgeBase:
 
     def __sqs_setup(self):
         self.sqs_resource = boto3.resource('sqs')
-        self.connector = Connector(sqs=self.sqs_resource)
+        self.connector = SQSWrapper.Connector(
+            sqs_resource=self.sqs_resource,
+            queue_names=['tuner-update.fifo', 'detection-system-update.fifo']
+        )
 
     def terminate(self):
         self.connector.close()
@@ -51,9 +53,16 @@ class KnowledgeBase:
         LOGGER.info('Completed sqlite3 in memory databases setup.')
 
     def __s3_setup_and_load(self):
+        bucket_name = 'nsl-kdd-datasets'
         self.s3_resource = boto3.client('s3')
-        self.loader = Loader(s3_resource=self.s3_resource)
-        self.loader.s3_load()
+        self.loader = Loader(s3_resource=self.s3_resource, bucket_name=bucket_name)
+        self.loader.s3_processed_validation_sets()
+        self.loader.s3_processed_train_sets()
+        self.loader.s3_models()
+        self.loader.s3_scalers()
+        self.loader.s3_pca_encoders()
+        self.loader.s3_one_hot_encoders()
+        self.loader.s3_min_features()
 
         LOGGER.info('Loading from S3 bucket complete.')
 
@@ -98,8 +107,8 @@ class KnowledgeBase:
                                                        'NSL_l2_classifier.pkl')
 
         LOGGER.info('Loading minimal features.')
-        self.features_l1 = self.loader.load_features('AWS Downloads/MinimalFeatures/NSL_features_l1.txt')
-        self.features_l2 = self.loader.load_features('AWS Downloads/MinimalFeatures/NSL_features_l2.txt')
+        self.features_l1 = self.loader.load_features('NSL_features_l1.txt')
+        self.features_l2 = self.loader.load_features('NSL_features_l2.txt')
 
     def __fill_tables(self):
         # create a table for each train set
@@ -168,13 +177,13 @@ class KnowledgeBase:
         if feature_selection_func(self.perform_query(query_dict)):
 
             update_msg = 'UPDATED FEATURES'
-            self.connector.fanout_send_message(update_msg, None)
+            self.connector.send_message_to_queues(update_msg, None)
 
         else:
             LOGGER.error('Feature selection function failed. Retry.')
 
     def __test(self):
-        self.connector.fanout_send_message('UPDATE FEATURES,TRAIN,VALIDATE', None)
+        self.connector.send_message_to_queues('UPDATE FEATURES,TRAIN,VALIDATE', None)
 
     def run_tasks(self):
 

@@ -1,43 +1,46 @@
 import logging
+import os
 import random
 import string
+from typing import List
 
+from KBProcess import LoggerConfig
 from botocore.exceptions import ClientError
 
-import LoggerConfig
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-LOGGER = logging.getLogger('KnowledgeBase')
+filename = os.path.splitext(os.path.basename(__file__))[0]
+LOGGER = logging.getLogger(filename)
 
 
 class Connector:
-    prefix = '-update'
-    suffix = '.fifo'
+    """
+    This class is used to interact with Amazon SQS. It is responsible for creating queues, sending messages
+    and receiving messages, deleting the queues, and more. Acts as a wrapper around Amazon SQS.
+    """
 
-    msg_counter = 1
-
-    def __init__(self, sqs):
-        self.sqs = sqs
-
-        self.queue_names = [
-            'tuner'+self.prefix+self.suffix,
-            'detection-system'+self.prefix+self.suffix]
-
+    def __init__(self, sqs_client=None, sqs_resource=None, queue_urls: List[str] = None, queue_names: List[str] = None):
         self.queues = {}
+        self.queue_names = queue_names
+        self.sqs_resource = sqs_resource
+        self.sqs_client = sqs_client
+        self.queue_urls = queue_urls
 
-        self.setup()
+        self.msg_counter = 1
 
-    def setup(self):
+        if queue_names is not None:
+            self.__create_queues()
 
-        attributes = {
-            'FifoQueue': 'true',
-            'ContentBasedDeduplication': 'true'
-        }
-
+    def __create_queues(self):
+        LOGGER.info('Creating a queue for each queue name provided.')
         for queue_name in self.queue_names:
-            self.create_queue(queue_name=queue_name, attributes=attributes)
+            attributes = {
+                'FifoQueue': 'true',
+                'ContentBasedDeduplication': 'true'
+            }
+            self.__create_queue(queue_name=queue_name, attributes=attributes)
 
-    def create_queue(self, queue_name: str, attributes: dict = None):
+    def __create_queue(self, queue_name: str, attributes: dict = None):
         """
         Creates an Amazon SQS queue.
 
@@ -52,7 +55,7 @@ class Connector:
             attributes = {}
 
         try:
-            queue = self.sqs.create_queue(
+            queue = self.sqs_resource.create_queue(
                 QueueName=queue_name,
                 Attributes=attributes
             )
@@ -65,7 +68,7 @@ class Connector:
         else:
             return queue
 
-    def fanout_send_message(self, message_body, attributes=None):
+    def send_message_to_queues(self, message_body, attributes=None):
 
         for queue_name in self.queue_names:
             queue = self.queues[queue_name]
@@ -75,8 +78,8 @@ class Connector:
         """
         Send a message to an Amazon SQS queue.
 
+        :param queue:
         :param queue_name:
-        :param queue: The queue that receives the message.
         :param message_body: The body text of the message.
         :param message_attributes: Custom attributes of the message. These are key-value
                                    pairs that can be whatever you want.
@@ -93,7 +96,7 @@ class Connector:
                 MessageAttributes=message_attributes,
                 MessageDeduplicationId=deduplication_id,
             )
-            LOGGER.info("Sent message #%d: '%s' to '%s'.", self.msg_counter, message_body, queue_name)
+            LOGGER.info(f"Sent message #{self.msg_counter}: '{message_body}' to '{queue_name}'.")
             self.msg_counter += 1
 
         except ClientError as error:
@@ -107,33 +110,50 @@ class Connector:
         x = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(20))
         return str(x)
 
-    def get_queues(self, prefix=None):
+    def receive_messages(self):
         """
-        Gets a list of SQS queues. When a prefix is specified, only queues with names
-        that start with the prefix are returned.
-
-        :param prefix: The prefix used to restrict the list of returned queues.
-        :return: A list of Queue objects.
+        Receive a batch of messages in a single request from an SQS queue.
+        :return: The list of Message objects received. These each contain the body
+                 of the message and metadata and custom attributes.
         """
-        if prefix:
-            queue_iter = self.sqs.queue_names.filter(QueueNamePrefix=prefix)
-        else:
-            queue_iter = self.sqs.receiver_queues.all()
+        for queue_url in self.queue_urls:
+            try:
+                response = self.sqs_client.receive_message(
+                    QueueUrl=queue_url,
+                    AttributeNames=['All'],
+                    MessageAttributeNames=['All'],
+                    MaxNumberOfMessages=1,
+                    VisibilityTimeout=5,
+                    WaitTimeSeconds=0
+                )
 
-        queues = list(queue_iter)
-        if queues:
-            LOGGER.info("Got queues: %s", ", ".join([q.url for q in queues]))
-        else:
-            LOGGER.warning("No queues found.")
+                if 'Messages' in response:
+                    message = response['Messages'][0]
+                    receipt_handle = message['ReceiptHandle']
+                    message_body = message['Body']
 
-        return self.queues
+                    LOGGER.info(f"Received message: {message_body}")
+
+                    # Delete the received message from the queue
+                    try:
+                        self.sqs_client.delete_message(
+                            QueueUrl=queue_url,
+                            ReceiptHandle=receipt_handle
+                        )
+                    except ClientError:
+                        LOGGER.critical('Could not remove message from SQS queue.')
+
+                    return message_body
+
+            except ClientError as error:
+                LOGGER.exception("Couldn't receive messages from queue.")
+                raise error
 
     def close(self):
         """
-        Removes an SQS queue. When run against an AWS account, it can take up to
+        Removes a SQS queue. When run against an AWS account, it can take up to
         60 seconds before the queue is actually deleted.
 
-        :param queue: The queue to delete.
         :return: None
         """
         for queue in self.queues.values():

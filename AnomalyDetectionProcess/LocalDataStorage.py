@@ -1,17 +1,19 @@
 import json
 import logging
+import os
 import sqlite3
 from typing import Tuple
 
 import boto3
 import pandas as pd
 
-from LoaderDetectionSystem import Loader
-import LoggerConfig
+from KBProcess import LoggerConfig
+from KBProcess import S3Downloader
 
-LOGGER = logging.getLogger('LocalDataStorage')
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-LOGGER.info('Creating an instance of DetectionSystem.')
+filename = os.path.splitext(os.path.basename(__file__))[0]
+LOGGER = logging.getLogger(filename)
+
 
 class Data:
 
@@ -24,6 +26,7 @@ class Data:
         self.anomaly_by_l2 = None
         self.quarantine_samples = None
         self.normal_traffic = None
+        self.bucket_name = 'nsl-kdd-datasets'
         self.__s3_setup_and_load()
         self.__load_data_instances()
         self.__set_local_storage()
@@ -31,7 +34,6 @@ class Data:
         self.__parse_detection_parameters()
 
     def __parse_detection_parameters(self):
-
         json_data = json.load(open('utils.json', 'r'))
 
         self.ANOMALY_THRESHOLD1 = json_data.get("ANOMALY_THRESHOLD1", None)
@@ -41,34 +43,40 @@ class Data:
 
     def __s3_setup_and_load(self):
         self.s3_resource = boto3.client('s3')
-        self.loader = Loader(s3_resource=self.s3_resource)
+        self.downloader = S3Downloader.Loader(bucket_name=self.bucket_name, s3_resource=self.s3_resource)
 
-        LOGGER.info('Loading models.')
-        self.loader.s3_load()
+        LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
+
+        self.downloader.s3_min_features()
+        self.downloader.s3_one_hot_encoders()
+        self.downloader.s3_pca_encoders()
+        self.downloader.s3_scalers()
+        self.downloader.s3_models()
+        self.downloader.s3_original_test_set()
 
         LOGGER.info('Loading from S3 bucket complete.')
 
     def __load_data_instances(self):
         LOGGER.info('Loading test set.')
-        self.x_test, self.y_test = self.loader.load_testset('KDDTest+.txt', 'KDDTest+_targets.npy')
+        self.x_test, self.y_test = S3Downloader.Loader.load_test_set()
 
         LOGGER.info('Loading one hot encoders.')
-        self.ohe1, self.ohe2 = self.loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
+        self.ohe1, self.ohe2 = S3Downloader.Loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
 
         LOGGER.info('Loading scalers.')
-        self.scaler1, self.scaler2 = self.loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
+        self.scaler1, self.scaler2 = S3Downloader.Loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
 
         LOGGER.info('Loading pca transformers.')
-        self.pca1, self.pca2 = self.loader.load_pca_transformers('layer1_pca_transformer.pkl',
-                                                                 'layer2_pca_transformer.pkl')
+        self.pca1, self.pca2 = S3Downloader.Loader.load_pca_transformers('layer1_pca_transformer.pkl',
+                                                                         'layer2_pca_transformer.pkl')
 
         LOGGER.info('Loading models.')
-        self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
-                                                           'NSL_l2_classifier.pkl')
+        self.layer1, self.layer2 = S3Downloader.Loader.load_models('NSL_l1_classifier.pkl',
+                                                                   'NSL_l2_classifier.pkl')
 
         LOGGER.info('Loading minimal features.')
-        self.features_l1 = self.loader.load_features('NSL_features_l1.txt')
-        self.features_l2 = self.loader.load_features('NSL_features_l2.txt')
+        self.features_l1 = S3Downloader.Loader.load_features('NSL_features_l1.txt')
+        self.features_l2 = S3Downloader.Loader.load_features('NSL_features_l2.txt')
 
     def __set_local_storage(self):
         self.quarantine_samples = pd.DataFrame(columns=self.x_test.columns)

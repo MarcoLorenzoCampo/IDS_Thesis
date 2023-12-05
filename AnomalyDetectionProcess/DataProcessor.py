@@ -1,14 +1,17 @@
 import argparse
 import copy
+import json
 import logging
+import os
 import re
 
 import pandas as pd
-import LoggerConfig
 
-LOGGER = logging.getLogger('DataProcessor')
+from KBProcess import LoggerConfig
+
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-LOGGER.info('Creating an instance of DetectionSystem.')
+filename = os.path.splitext(os.path.basename(__file__))[0]
+LOGGER = logging.getLogger(filename)
 
 def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
 
@@ -26,7 +29,7 @@ def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
 
     return pca_transformed
 
-def parse_message_body(message):
+def parse_update_msg(message):
     LOGGER.info('Received messages: %s', message)
 
     pattern = re.compile(r'^UPDATE\s+([^,]+(?:,\s*[^,]+)*)\s*$', re.IGNORECASE)
@@ -41,6 +44,60 @@ def parse_message_body(message):
         return columns
     else:
         LOGGER.error("Message body does not match the required syntax. Discarding it.")
+
+def parse_metrics_msg(json_string):
+    try:
+        parsed_data = json.loads(json_string)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse JSON: {e}")
+
+    try:
+        metrics_1 = parsed_data["metrics1"]
+        metrics_2 = parsed_data["metrics_2"]
+        classification_metrics = parsed_data["classification_metrics"]
+    except KeyError as e:
+        raise ValueError(f"Missing key in JSON: {e}")
+
+    try:
+        metrics1 = {
+            "accuracy": metrics_1["accuracy"],
+            "precision": metrics_1["precision"],
+            "fscore": metrics_1["fscore"],
+            "tpr": metrics_1["tpr"],
+            "fpr": metrics_1["fpr"],
+            "tnr": metrics_1["tnr"],
+            "fnr": metrics_1["fnr"]
+        }
+
+    except KeyError as e:
+        raise ValueError(f"Missing key in metrics1: {e}")
+
+    try:
+        metrics2 = {
+            "accuracy": metrics_2["accuracy"],
+            "precision": metrics_2["precision"],
+            "fscore": metrics_2["fscore"],
+            "tpr": metrics_2["tpr"],
+            "fpr": metrics_2["fpr"],
+            "tnr": metrics_2["tnr"],
+            "fnr": metrics_2["fnr"]
+        }
+    except KeyError as e:
+        raise ValueError(f"Missing key in metrics_2: {e}")
+
+    try:
+        classification_metrics = {
+            "normal_ratio": classification_metrics["normal_ratio"],
+            "l1_anomaly_ratio": classification_metrics["l1_anomaly_ratio"],
+            "l2_anomaly_ratio": classification_metrics["l2_anomaly_ratio"],
+            "quarantined_ratio": classification_metrics["quarantined_ratio"]
+        }
+
+    except KeyError as e:
+        raise ValueError(f"Missing key in classification_metrics: {e}")
+
+    return metrics1, metrics2, classification_metrics
+
 
 def process_command_line_args():
     parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')

@@ -1,5 +1,7 @@
 import copy
+import json
 import logging
+import os
 import time
 from typing import Union
 import threading
@@ -10,16 +12,16 @@ from botocore.exceptions import ClientError
 
 from Runner import Runner
 from LocalDataStorage import Data
-from DSConnWrapper import Connector
+from SQSWrapper import Connector
 from Metrics import Metrics
 import DataProcessor
-import LoggerConfig
+
+from KBProcess import LoggerConfig
 
 
-LOGGER = logging.getLogger('DetectionSystem')
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-LOGGER.info('Creating an instance of DetectionSystem.')
-
+filename = os.path.splitext(os.path.basename(__file__))[0]
+LOGGER = logging.getLogger(filename)
 
 class DetectionSystem:
 
@@ -48,7 +50,8 @@ class DetectionSystem:
         self.connector = Connector(
             sqs_client=self.sqs_client,
             sqs_resource=self.sqs_resource,
-            queue_url=queue_url
+            queue_urls=[queue_url],
+            queue_names=['forward-metrics.fifo']
         )
 
     def classify(self, incoming_data, actual: int = None):
@@ -126,7 +129,8 @@ class DetectionSystem:
 
             if msg_body:
                 LOGGER.info(f'Parsing message: {msg_body}')
-                parsed = DataProcessor.parse_message_body(msg_body)
+                parsed = DataProcessor.parse_update_msg(msg_body)
+                LOGGER.info(f'Parsed message: {parsed}')
 
             time.sleep(self.polling_timer)
 
@@ -149,10 +153,10 @@ class DetectionSystem:
             with self.metrics.get_lock():
                 LOGGER.info('Snapshotting metrics..')
                 json_output = self.metrics.snapshot_metrics()
-                msg_body = json_output if json_output is not None else "ERROR"
+                msg_body = json.dumps(json_output) if json_output is not None else "ERROR"
 
             try:
-                self.connector.send_message(msg_body)
+                self.connector.send_message_to_queues(msg_body)
             except ClientError:
                 LOGGER.error("Metrics snapshot could not be sent to SQS. Restarting the program.")
                 raise KeyboardInterrupt

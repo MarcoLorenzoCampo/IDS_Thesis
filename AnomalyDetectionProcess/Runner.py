@@ -7,8 +7,8 @@ class Runner:
 
     def __init__(self):
         # load the test sets as simulated traffic samples
-        self.x_test = pd.read_csv('AWS Downloads/Test Set/KDDTest+.txt', sep=",", header=0)
-        self.y_test = np.load('AWS Downloads/Test Set/KDDTest+_targets.npy', allow_pickle=True)
+        self.x_test = pd.read_csv('AWS Downloads/Datasets/OriginalDatasets/KDDTest+.txt', sep=",", header=0)
+        self.y_test = np.load('AWS Downloads/Datasets/OriginalDatasets/KDDTest+_targets.npy', allow_pickle=True)
 
     def get_packet(self):
         if self.counter < self.x_test.shape[0]:

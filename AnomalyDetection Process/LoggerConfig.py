@@ -1,1 +1,0 @@
-LOG_FORMAT = '%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d: %(message)s'
