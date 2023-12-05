@@ -1,12 +1,11 @@
 import json
 import logging
 import threading
-import time
 import LoggerConfig
 
-import numpy as np
 from CustomExceptions import accuracyException, precisionException, fException, tprException, fprException, \
     tnrException, fnrException
+
 
 LOGGER = logging.getLogger('Metrics')
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
@@ -14,15 +13,15 @@ logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 class Metrics:
     def __init__(self):
 
-        file_path = 'metrics_thresholds.json'
+        self.metrics_lock = threading.Lock()
+
+        file_path = 'utils.json'
         try:
             with open(file_path, 'r') as file:
                 metrics_thresholds = json.load(file)
                 self._metrics_thresh_1 = metrics_thresholds['_metrics_thresh_1']
                 self._metrics_thresh_2 = metrics_thresholds['_metrics_thresh_2']
                 self._time_interval = metrics_thresholds['time_interval']
-                self._max_usage = metrics_thresholds['max_usage']
-                self._max_clf_time = metrics_thresholds['max_clf_time']
                 LOGGER.info("Metrics thresholds loaded from file.")
         except FileNotFoundError:
             LOGGER.error(f"Metrics thresholds file not found: {file_path}")
@@ -82,8 +81,6 @@ class Metrics:
         }
 
         # additional metrics
-        self.classification_times = []
-        self.cpu_usages = []
         self._tprs_1 = []
         self._fprs_1 = []
         self._tprs_2 = []
@@ -203,6 +200,9 @@ class Metrics:
             LOGGER.info("Fnr for Layer 1 fell below the threshold.")
             raise fnrException
 
+    def get_lock(self):
+        return self.metrics_lock
+
     def show_metrics(self):
 
         LOGGER.info('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
@@ -236,24 +236,16 @@ class Metrics:
                            'fnr': 0.0}
         self._metrics_2 = {'accuracy': 0.0, 'precision': 0.0, 'fscore': 0.0, 'tpr': 0.0, 'fpr': 0.0, 'tnr': 0.0,
                            'fnr': 0.0}
-        self.classification_times = []
-        self.cpu_usages = []
         self._tprs_1 = []
         self._fprs_1 = []
         self._tprs_2 = []
         self._fprs_2 = []
 
-    def add_classification_time(self, time):
-        self.classification_times.append(time)
-
-    def add_cpu_usage(self, usage):
-        self.cpu_usages.append(usage)
-
-    def get_avg_time(self):
-        return np.mean(self.classification_times)
-
     def get_counts(self, tag):
         return self._count_1[tag] + self._count_2[tag]
 
     def get_metrics(self, tag):
-        return (self._metrics_1[tag] + self._metrics_2[tag]) / 2
+        return self._metrics_1, self._metrics_2, self._classification_metrics
+
+    def snapshot_metrics(self):
+        LOGGER.info('Building a json snapshot of current metrics')

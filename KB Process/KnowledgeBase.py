@@ -8,7 +8,7 @@ import boto3
 import pandas as pd
 
 from KBLoader import Loader
-from KBConnector import Connector
+from KBConnWrapper import Connector
 import FeaturesSelector
 
 import LoggerConfig

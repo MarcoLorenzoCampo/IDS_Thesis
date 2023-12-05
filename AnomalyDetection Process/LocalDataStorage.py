@@ -1,5 +1,7 @@
+import json
 import logging
 import sqlite3
+from typing import Tuple
 
 import boto3
 import pandas as pd
@@ -14,9 +16,28 @@ LOGGER.info('Creating an instance of DetectionSystem.')
 class Data:
 
     def __init__(self):
+        self.cat_features = None
+        self.BENIGN_THRESHOLD = None
+        self.ANOMALY_THRESHOLD2 = None
+        self.ANOMALY_THRESHOLD1 = None
+        self.anomaly_by_l1 = None
+        self.anomaly_by_l2 = None
+        self.quarantine_samples = None
+        self.normal_traffic = None
         self.__s3_setup_and_load()
         self.__load_data_instances()
+        self.__set_local_storage()
         self.__sqlite3_setup()
+        self.__parse_detection_parameters()
+
+    def __parse_detection_parameters(self):
+
+        json_data = json.load(open('utils.json', 'r'))
+
+        self.ANOMALY_THRESHOLD1 = json_data.get("ANOMALY_THRESHOLD1", None)
+        self.ANOMALY_THRESHOLD2 = json_data.get("ANOMALY_THRESHOLD2", None)
+        self.BENIGN_THRESHOLD = json_data.get("BENIGN_THRESHOLD", None)
+        self.cat_features = json_data.get("cat_features", None)
 
     def __s3_setup_and_load(self):
         self.s3_resource = boto3.client('s3')
@@ -79,3 +100,23 @@ class Data:
 
     def __clean(self):
         del self.x_test
+
+    def add_to_quarantine(self, sample: pd.DataFrame) -> Tuple[str, int]:
+        self.quarantine_samples = pd.concat([self.quarantine_samples, sample], axis=0)
+        return 'quarantine', 1
+
+    def add_to_anomaly1(self, sample: pd.DataFrame) -> Tuple[str, int]:
+        self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
+        return 'l1_anomaly', 1
+
+    def add_to_anomaly2(self, sample: pd.DataFrame) -> Tuple[str, int]:
+        self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
+        return 'l2_anomaly', 1
+
+    def add_to_normal1(self, sample: pd.DataFrame) -> Tuple[str, int]:
+        self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
+        return 'normal_traffic', 1
+
+    def add_to_normal2(self, sample: pd.DataFrame) -> Tuple[str, int]:
+        self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
+        return 'normal_traffic', 1
