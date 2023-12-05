@@ -1,6 +1,5 @@
 import copy
 import logging
-import re
 import time
 from typing import Union
 import threading
@@ -9,6 +8,7 @@ import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
 
+from Runner import Runner
 from LocalDataStorage import Data
 from DSConnectionHandler import Connector
 from Metrics import Metrics
@@ -29,6 +29,9 @@ class DetectionSystem:
         self.storage = Data()
         self.metrics = Metrics()
         self.__sqs_setup()
+
+        # only for testing purposes
+        self.runner = Runner()
 
     def __sqs_setup(self):
         queue_url = 'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo'
@@ -159,6 +162,8 @@ class DetectionSystem:
         while True:
             try:
                 LOGGER.info('Classifying data..')
+                sample, actual = self.runner.get_packet()
+                self.classify(sample, actual)
             except KeyboardInterrupt:
                 LOGGER.info('Closing the instance.')
                 raise KeyboardInterrupt
