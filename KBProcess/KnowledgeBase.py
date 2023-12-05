@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sqlite3
@@ -12,10 +13,10 @@ import FeaturesSelector
 
 import LoggerConfig
 
-
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
 LOGGER = logging.getLogger(filename)
+
 
 class KnowledgeBase:
     FULL_CLOSE = False
@@ -183,7 +184,11 @@ class KnowledgeBase:
             LOGGER.error('Feature selection function failed. Retry.')
 
     def __test(self):
-        self.connector.send_message_to_queues('UPDATE FEATURES,TRAIN,VALIDATE', None)
+        test_dict = {
+            "UPDATE": ["FEATURES", "TRAIN", "VALIDATE"]
+        }
+        msg_body = json.dumps(test_dict)
+        self.connector.send_message_to_queues(msg_body, None)
 
     def run_tasks(self):
 
@@ -226,7 +231,7 @@ class KnowledgeBase:
                 print("Invalid input. Please enter a valid number.")
                 continue
 
-            #self.__test()
+            # self.__test()
             time.sleep(1.5)
 
         raise KeyboardInterrupt

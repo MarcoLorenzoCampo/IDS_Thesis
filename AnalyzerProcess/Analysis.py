@@ -42,6 +42,9 @@ class Analyzer:
             queue_names=['forward-objs.fifo']
         )
 
+    def analyze(self, metrics1: dict, metrics2: dict, classification_metrics: dict):
+        pass
+
     def poll_queues(self):
         while True:
             LOGGER.info('Fetching messages..')
