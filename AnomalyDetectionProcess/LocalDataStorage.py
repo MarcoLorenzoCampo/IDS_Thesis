@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sqlite3
+from datetime import datetime, timedelta
 from typing import Tuple
 
 import boto3
@@ -27,7 +28,7 @@ class Data:
         self.quarantine_samples = None
         self.normal_traffic = None
         self.bucket_name = 'nsl-kdd-datasets'
-        self.__s3_setup_and_load()
+        self.__s3_setup()
         self.__load_data_instances()
         self.__set_local_storage()
         self.__sqlite3_setup()
@@ -41,20 +42,39 @@ class Data:
         self.BENIGN_THRESHOLD = json_data.get("BENIGN_THRESHOLD", None)
         self.cat_features = json_data.get("cat_features", None)
 
-    def __s3_setup_and_load(self):
-        self.s3_resource = boto3.client('s3')
-        self.downloader = S3Downloader.Loader(bucket_name=self.bucket_name, s3_resource=self.s3_resource)
+    def __s3_setup(self):
 
+        self.s3_resource = boto3.client('s3')
+        self.loader = S3Downloader.Loader(bucket_name=self.bucket_name, s3_resource=self.s3_resource)
+
+        if self.__s3_ok() and not self.__need_s3_update():
+            LOGGER.info('S3 is already setup and loaded.')
+            return
+
+        self.__s3_load()
+
+    def __s3_load(self):
         LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
 
-        self.downloader.s3_min_features()
-        self.downloader.s3_one_hot_encoders()
-        self.downloader.s3_pca_encoders()
-        self.downloader.s3_scalers()
-        self.downloader.s3_models()
-        self.downloader.s3_original_test_set()
+        self.loader.s3_min_features()
+        self.loader.s3_one_hot_encoders()
+        self.loader.s3_pca_encoders()
+        self.loader.s3_scalers()
+        self.loader.s3_models()
+        self.loader.s3_original_test_set()
 
         LOGGER.info('Loading from S3 bucket complete.')
+
+    def __s3_ok(self):
+        l = self.loader
+        return (
+            l.check_test_original() and
+            l.check_features() and
+            l.check_models() and
+            l.check_encoders() and
+            l.check_pca_encoders() and
+            l.check_scalers()
+        )
 
     def __load_data_instances(self):
         LOGGER.info('Loading test set.')
@@ -128,3 +148,17 @@ class Data:
     def add_to_normal2(self, sample: pd.DataFrame) -> Tuple[str, int]:
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         return 'normal_traffic', 1
+
+    @staticmethod
+    def __need_s3_update():
+        try:
+            with open('last_online.txt', 'r') as last_online_file:
+                last_online_str = last_online_file.read().strip()
+
+            last_online = datetime.strptime(last_online_str, "%Y-%m-%d %H:%M:%S")
+
+            time_difference = datetime.now() - last_online
+
+            return time_difference > timedelta(hours=3)
+        except FileNotFoundError:
+            return False

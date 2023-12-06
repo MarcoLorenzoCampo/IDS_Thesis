@@ -10,6 +10,7 @@ from KBProcess import LoggerConfig
 LOGGER = logging.getLogger('KBLoader')
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 
+
 class Loader:
     def __init__(self, s3_resource, bucket_name: str):
         self.bucket_name = bucket_name
@@ -234,5 +235,91 @@ class Loader:
 
     @staticmethod
     def load_features(file_name: str):
-        with open('AWS Downloads/MinimalFeatures/'+file_name, 'r') as f:
+        with open('AWS Downloads/MinimalFeatures/' + file_name, 'r') as f:
             return f.read().split(',')
+
+    @staticmethod
+    def check_train_original():
+        train_path = os.path.join('AWS Downloads/Datasets/OriginalDatasets/',
+                                  'KDDTrain+20_percent_with_labels.txt')
+        train20_path = os.path.join('AWS Downloads/Datasets/OriginalDatasets/',
+                                    'KDDTrain+_with_labels.txt')
+        return os.path.isfile(train20_path) and os.path.isfile(train_path)
+
+    @staticmethod
+    def check_train_encoded():
+        train_pca_path1 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                       'KDDTrain+_l1_pca.pkl')
+        train_pca_path2 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                       'KDDTrain+_l2_pca.pkl')
+        targets_pca1 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                    'KDDTrain+_l1_targets.npy')
+        targets_pca2 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                    'KDDTrain+_l2_targets.npy')
+
+        return (os.path.isfile(train_pca_path2) and os.path.isfile(train_pca_path1)
+                and os.path.isfile(targets_pca2) and os.path.isfile(targets_pca1))
+
+    @staticmethod
+    def check_validation_encoded():
+        val_pca_path1 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                     'KDDValidate+_l1_pca.pkl')
+        val_pca_path2 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                     'KDDValidate+_l2_pca.pkl')
+        targets_pca1 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                    'KDDValidate+_l1_targets.npy')
+        targets_pca2 = os.path.join('AWS Downloads/Datasets/PCAEncoded/',
+                                    'KDDValidate+_l2_targets.npy')
+
+        return (os.path.isfile(val_pca_path2) and os.path.isfile(val_pca_path1)
+                and os.path.isfile(targets_pca2) and os.path.isfile(targets_pca1))
+
+    @staticmethod
+    def check_test_original():
+        test_path = os.path.join('AWS Downloads/Datasets/OriginalDatasets/',
+                                 'KDDTest+.txt')
+        test_target_path = os.path.join('AWS Downloads/Datasets/OriginalDatasets/',
+                                        'KDDTest+_targets.npy')
+
+        output = os.path.isfile(test_target_path) and os.path.isfile(test_path)
+        return output
+
+    @staticmethod
+    def check_features():
+        features_path1 = os.path.join('AWS Downloads/MinimalFeatures/', 'NSL_features_l1.txt')
+        features_path2 = os.path.join('AWS Downloads/MinimalFeatures/', 'NSL_features_l1.txt')
+
+        output = os.path.isfile(features_path1) and os.path.isfile(features_path2)
+        return output
+
+    @staticmethod
+    def check_models():
+        model1_path = os.path.join('AWS Downloads/Models/StartingModels/', 'NSL_l1_classifier.pkl')
+        model2_path = os.path.join('AWS Downloads/Models/StartingModels/', 'NSL_l2_classifier.pkl')
+
+        output = os.path.isfile(model1_path) and os.path.isfile(model2_path)
+        return output
+
+    @staticmethod
+    def check_encoders():
+        ohe1_path = os.path.join('AWS Downloads/OneHotEncoders/', 'OneHotEncoder_l1.pkl')
+        ohe2_path = os.path.join('AWS Downloads/OneHotEncoders/', 'OneHotEncoder_l2.pkl')
+
+        output = os.path.isfile(ohe1_path) and os.path.isfile(ohe2_path)
+        return output
+
+    @staticmethod
+    def check_pca_encoders():
+        pca1_path = os.path.join('AWS Downloads/PCAEncoders/', 'layer1_pca_transformer.pkl')
+        pca2_path = os.path.join('AWS Downloads/PCAEncoders/', 'layer2_pca_transformer.pkl')
+
+        output = os.path.isfile(pca1_path) and os.path.isfile(pca2_path)
+        return output
+
+    @staticmethod
+    def check_scalers():
+        scaler1_path = os.path.join('AWS Downloads/Scalers/', 'Scaler_l1.pkl')
+        scaler2_path = os.path.join('AWS Downloads/Scalers/', 'Scaler_l2.pkl')
+
+        output = os.path.isfile(scaler1_path) and os.path.isfile(scaler2_path)
+        return output

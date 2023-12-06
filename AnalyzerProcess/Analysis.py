@@ -25,8 +25,8 @@ class Analyzer:
         with open(path, 'r') as f:
             json_file = json.load(f)
 
-        self._metrics_threshold_1 = json_file['_metrics_thresh_1']
-        self._metrics_threshold_2 = json_file['_metrics_thresh_2']
+        self._metrics_thresholds_1 = json_file['_metrics_thresh_1']
+        self._metrics_thresholds_2 = json_file['_metrics_thresh_2']
 
         self.__sqs_setup()
 
@@ -56,7 +56,7 @@ class Analyzer:
                 raise KeyboardInterrupt
 
             if msg_body:
-                LOGGER.info(f'Parsing message: {msg_body}')
+                LOGGER.info(f'Parsing message: {json.dumps(msg_body, indent=2)}')
                 metrics1, metrics2, classification_metrics = DataProcessor.parse_metrics_msg(msg_body)
                 LOGGER.info(f'Parsed message: {metrics1, metrics2, classification_metrics}')
 
@@ -64,8 +64,8 @@ class Analyzer:
 
 
 def main():
-    arg1, arg2, arg3 = DataProcessor.process_command_line_args()
-    analyzer = Analyzer(arg2)
+    args = DataProcessor.process_command_line_args()
+    analyzer = Analyzer(polling_timer=1)
 
     queue_reading_thread = threading.Thread(target=analyzer.poll_queues)
 
