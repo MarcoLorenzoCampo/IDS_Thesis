@@ -1,7 +1,9 @@
 import sys
+
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
+# print(sys.path)
 
 import copy
 import json
@@ -24,19 +26,16 @@ import DataProcessor
 
 from KBProcess import LoggerConfig
 
-
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
 LOGGER = logging.getLogger(filename)
 
-class DetectionSystem:
 
+class DetectionSystem:
     FULL_CLOSE = False
     SYSTEM_CLOSE = False
 
     def __init__(self, metrics_snapshot_timer: float, polling_timer: float, classification_delay: float):
-
-        self.exit_signal = threading.Event()
 
         self.metrics_snapshot_timer = metrics_snapshot_timer
         self.polling_timer = polling_timer
@@ -133,83 +132,72 @@ class DetectionSystem:
         self.connector.close()
 
     def poll_queues(self):
-        try:
-            while not self.exit_signal.is_set():
-                LOGGER.info('Fetching messages..')
+        while True:
+            LOGGER.info('Fetching messages..')
 
-                try:
-                    msg_body = self.connector.receive_messages()
-                except ClientError:
-                    LOGGER.error("Couldn't fetch messages from queue. Restarting the program.")
-                    raise KeyboardInterrupt
+            try:
+                msg_body = self.connector.receive_messages()
+            except Exception as e:
+                LOGGER.error(f"Error in fetching messages from queue: {e}")
+                raise KeyboardInterrupt
 
-                if msg_body:
-                    LOGGER.info(f'Parsing message: {msg_body}')
-                    parsed = DataProcessor.parse_update_msg(msg_body)
-                    LOGGER.info(f'Parsed message: {parsed}')
+            if msg_body:
+                LOGGER.info(f'Parsing message: {msg_body}')
+                parsed = DataProcessor.parse_update_msg(msg_body)
+                LOGGER.info(f'Parsed message: {parsed}')
 
-                time.sleep(self.polling_timer)
-        except KeyboardInterrupt:
-            LOGGER.error("Received keyboard interrupt. Terminating queue_reading.")
-            self.exit_signal.set()
+            time.sleep(self.polling_timer)
 
     def run_classification(self):
-        try:
-            while not self.exit_signal.is_set():
-                try:
-                    with self.metrics.get_lock():
-                        LOGGER.info('Classifying data..')
-                        sample, actual = self.runner.get_packet()
-                        self.classify(sample, actual)
-                except Exception as e:
-                    LOGGER.error(f"Error in run_classification: {e}")
-                    self.exit_signal.set()
+        while True:
+            try:
+                with self.metrics.get_lock():
+                    LOGGER.info('Classifying data..')
+                    sample, actual = self.runner.get_packet()
+                    self.classify(sample, actual)
+            except Exception as e:
+                LOGGER.error(f"Error in classification: {e}")
+                raise KeyboardInterrupt
 
-                time.sleep(self.classification_delay)
-        except KeyboardInterrupt:
-            LOGGER.info("Received keyboard interrupt. Terminating run_classification.")
-            self.exit_signal.set()
+            time.sleep(self.classification_delay)
 
     def snapshot_metrics(self):
-        try:
-            while not self.exit_signal.is_set():
-                with self.metrics.get_lock():
-                    LOGGER.info('Snapshotting metrics..')
-                    json_output = self.metrics.snapshot_metrics()
-                    msg_body = json.dumps(json_output) if json_output is not None else "ERROR"
+        while True:
+            with self.metrics.get_lock():
+                LOGGER.info('Snapshotting metrics..')
+                json_output = self.metrics.snapshot_metrics()
+                msg_body = json.dumps(json_output) if json_output is not None else "ERROR"
 
-                try:
-                    self.connector.send_message_to_queues(msg_body)
-                except ClientError as e:
-                    LOGGER.error(f"Error in snapshot_metrics: {e}")
-                    self.exit_signal.set()
+            try:
+                self.connector.send_message_to_queues(msg_body)
+            except ClientError as e:
+                LOGGER.error(f"Error in snapshot metrics: {e}")
+                raise KeyboardInterrupt
 
-                time.sleep(self.metrics_snapshot_timer)
-        except KeyboardInterrupt:
-            LOGGER.info("Received keyboard interrupt. Terminating snapshot_metrics.")
-            self.exit_signal.set()
+            time.sleep(self.metrics_snapshot_timer)
 
     def run_tasks(self):
         queue_reading_thread = threading.Thread(target=self.poll_queues, daemon=True)
         classification_thread = threading.Thread(target=self.run_classification, daemon=True)
         metrics_snapshot_thread = threading.Thread(target=self.snapshot_metrics, daemon=True)
 
+        queue_reading_thread.start()
+        # classification_thread.start()
+        # metrics_snapshot_thread.start()
+
         try:
-            queue_reading_thread.start()
-            #classification_thread.start()
-            #metrics_snapshot_thread.start()
-            queue_reading_thread.join()
-            #classification_thread.join()
-            #metrics_snapshot_thread.join()
+            while True:
+                time.sleep(1)
         except KeyboardInterrupt:
             LOGGER.info("Received keyboard interrupt. Preparing to terminate threads.")
 
-        LOGGER.info('Saving last online timestamp.')
-        current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open('last_online.txt', 'w') as file:
-            file.write(current_timestamp)
-
-        LOGGER.info('Terminating DetectionSystem instance.')
+            LOGGER.info('Saving last online timestamp.')
+            current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open('last_online.txt', 'w') as file:
+                file.write(current_timestamp)
+        finally:
+            LOGGER.info('Terminating DetectionSystem instance.')
+            raise KeyboardInterrupt
 
 
 if __name__ == '__main__':
@@ -224,7 +212,4 @@ if __name__ == '__main__':
             LOGGER.info('Deleting queues..')
         else:
             LOGGER.info('Received keyboard interrupt. Preparing to terminate threads.')
-
-        # Optionally, you may add a time.sleep here to give threads time to terminate gracefully.
-        time.sleep(5)
-
+    time.sleep(2)

@@ -238,41 +238,42 @@ class KnowledgeBase:
         }
 
         LOGGER.info('Running background tasks..')
-        time.sleep(5)
+        time.sleep(2)
 
-        # infinite loop
-        while True:
+        try:
+            while True:
 
-            print("\nSelect the number of the action to perform:"
-                  "\n1. ICFS feature selection"
-                  "\n2. SFS feature selection"
-                  "\n3. BFS feature selection"
-                  "\n4. Fisher feature selection"
-                  "\n5. Analyze the dataset for changes"
-                  "\n'exit' to quit to program.")
+                print("\nSelect the number of the action to perform:"
+                      "\n1. ICFS feature selection"
+                      "\n2. SFS feature selection"
+                      "\n3. BFS feature selection"
+                      "\n4. Fisher feature selection"
+                      "\n5. Analyze the dataset for changes"
+                      "\n'exit' to quit to program.")
 
-            choice = input('>> ')
+                choice = input('>> ')
 
-            if choice.lower() == 'exit':
-                break
+                if choice.lower() == 'exit':
+                    break
 
-            try:
-                action_number = int(choice)
-                selected_function = action_mapping.get(action_number)
-                if selected_function:
-                    self.__select_features_procedure(selected_function)
-                else:
-                    print("Invalid action number. Please enter a number between 1 and 4.")
+                try:
+                    action_number = int(choice)
+                    selected_function = action_mapping.get(action_number)
+                    if selected_function:
+                        self.__select_features_procedure(selected_function)
+                    else:
+                        print("Invalid action number. Please enter a number between 1 and 4.")
+                        continue
+
+                except ValueError:
+                    print("Invalid input. Please enter a valid number.")
                     continue
 
-            except ValueError:
-                print("Invalid input. Please enter a valid number.")
-                continue
+                # self.__test()
+                time.sleep(1.5)
 
-            # self.__test()
-            time.sleep(1.5)
-
-        raise KeyboardInterrupt
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt('Keyboard interrupt. Terminating knowledge base instance.')
 
 
 if __name__ == '__main__':
