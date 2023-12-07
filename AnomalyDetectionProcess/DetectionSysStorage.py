@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import sqlite3
-from datetime import datetime, timedelta
 from typing import Tuple
 
 import boto3
@@ -10,23 +9,16 @@ import pandas as pd
 
 from KBProcess import LoggerConfig
 from KBProcess import S3Downloader
+import Utils
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
 LOGGER = logging.getLogger(filename)
 
 
-class Data:
+class Storage:
 
     def __init__(self):
-        self.cat_features = None
-        self.BENIGN_THRESHOLD = None
-        self.ANOMALY_THRESHOLD2 = None
-        self.ANOMALY_THRESHOLD1 = None
-        self.anomaly_by_l1 = None
-        self.anomaly_by_l2 = None
-        self.quarantine_samples = None
-        self.normal_traffic = None
         self.bucket_name = 'nsl-kdd-datasets'
         self.__s3_setup()
         self.__load_data_instances()
@@ -47,7 +39,7 @@ class Data:
         self.s3_resource = boto3.client('s3')
         self.loader = S3Downloader.Loader(bucket_name=self.bucket_name, s3_resource=self.s3_resource)
 
-        if self.__s3_ok() and not self.__need_s3_update():
+        if self.__s3_ok() and not Utils.need_s3_update():
             LOGGER.info('S3 is already setup and loaded.')
             return
 
@@ -148,17 +140,3 @@ class Data:
     def add_to_normal2(self, sample: pd.DataFrame) -> Tuple[str, int]:
         self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
         return 'normal_traffic', 1
-
-    @staticmethod
-    def __need_s3_update():
-        try:
-            with open('last_online.txt', 'r') as last_online_file:
-                last_online_str = last_online_file.read().strip()
-
-            last_online = datetime.strptime(last_online_str, "%Y-%m-%d %H:%M:%S")
-
-            time_difference = datetime.now() - last_online
-
-            return time_difference > timedelta(hours=3)
-        except FileNotFoundError:
-            return False

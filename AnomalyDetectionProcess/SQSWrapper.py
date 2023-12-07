@@ -20,6 +20,12 @@ class Connector:
     """
 
     def __init__(self, sqs_client=None, sqs_resource=None, queue_urls: List[str] = None, queue_names: List[str] = None):
+        """
+        :param sqs_client: client instance to read messages from Amazon SQS.
+        :param sqs_resource: resource to interact with Amazon SQS.
+        :param queue_urls: queue urls to fetch messages from.
+        :param queue_names: queue names to be created.
+        """
         self.queues = {}
         self.queue_names = queue_names
         self.sqs_resource = sqs_resource
@@ -43,14 +49,12 @@ class Connector:
     def __create_queue(self, queue_name: str, attributes: dict = None):
         """
         Creates an Amazon SQS queue.
-
         :param queue_name: The name of the queue. This is part of the URL assigned to the queue.
         :param attributes: The attributes of the queue, such as maximum message size or
                            whether it's a FIFO queue.
         :return: A Queue object that contains metadata about the queue and that can be used
                  to perform queue operations like sending and receiving messages.
         """
-
         if not attributes:
             attributes = {}
 
@@ -69,7 +73,11 @@ class Connector:
             return queue
 
     def send_message_to_queues(self, message_body, attributes=None):
-
+        """
+        Proxy method that sends a message to all the queues in the wrapper.
+        :param message_body: String or dictionary that contains the body of the message.
+        :param attributes: Optional attributes of the message. These are key-value pairs that can be whatever you want.
+        """
         for queue_name in self.queue_names:
             queue = self.queues[queue_name]
             self.send_message(queue, queue_name, message_body, attributes)
@@ -77,7 +85,6 @@ class Connector:
     def send_message(self, queue, queue_name, message_body, message_attributes=None):
         """
         Send a message to an Amazon SQS queue.
-
         :param queue:
         :param queue_name:
         :param message_body: The body text of the message.
@@ -97,6 +104,7 @@ class Connector:
                 MessageDeduplicationId=deduplication_id,
             )
             LOGGER.info(f"Sent message #{self.msg_counter}: '{message_body}' to '{queue_name}'.")
+            LOGGER.info(f"Sent message with message_id: {response['MessageId']}")
             self.msg_counter += 1
 
         except ClientError as error:

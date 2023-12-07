@@ -10,7 +10,6 @@ import json
 import logging
 import os
 import time
-import datetime
 from typing import Union
 import threading
 
@@ -19,10 +18,10 @@ import pandas as pd
 from botocore.exceptions import ClientError
 
 from Runner import Runner
-from LocalDataStorage import Data
+from DetectionSysStorage import Storage
 from SQSWrapper import Connector
 from Metrics import Metrics
-import DataProcessor
+import Utils
 
 from KBProcess import LoggerConfig
 
@@ -33,7 +32,7 @@ LOGGER = logging.getLogger(filename)
 
 class DetectionSystem:
     FULL_CLOSE = False
-    SYSTEM_CLOSE = False
+    DEBUG = True
 
     def __init__(self, metrics_snapshot_timer: float, polling_timer: float, classification_delay: float):
 
@@ -44,7 +43,7 @@ class DetectionSystem:
         self.metrics_switcher = {}
         self.clf_switcher = {}
 
-        self.storage = Data()
+        self.storage = Storage()
         self.metrics = Metrics()
         self.__set_switchers()
         self.__sqs_setup()
@@ -53,15 +52,21 @@ class DetectionSystem:
         self.runner = Runner()
 
     def __sqs_setup(self):
-        queue_url = 'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo'
         self.sqs_client = boto3.client('sqs')
         self.sqs_resource = boto3.resource('sqs')
+
+        self.queue_urls = [
+            'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo',
+        ]
+        self.queue_names = [
+            'forward-metrics.fifo',
+        ]
 
         self.connector = Connector(
             sqs_client=self.sqs_client,
             sqs_resource=self.sqs_resource,
-            queue_urls=[queue_url],
-            queue_names=['forward-metrics.fifo']
+            queue_urls=self.queue_urls,
+            queue_names=self.queue_names
         )
 
     def classify(self, incoming_data, actual: int = None):
@@ -88,13 +93,13 @@ class DetectionSystem:
                 self.__finalize_clf(incoming_data, [0, 'QUARANTINE'], actual)
 
     def __clf_layer1(self, unprocessed_sample):
-        sample = DataProcessor.data_process(unprocessed_sample, self.storage.scaler1, self.storage.ohe1,
-                                            self.storage.pca1, self.storage.features_l1, self.storage.cat_features)
+        sample = Utils.data_process(unprocessed_sample, self.storage.scaler1, self.storage.ohe1,
+                                    self.storage.pca1, self.storage.features_l1, self.storage.cat_features)
         return self.storage.layer1.predict(sample)
 
     def __clf_layer2(self, unprocessed_sample):
-        sample = DataProcessor.data_process(unprocessed_sample, self.storage.scaler2, self.storage.ohe2,
-                                            self.storage.pca2, self.storage.features_l2, self.storage.cat_features)
+        sample = Utils.data_process(unprocessed_sample, self.storage.scaler2, self.storage.ohe2,
+                                    self.storage.pca2, self.storage.features_l2, self.storage.cat_features)
         return self.storage.layer2.predict_proba(sample)
 
     def __finalize_clf(self, sample: pd.DataFrame, output: list[Union[int, str]], actual: int = None):
@@ -143,7 +148,7 @@ class DetectionSystem:
 
             if msg_body:
                 LOGGER.info(f'Parsing message: {msg_body}')
-                parsed = DataProcessor.parse_update_msg(msg_body)
+                parsed = Utils.parse_update_msg(msg_body)
                 LOGGER.info(f'Parsed message: {parsed}')
 
             time.sleep(self.polling_timer)
@@ -182,34 +187,29 @@ class DetectionSystem:
         metrics_snapshot_thread = threading.Thread(target=self.snapshot_metrics, daemon=True)
 
         queue_reading_thread.start()
-        # classification_thread.start()
-        # metrics_snapshot_thread.start()
+        classification_thread.start()
+        metrics_snapshot_thread.start()
 
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
             LOGGER.info("Received keyboard interrupt. Preparing to terminate threads.")
-
-            LOGGER.info('Saving last online timestamp.')
-            current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open('last_online.txt', 'w') as file:
-                file.write(current_timestamp)
+            Utils.save_current_timestamp()
         finally:
             LOGGER.info('Terminating DetectionSystem instance.')
             raise KeyboardInterrupt
 
 
 if __name__ == '__main__':
-    arg1, arg2, arg3 = DataProcessor.process_command_line_args()
+    arg1, arg2, arg3 = Utils.process_command_line_args()
     ds = DetectionSystem(arg1, arg2, arg3)
 
     try:
         ds.run_tasks()
     except KeyboardInterrupt:
-        if ds.SYSTEM_CLOSE:
+        if ds.FULL_CLOSE:
             ds.terminate()
             LOGGER.info('Deleting queues..')
         else:
             LOGGER.info('Received keyboard interrupt. Preparing to terminate threads.')
-    time.sleep(2)

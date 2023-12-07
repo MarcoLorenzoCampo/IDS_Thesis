@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime, timedelta
 
 import pandas as pd
 
@@ -136,3 +137,31 @@ def process_command_line_args():
         LOGGER.info(f'Classification Delay: {classification_delay}')
 
     return metrics_snapshot_timer, polling_timer, classification_delay
+
+def need_s3_update():
+    try:
+        with open('last_online.txt', 'r') as last_online_file:
+            last_online_str = last_online_file.read().strip()
+
+        last_online = datetime.strptime(last_online_str, "%Y-%m-%d %H:%M:%S")
+
+        time_difference = datetime.now() - last_online
+
+        return time_difference > timedelta(hours=3)
+    except FileNotFoundError:
+        return False
+
+def save_current_timestamp():
+    LOGGER.info('Saving last online timestamp.')
+    current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open('last_online.txt', 'w') as file:
+        file.write(current_timestamp)
+
+def parse_objs(data):
+    objectives = {}
+    for layer, objectives_list in data.items():
+        objectives[layer] = []
+        for objective in objectives_list:
+            objectives[layer].append(objective.strip())
+
+    return objectives
