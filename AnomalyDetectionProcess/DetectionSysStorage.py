@@ -7,9 +7,7 @@ from typing import Tuple
 import boto3
 import pandas as pd
 
-from KBProcess import LoggerConfig
-from KBProcess import S3Downloader
-import Utils
+from Shared import S3Downloader, LoggerConfig, Utils
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
@@ -98,7 +96,7 @@ class Storage:
 
     def __sqlite3_setup(self):
         LOGGER.info('Connecting to sqlite3 in-memory database.')
-        self.sql_connection = sqlite3.connect(':memory:')
+        self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.sql_connection.cursor()
 
         LOGGER.info('Instantiating the needed SQL in-memory tables.')
@@ -111,7 +109,7 @@ class Storage:
 
     def __fill_tables(self):
         self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')
-        self.__append_to_table('x_test', 'target', self.y_test)
+        self.__append_to_table('x_test', 'targets', self.y_test)
 
     def __append_to_table(self, table_name, column_name, target_values):
         existing_data = pd.read_sql_query(f'SELECT * FROM {table_name}', self.sql_connection)

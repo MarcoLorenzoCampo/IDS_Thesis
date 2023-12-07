@@ -1,13 +1,14 @@
+import json
 import logging
 import os
 import sqlite3
+from pprint import pprint
 
 import boto3
 import pandas as pd
 
-from KBProcess import LoggerConfig
-from AnomalyDetectionProcess import Utils
-from KBProcess.S3Downloader import Loader
+from Shared import LoggerConfig, Utils
+from Shared.S3Downloader import Loader
 
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
@@ -78,7 +79,7 @@ class Storage:
 
     def __sqlite3_setup(self):
         LOGGER.info('Connecting to sqlite3 in memory database.')
-        self.sql_connection = sqlite3.connect(':memory:')
+        self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.sql_connection.cursor()
 
         LOGGER.info('Instantiating the needed SQL in memory tables.')
@@ -99,10 +100,10 @@ class Storage:
         self.x_validate_l2.to_sql('x_validate_l2', self.sql_connection, index=False, if_exists='replace')
 
         # now append target variables as the last column of each table
-        self.__append_to_table('x_train_l1', 'target', self.y_train_l1)
-        self.__append_to_table('x_train_l2', 'target', self.y_train_l2)
-        self.__append_to_table('x_validate_l1', 'target', self.y_validate_l1)
-        self.__append_to_table('x_validate_l2', 'target', self.y_validate_l2)
+        self.__append_to_table('x_train_l1', 'targets', self.y_train_l1)
+        self.__append_to_table('x_train_l2', 'targets', self.y_train_l2)
+        self.__append_to_table('x_validate_l1', 'targets', self.y_validate_l1)
+        self.__append_to_table('x_validate_l2', 'targets', self.y_validate_l2)
 
     def __append_to_table(self, table_name, column_name, target_values):
         existing_data = pd.read_sql_query(f'SELECT * FROM {table_name}', self.sql_connection)
@@ -115,6 +116,7 @@ class Storage:
         del self.x_validate_l1, self.x_validate_l2, self.y_validate_l1, self.y_validate_l2
 
     def perform_query(self, received):
+
         try:
             select_clause = received.get("select")
             from_clause = received.get("from")

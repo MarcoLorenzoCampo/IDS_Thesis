@@ -2,17 +2,17 @@ import json
 import logging
 import os
 import threading
-from typing import List
 
 import boto3
 import optuna
 import time
 
-from AnomalyDetectionProcess import Utils
+import pandas as pd
+
 from HypertunerStorage import Storage
 from Optimizer import Optimizer
-from KBProcess import LoggerConfig
-from AnomalyDetectionProcess.SQSWrapper import Connector
+from Shared import LoggerConfig, Utils
+from Shared.SQSWrapper import Connector
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
@@ -22,6 +22,7 @@ LOGGER = logging.getLogger(filename)
 class Hypertuner:
     FULL_CLOSE = False
     DEBUG = True
+    OPTIMIZATION_LOCK = False
 
     def __init__(self, ):
 
@@ -52,83 +53,89 @@ class Hypertuner:
         )
 
     def __objs_map(self, objectives: dict):
-        pass
 
-    def tune(self, to_opt: str, direction: str):
+        self.OPTIMIZATION_LOCK = True
 
         self.__optimizer_setup()
 
-        study_l1 = optuna.create_study(study_name=f'RandomForest optimization: {to_opt}', direction=direction)
-        study_l2 = optuna.create_study(study_name=f'SupportVectorMachine optimization: {to_opt}', direction=direction)
+        LOGGER.info("MAXIMIZE direction only, evaluating 1/FNR and 1/FPR for tuning.")
+        function_mapping = {
+            'accuracy': [self.optimizer.objective_accuracy_l1, self.optimizer.objective_accuracy_l2],
+            'precision': [self.optimizer.objective_precision_l1, self.optimizer.objective_precision_l2],
+            'fscore': [self.optimizer.objective_fscore_l1, self.optimizer.objective_fscore_l2],
+            'tpr': [self.optimizer.objective_tpr_l1, self.optimizer.objective_tpr_l2],
+            'tnr': [self.optimizer.objective_tnr_l1, self.optimizer.objective_tnr_l2],
+            'fnr': [self.optimizer.objective_inv_fpr_l1, self.optimizer.objective_inv_fpr_l2],
+            'fpr': [self.optimizer.objective_inv_fnr_l1, self.optimizer.objective_inv_fnr_l2],
+        }
 
-        if to_opt == 'accuracy':
-            LOGGER.info('Optimizing L1 for accuracy.')
-            study_l1.optimize(self.optimizer.objective_accuracy_l1)
-            study_l2.optimize(self.optimizer.objective_accuracy_l2)
+        # Obtain the functions to optimize and combine their outputs into a single objective
+        objs_l1 = objectives['layer1']
+        objs_l2 = objectives['layer2']
 
-        if to_opt == 'precision':
-            LOGGER.info('Optimizing L1 for precision.')
-            study_l1.optimize(self.optimizer.objective_precision_l1)
-            study_l2.optimize(self.optimizer.objective_precision_l2)
+        fun_calls1 = []
+        for obj in objs_l1:
+            fun_calls1.append(function_mapping[obj][0])
 
-        if to_opt == 'fscore':
-            LOGGER.info('Optimizing L1 for fscore.')
-            study_l1.optimize(self.optimizer.objective_fscore_l1)
-            study_l2.optimize(self.optimizer.objective_fscore_l2)
+        fun_calls2 = []
+        for obj in objs_l2:
+            fun_calls2.append(function_mapping[obj][1])
 
-        if to_opt == 'tpr':
-            LOGGER.info('Optimizing L1 for tpr.')
-            study_l1.optimize(self.optimizer.objective_tpr_l1)
-            study_l2.optimize(self.optimizer.objective_tpr_l2)
+        study_l1 = optuna.create_study(study_name=f'Layer1 optimization', direction="maximize")
+        study_l2 = optuna.create_study(study_name=f'Layer2 optimization', direction="maximize")
 
-        if to_opt == 'tnr':
-            LOGGER.info('Optimizing L1 for tnr.')
-            study_l1.optimize(self.optimizer.objective_tnr_l1)
-            study_l2.optimize(self.optimizer.objective_tnr_l2)
+        study_l1.optimize(lambda trial: self.optimizer.optimize_wrapper(fun_calls1, trial))
+        LOGGER.info(f"Found new optimal hyperparameters for layer 1: {study_l1.best_params}")
 
-        if to_opt == 'fpr':
-            LOGGER.info('Optimizing L1 for fpr.')
-            study_l1.optimize(self.optimizer.objective_fpr_l1)
-            study_l2.optimize(self.optimizer.objective_fpr_l2)
+        study_l2.optimize(lambda trial: self.optimizer.optimize_wrapper(fun_calls2, trial))
+        LOGGER.info(f"Found new optimal hyperparameters for layer 2: {study_l2.best_params}")
 
-        if to_opt == 'fnr':
-            LOGGER.info('Optimizing L1 for fnr.')
-            study_l1.optimize(self.optimizer.objective_fnr_l1)
-            study_l2.optimize(self.optimizer.objective_fnr_l2)
-
-        if to_opt == 'quarantine_ratio':
-            LOGGER.info('Optimizing L1 for tpr.')
-            study_l1.optimize(self.optimizer.objective_quarantine_rate_l1)
-            study_l2.optimize(self.optimizer.objective_quarantine_rate_l2)
-
-        # obtain the optimal classifiers from the studies
         self.new_opt_layer1 = self.optimizer.train_new_hps('RandomForest', study_l1.best_params)
         self.new_opt_layer2 = self.optimizer.train_new_hps('SVM', study_l2.best_params)
 
         self.optimizer.unset()
+        self.OPTIMIZATION_LOCK = False
 
         return self.new_opt_layer1, self.new_opt_layer2
 
     def __optimizer_setup(self):
 
-        partial = 'SELECT * FROM '
+        query = {
+            'select': "*"
+        }
 
         LOGGER.info('Obtaining the datasets from SQLite3 in memory database.')
         datasets = []
         for dataset in ['x_train_l1', 'x_train_l2', 'x_validate_l1', 'x_validate_l2']:
-            query = partial + dataset
-            datasets.append(self.storage.perform_query(query))
+            query['from'] = str(dataset)
+            result = self.storage.perform_query(query)
+            result_df = pd.DataFrame(result)
+            datasets.append(result_df)
 
-        self.optimizer.optimization_wrapper(
+        self.optimizer.dataset_setter(
             x_train_1=datasets[0],
             x_train_2=datasets[1],
             x_val_1=datasets[2],
             x_val_2=datasets[3],
             y_train_1=datasets[0]['targets'],
-            y_train_2=datasets[5]['targets'],
+            y_train_2=datasets[1]['targets'],
             y_val_1=datasets[2]['targets'],
             y_val_2=datasets[3]['targets'],
         )
+
+        if self.DEBUG:
+            print(
+                "x_train_1: ", datasets[0].shape,
+                "\nx_train_2: ", datasets[1].shape,
+                "\nx_validate_1: ", datasets[2].shape,
+                "\nx_validate_2: ", datasets[3].shape,
+                "\ny_train_1", datasets[0]['targets'].shape,
+                "\ny_train_2", datasets[1]['targets'].shape,
+                "\ny_val_1", datasets[2]['targets'].shape,
+                "\ny_val_2", datasets[3]['targets'].shape
+            )
+        pass
+
 
     def terminate(self):
         self.FULL_CLOSE = True
@@ -145,9 +152,12 @@ class Hypertuner:
                 raise KeyboardInterrupt
 
             if msg_body:
-                LOGGER.info(f'Parsing message: {json.dumps(msg_body, indent=2)}')
-                objectives = Utils.parse_objs(msg_body)
-                self.tune(objectives)
+                if not self.OPTIMIZATION_LOCK:
+                    LOGGER.info(f'Parsing message: {json.dumps(msg_body, indent=2)}')
+                    objectives = Utils.parse_objs(msg_body)
+                    self.__objs_map(objectives)
+                else:
+                    LOGGER.info('Process locked. Optimization in progress.')
 
             time.sleep(2)
 
@@ -160,11 +170,10 @@ class Hypertuner:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            LOGGER.info("Received keyboard interrupt. Preparing to terminate threads.")
             Utils.save_current_timestamp()
 
         finally:
-            LOGGER.info('Terminating DetectionSystem instance.')
+            LOGGER.info('Terminating Hypertuner instance.')
             raise KeyboardInterrupt
 
 

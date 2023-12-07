@@ -2,7 +2,7 @@ import logging
 import os
 import threading
 
-from KBProcess import LoggerConfig
+from Shared import LoggerConfig
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]

@@ -1,12 +1,13 @@
 import logging
 import os
+from typing import Callable, List
 
 import optuna
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score, accuracy_score
 from sklearn.svm import SVC
 
-from KBProcess import LoggerConfig
+from Shared import LoggerConfig
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
@@ -18,7 +19,7 @@ class Optimizer:
     def __init__(self, n_trials: int):
         self.n_trials = n_trials
 
-    def optimization_wrapper(self, x_train_1, x_train_2, y_train_1, y_train_2, x_val_1, y_val_1, x_val_2, y_val_2):
+    def dataset_setter(self, x_train_1, x_train_2, y_train_1, y_train_2, x_val_1, y_val_1, x_val_2, y_val_2):
         self.x_train_l1 = x_train_1
         self.x_train_l2 = x_train_2
         self.y_train_l1 = y_train_1
@@ -34,6 +35,14 @@ class Optimizer:
         del self.y_train_l1, self.y_train_l2
         del self.x_validate_l1, self.y_validate_l1
         del self.x_validate_l2, self.y_validate_l2
+
+    def optimize_wrapper(self, fun_calls: List[Callable], trial: optuna.Trial):
+
+        outputs = {}
+        for fun_call in fun_calls:
+            outputs[fun_call] = fun_call(trial)
+
+        LOGGER.info(f'Outputs: {outputs}')
 
     def objective_tpr_l1(self, trial: optuna.Trial) -> float:
         """
@@ -84,7 +93,7 @@ class Optimizer:
 
             return tpr
 
-    def objective_fpr_l1(self, trial: optuna.Trial) -> float:
+    def objective_inv_fpr_l1(self, trial: optuna.Trial) -> float:
         """
         This function defines the objective to maximize the true positive rate
         :param trial:
@@ -111,9 +120,12 @@ class Optimizer:
             tn = sum((self.y_validate_l1 == 0) & (predicted == 0))
             fpr = fp / (fp + tn) if (fp + tn) != 0 else 0.0
 
-            return fpr
+            try:
+                return 1/fpr
+            except ZeroDivisionError:
+                return 0.0
 
-    def objective_fpr_l2(self, trial: optuna.Trial) -> float:
+    def objective_inv_fpr_l2(self, trial: optuna.Trial) -> float:
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
@@ -131,7 +143,10 @@ class Optimizer:
             tn = sum((self.y_validate_l2 == 0) & (predicted == 0))
             fpr = fp / (fp + tn) if (fp + tn) != 0 else 0.0
 
-            return fpr
+            try:
+                return 1 / fpr
+            except ZeroDivisionError:
+                return 0.0
 
     def objective_tnr_l1(self, trial: optuna.Trial) -> float:
         """
@@ -156,8 +171,8 @@ class Optimizer:
             classifier = self.train_new_hps(classifier_name, parameters)
             predicted = classifier.predict(self.x_validate_l1)
 
-            tn = sum((self.y_validate_l2 == 0) & (predicted == 0))
-            fp = sum((self.y_validate_l2 == 0) & (predicted == 1))
+            tn = sum((self.y_validate_l1 == 0) & (predicted == 0))
+            fp = sum((self.y_validate_l1 == 0) & (predicted == 1))
             tnr = tn / (tn + fp) if (tn + fp) != 0 else 0.0
 
             return tnr
@@ -182,7 +197,7 @@ class Optimizer:
 
             return tnr
 
-    def objective_fnr_l1(self, trial: optuna.Trial) -> float:
+    def objective_inv_fnr_l1(self, trial: optuna.Trial) -> float:
         """
         This function defines the objective to maximize the true positive rate
         :param trial:
@@ -205,13 +220,16 @@ class Optimizer:
             classifier = self.train_new_hps(classifier_name, parameters)
             predicted = classifier.predict(self.x_validate_l1)
 
-            fn = sum((self.y_validate_l2 == 1) & (predicted == 0))
-            tp = sum((self.y_validate_l2 == 1) & (predicted == 1))
+            fn = sum((self.y_validate_l1 == 1) & (predicted == 0))
+            tp = sum((self.y_validate_l1 == 1) & (predicted == 1))
             fnr = fn / (fn + tp) if (fn + tp) != 0 else 0.0
 
-            return fnr
+            try:
+                return 1 / fnr
+            except ZeroDivisionError:
+                return 0.0
 
-    def objective_fnr_l2(self, trial: optuna.Trial) -> float:
+    def objective_inv_fnr_l2(self, trial: optuna.Trial) -> float:
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
@@ -229,7 +247,10 @@ class Optimizer:
             tp = sum((self.y_validate_l2 == 1) & (predicted == 1))
             fnr = fn / (fn + tp) if (fn + tp) != 0 else 0.0
 
-            return fnr
+            try:
+                return 1/fnr
+            except ZeroDivisionError:
+                return 0.0
 
     def objective_accuracy_l1(self, trial: optuna.Trial) -> float:
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
@@ -330,8 +351,8 @@ class Optimizer:
             predicted = classifier.predict(self.x_validate_l1)
 
             precision = precision_score(self.y_validate_l1, predicted)
-            tp = sum((self.y_validate_l2 == 1) & (predicted == 1))
-            fn = sum((self.y_validate_l2 == 1) & (predicted == 0))
+            tp = sum((self.y_validate_l1 == 1) & (predicted == 1))
+            fn = sum((self.y_validate_l1 == 1) & (predicted == 0))
             tpr = tp / (tp + fn) if (tp + fn) != 0 else 0.0
 
             fscore = 2 * precision * tpr / (precision + tpr)
@@ -381,8 +402,8 @@ class Optimizer:
             predicted = classifier.predict(self.x_validate_l1)
 
             precision = precision_score(self.y_validate_l1, predicted)
-            tp = sum((self.y_validate_l2 == 1) & (predicted == 1))
-            fn = sum((self.y_validate_l2 == 1) & (predicted == 0))
+            tp = sum((self.y_validate_l1 == 1) & (predicted == 1))
+            fn = sum((self.y_validate_l1 == 1) & (predicted == 0))
             tpr = tp / (tp + fn) if (tp + fn) != 0 else 0.0
 
             fscore = 2 * precision * tpr / (precision + tpr)
@@ -402,9 +423,9 @@ class Optimizer:
             }
 
             classifier = self.train_new_hps(classifier_name, parameters)
-            predicted = classifier.predict(self.x_validate_l1)
+            predicted = classifier.predict(self.x_validate_l2)
 
-            precision = precision_score(self.y_validate_l1, predicted)
+            precision = precision_score(self.y_validate_l2, predicted)
             tp = sum((self.y_validate_l2 == 1) & (predicted == 1))
             fn = sum((self.y_validate_l2 == 1) & (predicted == 0))
             tpr = tp / (tp + fn) if (tp + fn) != 0 else 0.0

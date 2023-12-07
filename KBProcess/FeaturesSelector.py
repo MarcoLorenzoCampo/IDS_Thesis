@@ -2,8 +2,7 @@ import logging
 
 import pandas as pd
 
-import LoggerConfig
-
+from Shared import LoggerConfig
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 LOGGER = logging.getLogger('FeaturesSelector')

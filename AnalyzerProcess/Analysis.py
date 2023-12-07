@@ -6,9 +6,8 @@ import time
 
 import boto3
 
-from AnomalyDetectionProcess import Utils
-from KBProcess import LoggerConfig
-from AnomalyDetectionProcess.SQSWrapper import Connector
+from Shared import LoggerConfig, Utils
+from Shared.SQSWrapper import Connector
 
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)

@@ -1,7 +1,7 @@
 import logging
 import pickle
 
-import LoggerConfig
+from Shared import LoggerConfig
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB

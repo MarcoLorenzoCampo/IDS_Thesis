@@ -4,9 +4,8 @@ import os
 import boto3
 import sqlite3
 
-from AnomalyDetectionProcess import Utils
-from KBProcess.S3Downloader import Loader
-from KBProcess import LoggerConfig
+from Shared.S3Downloader import Loader
+from Shared import LoggerConfig, Utils
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
@@ -21,7 +20,7 @@ class Storage:
 
     def __sqlite3_setup(self):
         LOGGER.info('Connecting to sqlite3 in memory database.')
-        self.sql_connection = sqlite3.connect(':memory:')
+        self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.sql_connection.cursor()
 
         LOGGER.info('Instantiating the needed SQL in memory tables.')
@@ -127,10 +126,10 @@ class Storage:
         self.x_validate_l2.to_sql('x_validate_l2', self.sql_connection, index=False, if_exists='replace')
 
         # now append target variables as the last column of each table
-        self.__append_to_table('x_train_l1', 'target', self.y_train_l1)
-        self.__append_to_table('x_train_l2', 'target', self.y_train_l2)
-        self.__append_to_table('x_validate_l1', 'target', self.y_validate_l1)
-        self.__append_to_table('x_validate_l2', 'target', self.y_validate_l2)
+        self.__append_to_table('x_train_l1', 'targets', self.y_train_l1)
+        self.__append_to_table('x_train_l2', 'targets', self.y_train_l2)
+        self.__append_to_table('x_validate_l1', 'targets', self.y_validate_l1)
+        self.__append_to_table('x_validate_l2', 'targets', self.y_validate_l2)
 
     def __append_to_table(self, table_name, column_name, target_values):
         # Fetch the existing table from the in-memory database

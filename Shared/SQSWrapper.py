@@ -4,7 +4,7 @@ import random
 import string
 from typing import List
 
-from KBProcess import LoggerConfig
+from Shared import LoggerConfig
 from botocore.exceptions import ClientError
 
 

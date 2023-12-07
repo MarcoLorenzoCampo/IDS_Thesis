@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from KBProcess import LoggerConfig
+from Shared import LoggerConfig
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
@@ -140,7 +140,7 @@ def process_command_line_args():
 
 def need_s3_update():
     try:
-        with open('last_online.txt', 'r') as last_online_file:
+        with open('../AnomalyDetectionProcess/last_online.txt', 'r') as last_online_file:
             last_online_str = last_online_file.read().strip()
 
         last_online = datetime.strptime(last_online_str, "%Y-%m-%d %H:%M:%S")
@@ -154,14 +154,18 @@ def need_s3_update():
 def save_current_timestamp():
     LOGGER.info('Saving last online timestamp.')
     current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open('last_online.txt', 'w') as file:
+    with open('../AnomalyDetectionProcess/last_online.txt', 'w') as file:
         file.write(current_timestamp)
 
-def parse_objs(data):
-    objectives = {}
-    for layer, objectives_list in data.items():
-        objectives[layer] = []
-        for objective in objectives_list:
-            objectives[layer].append(objective.strip())
+def parse_objs(json_string: str):
+    data = json.loads(json_string)
 
-    return objectives
+    layer1_list = data.get("layer1", [])
+    layer2_list = data.get("layer2", [])
+
+    LOGGER.info(f'Parsed objectives. Layer1: {layer1_list}, Layer2: {layer2_list}')
+
+    return {
+        "layer1": layer1_list,
+        "layer2": layer2_list
+    }

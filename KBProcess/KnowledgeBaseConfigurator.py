@@ -4,13 +4,10 @@ import os
 import time
 import boto3
 
-from AnomalyDetectionProcess import Utils
-from AnomalyDetectionProcess import SQSWrapper
 from KBStorage import Storage
 import FeaturesSelector
 
-import LoggerConfig
-
+from Shared import LoggerConfig, SQSWrapper, Utils
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]

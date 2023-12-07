@@ -19,11 +19,10 @@ from botocore.exceptions import ClientError
 
 from Runner import Runner
 from DetectionSysStorage import Storage
-from SQSWrapper import Connector
+from Shared.SQSWrapper import Connector
 from Metrics import Metrics
-import Utils
 
-from KBProcess import LoggerConfig
+from Shared import LoggerConfig, Utils
 
 logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
 filename = os.path.splitext(os.path.basename(__file__))[0]
