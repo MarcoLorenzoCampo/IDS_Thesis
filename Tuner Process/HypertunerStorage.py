@@ -1,19 +1,14 @@
-import json
-import logging
 import os
 import sqlite3
-from pprint import pprint
 
 import boto3
 import pandas as pd
 
-from Shared import LoggerConfig, Utils
+from Shared import Utils
 from Shared.S3Downloader import Loader
 
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Storage:
 

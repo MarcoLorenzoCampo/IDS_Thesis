@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import threading
 
@@ -11,23 +10,25 @@ import pandas as pd
 
 from HypertunerStorage import Storage
 from Optimizer import Optimizer
-from Shared import LoggerConfig, Utils
+from Shared import Utils
 from Shared.SQSWrapper import Connector
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Hypertuner:
+
     FULL_CLOSE = False
     DEBUG = True
+    N_TRIALS = 2
+
     OPTIMIZATION_LOCK = False
 
     def __init__(self, ):
 
         self.storage = Storage()
-        self.optimizer = Optimizer(n_trials=7)
+        self.optimizer = Optimizer()
         self.__sqs_setup()
 
         # new optimal models
@@ -81,22 +82,75 @@ class Hypertuner:
         for obj in objs_l2:
             fun_calls2.append(function_mapping[obj][1])
 
-        study_l1 = optuna.create_study(study_name=f'Layer1 optimization', direction="maximize")
-        study_l2 = optuna.create_study(study_name=f'Layer2 optimization', direction="maximize")
+        if self.DEBUG:
+            print(f'# funcs l1: {len(fun_calls1)}, # funcs l2: {len(fun_calls2)}')
 
-        study_l1.optimize(lambda trial: self.optimizer.optimize_wrapper(fun_calls1, trial))
-        LOGGER.info(f"Found new optimal hyperparameters for layer 1: {study_l1.best_params}")
-
-        study_l2.optimize(lambda trial: self.optimizer.optimize_wrapper(fun_calls2, trial))
-        LOGGER.info(f"Found new optimal hyperparameters for layer 2: {study_l2.best_params}")
-
-        self.new_opt_layer1 = self.optimizer.train_new_hps('RandomForest', study_l1.best_params)
-        self.new_opt_layer2 = self.optimizer.train_new_hps('SVM', study_l2.best_params)
+        new_opt_layer1 = self.__layer1_tuning(fun_calls1, objs_l1)
+        new_opt_layer2 = self.__layer2_tuning(fun_calls2, objs_l2)
 
         self.optimizer.unset()
         self.OPTIMIZATION_LOCK = False
 
-        return self.new_opt_layer1, self.new_opt_layer2
+        return new_opt_layer1, new_opt_layer2
+
+    def __layer1_tuning(self, fun_calls1: list, objectives):
+
+        study_l1 = optuna.create_study(
+            study_name=f'Layer1 optimization',
+            directions=['maximize' for _ in fun_calls1],
+        )
+
+        study_l1.optimize(lambda trial: self.optimizer.optimize_wrapper(fun_calls1, trial), n_trials=self.N_TRIALS)
+
+        best_hps = self.__get_hps_from_trials(study_l1, objectives)
+
+        LOGGER.info(f"Found new optimal hyperparameters for layer 1: {study_l1}")
+
+        self.optimizer.train_new_hps('RandomForest', best_hps)
+
+    def __layer2_tuning(self, fun_calls2: list, objectives):
+
+        study_l2 = optuna.create_study(
+            study_name=f'Layer2 optimization',
+            directions=['maximize' for _ in fun_calls2],
+        )
+
+        study_l2.optimize(lambda trial: self.optimizer.optimize_wrapper(fun_calls2, trial), n_trials=self.N_TRIALS)
+        LOGGER.info(f"Found new optimal hyperparameters for layer 2: {study_l2.best_params}")
+
+        best_hps = self.__get_hps_from_trials(study_l2, objectives)
+
+        return self.optimizer.train_new_hps('SVM', best_hps)
+
+    @staticmethod
+    def __get_pareto_front_hps(study: optuna.study.Study, objective_names):
+        # Get all trials and their objective values as a DataFrame
+        trials_df = study.trials_dataframe()
+
+        pareto_hps = {}
+
+        for objective_name in objective_names:
+            # Sort trials by the current objective in ascending order (for minimization)
+            sorted_trials = trials_df.sort_values(by=f"user_attrs_{objective_name}")
+
+            # Extract hyperparameters from the trial with the best objective value
+            best_trial_params = sorted_trials["params"].iloc[0]
+            pareto_hps[objective_name] = best_trial_params
+
+        return pareto_hps
+
+    def __get_hps_from_trials(self, study: optuna.study.Study, objective_names):
+
+        best_trials = study.best_trials
+
+        pareto_hps = self.__get_pareto_front_hps(study, objective_names)
+
+        if self.DEBUG:
+            for trial in best_trials:
+                print(f'Trial: {trial.number}, Params: {trial.params}')
+                print(f'Selected hyperparameters: {pareto_hps}')
+
+        return pareto_hps
 
     def __optimizer_setup(self):
 

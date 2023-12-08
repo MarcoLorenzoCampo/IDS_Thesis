@@ -5,11 +5,9 @@ import boto3
 import sqlite3
 
 from Shared.S3Downloader import Loader
-from Shared import LoggerConfig, Utils
+from Shared import Utils
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Storage:
 

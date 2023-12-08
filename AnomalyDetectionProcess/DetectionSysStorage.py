@@ -7,11 +7,9 @@ from typing import Tuple
 import boto3
 import pandas as pd
 
-from Shared import S3Downloader, LoggerConfig, Utils
+from Shared import S3Downloader, Utils
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Storage:

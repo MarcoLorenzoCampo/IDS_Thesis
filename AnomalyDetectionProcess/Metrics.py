@@ -2,11 +2,9 @@ import logging
 import os
 import threading
 
-from Shared import LoggerConfig
+from Shared import Utils
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Metrics:
     def __init__(self):

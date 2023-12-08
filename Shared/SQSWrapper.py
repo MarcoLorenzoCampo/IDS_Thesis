@@ -1,16 +1,13 @@
-import logging
 import os
 import random
 import string
 from typing import List
 
-from Shared import LoggerConfig
+from Shared import Utils
 from botocore.exceptions import ClientError
 
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Connector:

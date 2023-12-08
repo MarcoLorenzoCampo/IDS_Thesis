@@ -8,14 +8,18 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from Shared import LoggerConfig
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+def get_logger(name):
+    LOG_FORMAT = '%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d: %(message)s'
+    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
+    return logging.getLogger(name)
+
+
+LOGGER = get_logger(os.path.splitext(os.path.basename(__file__))[0])
+
 
 def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
-
     data = copy.deepcopy(incoming_data)
     to_scale = data[features]
 
@@ -29,6 +33,7 @@ def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
     pca_transformed = pca.transform(processed)
 
     return pca_transformed
+
 
 def parse_update_msg(message):
     LOGGER.info('Received messages: %s', message)
@@ -45,6 +50,7 @@ def parse_update_msg(message):
         return columns
     else:
         LOGGER.error("Message body does not match the required syntax. Discarding it.")
+
 
 def parse_metrics_msg(json_string):
     try:
@@ -138,6 +144,7 @@ def process_command_line_args():
 
     return metrics_snapshot_timer, polling_timer, classification_delay
 
+
 def need_s3_update():
     try:
         with open('../AnomalyDetectionProcess/last_online.txt', 'r') as last_online_file:
@@ -151,11 +158,13 @@ def need_s3_update():
     except FileNotFoundError:
         return False
 
+
 def save_current_timestamp():
     LOGGER.info('Saving last online timestamp.')
     current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open('../AnomalyDetectionProcess/last_online.txt', 'w') as file:
         file.write(current_timestamp)
+
 
 def parse_objs(json_string: str):
     data = json.loads(json_string)

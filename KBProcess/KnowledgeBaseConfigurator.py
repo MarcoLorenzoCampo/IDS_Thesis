@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import time
 import boto3
@@ -7,11 +6,9 @@ import boto3
 from KBStorage import Storage
 import FeaturesSelector
 
-from Shared import LoggerConfig, SQSWrapper, Utils
+from Shared import SQSWrapper, Utils
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class KnowledgeBase:

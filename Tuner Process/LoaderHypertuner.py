@@ -1,13 +1,12 @@
-import logging
 import os
 
 import joblib
 import numpy as np
 import pandas as pd
 
-LOGGER = logging.getLogger('HypertunerLoader')
-LOG_FORMAT = '%(asctime)-10s %(levelname)-10s %(name)-45s %(funcName)-35s %(lineno)-5d: %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+from Shared import Utils
+
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Loader:
     def __init__(self, s3_resource):

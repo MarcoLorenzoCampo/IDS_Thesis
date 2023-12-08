@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Callable, List
 
@@ -7,17 +6,17 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score, accuracy_score
 from sklearn.svm import SVC
 
-from Shared import LoggerConfig
+from Shared import Utils
 
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
-filename = os.path.splitext(os.path.basename(__file__))[0]
-LOGGER = logging.getLogger(filename)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Optimizer:
 
-    def __init__(self, n_trials: int):
-        self.n_trials = n_trials
+    DEBUG = True
+
+    def __init__(self):
+        pass
 
     def dataset_setter(self, x_train_1, x_train_2, y_train_1, y_train_2, x_val_1, y_val_1, x_val_2, y_val_2):
         self.x_train_l1 = x_train_1
@@ -40,9 +39,16 @@ class Optimizer:
 
         outputs = {}
         for fun_call in fun_calls:
-            outputs[fun_call] = fun_call(trial)
+            try:
+                output_value = fun_call(trial)
+                outputs[fun_call.__name__] = output_value
+
+                LOGGER.info(f'Output: {output_value}')
+            except Exception as e:
+                LOGGER.info(f"Error in function {fun_call.__name__}: {str(e)}")
 
         LOGGER.info(f'Outputs: {outputs}')
+        return [output for output in outputs.values()]
 
     def objective_tpr_l1(self, trial: optuna.Trial) -> float:
         """
@@ -50,6 +56,8 @@ class Optimizer:
         :param trial:
         :return: True positive rate
         """
+        LOGGER.info(f'Calling optimization function: Objective TPR for layer 1')
+
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
@@ -74,6 +82,8 @@ class Optimizer:
             return tpr
 
     def objective_tpr_l2(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective TPR for layer 2')
+
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
@@ -94,6 +104,7 @@ class Optimizer:
             return tpr
 
     def objective_inv_fpr_l1(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective FPR for layer 1')
         """
         This function defines the objective to maximize the true positive rate
         :param trial:
@@ -126,6 +137,8 @@ class Optimizer:
                 return 0.0
 
     def objective_inv_fpr_l2(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective FPR for layer 2')
+
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
@@ -154,6 +167,8 @@ class Optimizer:
         :param trial:
         :return: True positive rate
         """
+        LOGGER.info(f'Calling optimization function: Objective TNR for layer 1')
+
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
@@ -178,6 +193,8 @@ class Optimizer:
             return tnr
 
     def objective_tnr_l2(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective TNR for layer 2')
+
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
@@ -203,6 +220,8 @@ class Optimizer:
         :param trial:
         :return: True positive rate
         """
+        LOGGER.info(f'Calling optimization function: Objective FNR for layer 1')
+
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
@@ -230,6 +249,8 @@ class Optimizer:
                 return 0.0
 
     def objective_inv_fnr_l2(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective FNR for layer 2')
+
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
@@ -253,6 +274,8 @@ class Optimizer:
                 return 0.0
 
     def objective_accuracy_l1(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective ACCURACY for layer 1')
+
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
@@ -274,6 +297,8 @@ class Optimizer:
             return accuracy
 
     def objective_accuracy_l2(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective ACCURACY for layer 2')
+
         # providing a choice of classifiers to use in the 'choices' array
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
@@ -292,6 +317,8 @@ class Optimizer:
             return accuracy
 
     def objective_precision_l1(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective PRECISION for layer 1')
+
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
@@ -314,6 +341,8 @@ class Optimizer:
             return precision
 
     def objective_precision_l2(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective PRECISION for layer 2')
+
         # providing a choice of classifiers to use in the 'choices' array
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
@@ -333,6 +362,8 @@ class Optimizer:
             return precision
 
     def objective_fscore_l1(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective FSCORE for layer 1')
+
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
@@ -360,6 +391,8 @@ class Optimizer:
             return fscore
 
     def objective_fscore_l2(self, trial: optuna.Trial) -> float:
+        LOGGER.info(f'Calling optimization function: Objective FSCORE for layer 2')
+
         # providing a choice of classifiers to use in the 'choices' array
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':

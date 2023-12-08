@@ -1,14 +1,12 @@
-import logging
 import os
 
 import joblib
 import numpy as np
 import pandas as pd
 
-from Shared import LoggerConfig
+from Shared import Utils
 
-LOGGER = logging.getLogger('KBLoader')
-logging.basicConfig(level=logging.INFO, format=LoggerConfig.LOG_FORMAT)
+LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Loader:
