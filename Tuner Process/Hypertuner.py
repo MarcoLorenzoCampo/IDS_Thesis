@@ -15,6 +15,7 @@ from Shared.SQSWrapper import Connector
 
 
 LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+pd.set_option('display.width', 1000)
 
 
 class Hypertuner:
@@ -122,10 +123,12 @@ class Hypertuner:
 
         return self.optimizer.train_new_hps('SVM', best_hps)
 
-    @staticmethod
-    def __get_pareto_front_hps(study: optuna.study.Study, objective_names):
+    def __get_pareto_front_hps(self, study: optuna.study.Study, objective_names):
         # Get all trials and their objective values as a DataFrame
         trials_df = study.trials_dataframe()
+
+        if self.DEBUG:
+            print(trials_df.columns)
 
         pareto_hps = {}
 
