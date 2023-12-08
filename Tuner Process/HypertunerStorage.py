@@ -3,6 +3,7 @@ import sqlite3
 
 import boto3
 import pandas as pd
+from botocore.exceptions import ClientError
 
 from Shared import Utils
 from Shared.S3Downloader import Loader
@@ -132,3 +133,25 @@ class Storage:
 
         LOGGER.info('Query was executed correctly.')
         return result_df
+
+    def update_s3_models(self, NSL_l1_classifier, NSL_l2_classifier):
+        LOGGER.info('Updating models in the S3 bucket {}.'.format(self.bucket_name))
+
+        """Upload a file to an S3 bucket
+
+        :param file_name: File to upload
+        :param bucket: Bucket to upload to
+        :param object_name: S3 object name. If not specified then file_name is used
+        :return: True if file was uploaded, else False
+        """
+
+        for file in [NSL_l1_classifier, NSL_l2_classifier]:
+            try:
+                response = self.s3_resource.upload_file(file, self.bucket_name, str(file.__name__)+'.pkl')
+
+            except ClientError as e:
+                LOGGER.error(f'Error when uploading file: {e}')
+                return False
+
+            return True
+
