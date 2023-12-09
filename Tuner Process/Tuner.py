@@ -1,3 +1,4 @@
+import pickle
 from pprint import pprint
 
 import optuna
@@ -48,12 +49,14 @@ class Tuner:
             print(f'# funcs l1: {len(fun_calls1)}, # funcs l2: {len(fun_calls2)}')
 
         new_layer1 = self.__layer1_tuning(fun_calls1)
-
         new_layer2 = self.__layer2_tuning(fun_calls2)
 
-        self.optimizer.unset()
+        with open('AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl', 'wb') as f:
+            pickle.dump(new_layer1, f)
+        with open('AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl', 'wb') as f:
+            pickle.dump(new_layer2, f)
 
-        return new_layer1, new_layer2
+        self.optimizer.unset()
 
     def __layer1_tuning(self, fun_calls1: list):
 

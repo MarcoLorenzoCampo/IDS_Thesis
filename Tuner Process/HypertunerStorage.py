@@ -134,24 +134,28 @@ class Storage:
         LOGGER.info('Query was executed correctly.')
         return result_df
 
-    def update_s3_models(self, NSL_l1_classifier, NSL_l2_classifier):
-        LOGGER.info('Updating models in the S3 bucket {}.'.format(self.bucket_name))
+    def update_s3_models(self):
 
-        """Upload a file to an S3 bucket
+        LOGGER.info(f'Updating models in the S3 bucket {self.bucket_name}.')
 
-        :param file_name: File to upload
-        :param bucket: Bucket to upload to
-        :param object_name: S3 object name. If not specified then file_name is used
-        :return: True if file was uploaded, else False
-        """
+        classifier1_path = 'AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl'
+        classifier2_path = 'AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl'
 
-        for file in [NSL_l1_classifier, NSL_l2_classifier]:
-            try:
-                response = self.s3_resource.upload_file(file, self.bucket_name, str(file.__name__)+'.pkl')
+        try:
+            self.s3_resource.upload_file(
+                classifier1_path,
+                self.bucket_name,
+                self.bucket_name+'/Models/Tuned/NSL_l1_classifier.pkl'
+            )
 
-            except ClientError as e:
-                LOGGER.error(f'Error when uploading file: {e}')
-                return False
+            self.s3_resource.upload_file(
+                classifier2_path,
+                self.bucket_name,
+                self.bucket_name+'/Models/Tuned/NSL_l2_classifier.pkl'
+            )
 
-            return True
+        except ClientError as e:
+            LOGGER.error(f'Error when uploading file: {e}')
+            return False
 
+        return True

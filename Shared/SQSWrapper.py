@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import string
@@ -20,6 +21,7 @@ class Connector:
         """
         :param sqs_client: client instance to read messages from Amazon SQS.
         :param sqs_resource: resource to interact with Amazon SQS.
+
         :param queue_urls: queue urls to fetch messages from.
         :param queue_names: queue names to be created.
         """
@@ -69,7 +71,7 @@ class Connector:
         else:
             return queue
 
-    def send_message_to_queues(self, message_body, attributes=None):
+    def send_message_to_queues(self, message_body: dict, attributes=None):
         """
         Proxy method that sends a message to all the queues in the wrapper.
         :param message_body: String or dictionary that contains the body of the message.
@@ -93,9 +95,11 @@ class Connector:
             message_attributes = {}
 
         deduplication_id = self.__gen_random_id()
+        json_to_send = json.dumps(message_body)
+
         try:
             response = queue.send_message(
-                MessageBody=message_body,
+                MessageBody=json_to_send,
                 MessageGroupId=queue_name,
                 MessageAttributes=message_attributes,
                 MessageDeduplicationId=deduplication_id,
@@ -139,7 +143,6 @@ class Connector:
 
                     LOGGER.info(f"Received message: {message_body}")
 
-                    # Delete the received message from the queue
                     try:
                         self.sqs_client.delete_message(
                             QueueUrl=queue_url,

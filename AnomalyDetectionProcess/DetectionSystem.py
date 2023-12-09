@@ -7,7 +7,6 @@ sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
 
 import copy
 import json
-import logging
 import os
 import time
 from typing import Union
@@ -144,9 +143,7 @@ class DetectionSystem:
                 raise KeyboardInterrupt
 
             if msg_body:
-                LOGGER.info(f'Parsing message: {msg_body}')
                 parsed = Utils.parse_update_msg(msg_body)
-                LOGGER.info(f'Parsed message: {parsed}')
 
             time.sleep(self.polling_timer)
 
@@ -168,7 +165,7 @@ class DetectionSystem:
             with self.metrics.get_lock():
                 LOGGER.info('Snapshotting metrics..')
                 json_output = self.metrics.snapshot_metrics()
-                msg_body = json.dumps(json_output) if json_output is not None else "ERROR"
+                msg_body = json_output if json_output is not None else "ERROR"
 
             try:
                 self.connector.send_message_to_queues(msg_body)

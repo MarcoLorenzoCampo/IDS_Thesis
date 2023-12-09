@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import threading
@@ -197,14 +198,14 @@ class Metrics:
     def get_counts(self, tag):
         return self._count_1[tag] + self._count_2[tag]
 
-    def get_metrics(self, tag):
+    def get_metrics(self):
         return self._metrics_1, self._metrics_2, self._classification_metrics
 
     def snapshot_metrics(self):
         LOGGER.info('Building a json snapshot of current metrics')
 
-        return {
-            "metrics1": {
+        metrics_dict = {
+            "metrics_1": {
                 "accuracy": self._metrics_1['accuracy'],
                 "precision": self._metrics_1['precision'],
                 "fscore": self._metrics_1['fscore'],
@@ -229,3 +230,5 @@ class Metrics:
                 "quarantined_ratio": self._classification_metrics['quarantine_ratio']
             }
         }
+
+        return metrics_dict

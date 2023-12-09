@@ -9,11 +9,10 @@ import boto3
 from Shared import Utils
 from Shared.SQSWrapper import Connector
 
-
 LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
-class Analyzer:
 
+class Analyzer:
     FULL_CLOSE = False
 
     def __init__(self, polling_timer: float):
@@ -68,7 +67,6 @@ class Analyzer:
 
         return objectives
 
-
     def poll_queues(self):
         while True:
             LOGGER.info('Fetching messages..')
@@ -80,11 +78,11 @@ class Analyzer:
                 raise KeyboardInterrupt
 
             if msg_body:
-                LOGGER.info(f'Parsing message: {json.dumps(msg_body, indent=2)}')
+                LOGGER.info(f'Parsing message: {msg_body}')
                 metrics1, metrics2, classification_metrics = Utils.parse_metrics_msg(msg_body)
                 objectives = self.analyze(metrics1, metrics2, classification_metrics)
 
-                self.connector.send_message_to_queues(json.dumps(objectives))
+                self.connector.send_message_to_queues(objectives)
 
             time.sleep(self.polling_timer)
 
@@ -117,4 +115,3 @@ if __name__ == '__main__':
             LOGGER.info('Deleting queues..')
         else:
             LOGGER.info('Received keyboard interrupt. Preparing to terminate threads.')
-

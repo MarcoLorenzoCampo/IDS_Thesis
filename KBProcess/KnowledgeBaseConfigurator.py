@@ -24,9 +24,20 @@ class KnowledgeBase:
 
     def __sqs_setup(self):
         self.sqs_resource = boto3.resource('sqs')
+
+        queue_urls = [
+            'https://sqs.eu-west-3.amazonaws.com/818750160971/forward-objectives.fifo',
+        ]
+
+        queue_names = [
+            'tuner-update.fifo',
+            'detection-system-update.fifo'
+        ]
+
         self.connector = SQSWrapper.Connector(
             sqs_resource=self.sqs_resource,
-            queue_names=['tuner-update.fifo', 'detection-system-update.fifo']
+            queue_names=queue_names,
+            queue_urls=queue_urls
         )
 
     def terminate(self):
@@ -40,18 +51,14 @@ class KnowledgeBase:
         }
         if feature_selection_func(self.storage.perform_query(query_dict)):
 
-            update_msg = 'UPDATED FEATURES'
+            update_msg = {
+                'UPDATE': 'FEATURES'
+            }
+
             self.connector.send_message_to_queues(update_msg, None)
 
         else:
             LOGGER.error('Feature selection function failed. Retry.')
-
-    def __test(self):
-        test_dict = {
-            "UPDATE": ["FEATURES", "TRAIN", "VALIDATE"]
-        }
-        msg_body = json.dumps(test_dict)
-        self.connector.send_message_to_queues(msg_body, None)
 
     def run_tasks(self):
 
@@ -59,7 +66,8 @@ class KnowledgeBase:
             1: FeaturesSelector.perform_icfs,
             2: FeaturesSelector.perform_sfs,
             3: FeaturesSelector.perform_bfs,
-            4: FeaturesSelector.perform_fisher
+            4: FeaturesSelector.perform_fisher,
+            5: FeaturesSelector.analyze_datasets
         }
 
         LOGGER.info('Running background tasks..')

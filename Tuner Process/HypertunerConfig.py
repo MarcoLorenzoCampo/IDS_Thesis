@@ -33,21 +33,30 @@ class Hypertuner:
         self.new_opt_layer2 = None
 
     def __sqs_setup(self):
+        """
+        Set up AWS SQS client, SQS resource, and Connector for handling SQS queues.
+        This method initializes the SQS client and resource using the boto3 library.
+        It also defines the URLs of the queues to fetch messages from
+        and names of the queue names to be created (if not already present)
+        """
         self.sqs_client = boto3.client('sqs')
         self.sqs_resource = boto3.resource('sqs')
 
-        self.queue_urls = [
+        queue_urls = [
             'https://sqs.eu-west-3.amazonaws.com/818750160971/forward-objectives.fifo',
+            'https://sqs.eu-west-3.amazonaws.com/818750160971/tuner-update.fifo',
         ]
-        self.queue_names = [
-            'tuned-models.fifo'
+
+        queue_names = [
+            'tuned-models-kb.fifo',  # Send new models notification to knowledge base
+            'tuned-models-ds.fifo',  # Send new models notification to the detection system
         ]
 
         self.connector = Connector(
             sqs_client=self.sqs_client,
             sqs_resource=self.sqs_resource,
-            queue_urls=self.queue_urls,
-            queue_names=self.queue_names
+            queue_urls=queue_urls,
+            queue_names=queue_names
         )
 
     def terminate(self):
@@ -71,9 +80,14 @@ class Hypertuner:
 
                     self.OPTIMIZATION_LOCK = True
 
-                    new_layer1, new_layer2 = self.tuner.objs_map(objectives)
-                    self.storage.update_s3_models(new_layer1, new_layer2)
-                    self.connector.send_message_to_queues("UPDATED MODELS")
+                    self.tuner.objs_map(objectives)
+                    self.storage.update_s3_models()
+
+                    msg_body = {
+                        'UPDATE': 'MODELS'
+                    }
+
+                    self.connector.send_message_to_queues(msg_body)
 
                     self.OPTIMIZATION_LOCK = False
                 else:
@@ -98,7 +112,7 @@ class Hypertuner:
 
 
 if __name__ == '__main__':
-    hypertuner = Hypertuner(n_trials=7)
+    hypertuner = Hypertuner(n_trials=1)
 
     try:
         hypertuner.run_tasks()

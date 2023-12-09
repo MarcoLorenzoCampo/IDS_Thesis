@@ -5,6 +5,8 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta
+from pprint import pprint
+from typing import List
 
 import pandas as pd
 
@@ -38,30 +40,41 @@ def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
 def parse_update_msg(message):
     LOGGER.info('Received messages: %s', message)
 
-    pattern = re.compile(r'^UPDATE\s+([^,]+(?:,\s*[^,]+)*)\s*$', re.IGNORECASE)
+    input_string = json.loads(message)
 
-    # Example usage
-    input_string = message
-    match = pattern.match(input_string)
+    to_update = input_string["UPDATE"]
 
-    if match:
-        columns = match.group(1).split(', ')
-        LOGGER.info(f"Attributes to update: {columns}")
-        return columns
-    else:
-        LOGGER.error("Message body does not match the required syntax. Discarding it.")
+    if to_update is not None:
+        LOGGER.info(f'Objects to update from S3: {to_update}')
+        return to_update
+
+    LOGGER.error("Message body does not match the required syntax. Discarding it.")
+    return None
 
 
 def parse_metrics_msg(json_string):
     try:
-        parsed_data = json.loads(json_string)
-    except json.JSONDecodeError as e:
+        parsed_data = json.loads(json.loads(json_string))
+    except Exception as e:
         raise ValueError(f"Failed to parse JSON: {e}")
 
+    """
+    parsed_data = {
+        "metrics_1": {"accuracy": 0.8627450980392157, "precision": 0.8333333333333334, "fscore": 0.851063829787234,
+                      "tpr": 0.8695652173913043, "fpr": 0.14285714285714285, "tnr": 0.8888888888888888,
+                      "fnr": 0.1111111111111111},
+        "metrics_2": {"accuracy": 0.88, "precision": 0.5, "fscore": 0.4, "tpr": 0.3333333333333333,
+                      "fpr": 0.045454545454545456, "tnr": 0.9130434782608695, "fnr": 0.08695652173913043},
+        "classification_metrics": {"normal_ratio": 0.6578947368421053, "l1_anomaly_ratio": 0.3157894736842105,
+                                   "l2_anomaly_ratio": 0.02631578947368421, "quarantined_ratio": 0.02631578947368421}
+    }
+    """
+
     try:
-        metrics_1 = parsed_data["metrics1"]
+        metrics_1 = parsed_data["metrics_1"]
         metrics_2 = parsed_data["metrics_2"]
         classification_metrics = parsed_data["classification_metrics"]
+
     except KeyError as e:
         raise ValueError(f"Missing key in JSON: {e}")
 

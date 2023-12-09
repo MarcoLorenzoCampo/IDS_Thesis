@@ -27,5 +27,9 @@ def perform_sfs(x_train: pd.DataFrame):
 
     return 1
 
+def analyze_datasets(self):
+    LOGGER.info('Analyzing datasets.')
+    pass
+
 def __split_two_layers(x_train: pd.DataFrame):
     pass
