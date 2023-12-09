@@ -141,7 +141,7 @@ class Connector:
                     receipt_handle = message['ReceiptHandle']
                     message_body = message['Body']
 
-                    LOGGER.info(f"Received message: {message_body}")
+                    LOGGER.info(f"Received message from queue: {message_body}")
 
                     try:
                         self.sqs_client.delete_message(

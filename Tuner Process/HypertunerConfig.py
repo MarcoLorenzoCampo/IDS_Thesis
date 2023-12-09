@@ -69,6 +69,9 @@ class Hypertuner:
 
             try:
                 msg_body = self.connector.receive_messages()
+
+                # build a switch case to determine the procedure based on the message type
+
             except Exception as e:
                 LOGGER.error(f"Error in fetching messages from queue: {e}")
                 raise KeyboardInterrupt
@@ -80,9 +83,10 @@ class Hypertuner:
 
                     self.OPTIMIZATION_LOCK = True
 
-                    self.tuner.objs_map(objectives)
-                    self.storage.update_s3_models()
+                    #self.tuner.objs_map(objectives)
+                    #self.storage.update_s3_models()
 
+                    LOGGER.info('Models have been tuned and updated. Forwarding models update notification.')
                     msg_body = {
                         'UPDATE': 'MODELS'
                     }

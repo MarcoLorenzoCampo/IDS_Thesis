@@ -58,18 +58,6 @@ def parse_metrics_msg(json_string):
     except Exception as e:
         raise ValueError(f"Failed to parse JSON: {e}")
 
-    """
-    parsed_data = {
-        "metrics_1": {"accuracy": 0.8627450980392157, "precision": 0.8333333333333334, "fscore": 0.851063829787234,
-                      "tpr": 0.8695652173913043, "fpr": 0.14285714285714285, "tnr": 0.8888888888888888,
-                      "fnr": 0.1111111111111111},
-        "metrics_2": {"accuracy": 0.88, "precision": 0.5, "fscore": 0.4, "tpr": 0.3333333333333333,
-                      "fpr": 0.045454545454545456, "tnr": 0.9130434782608695, "fnr": 0.08695652173913043},
-        "classification_metrics": {"normal_ratio": 0.6578947368421053, "l1_anomaly_ratio": 0.3157894736842105,
-                                   "l2_anomaly_ratio": 0.02631578947368421, "quarantined_ratio": 0.02631578947368421}
-    }
-    """
-
     try:
         metrics_1 = parsed_data["metrics_1"]
         metrics_2 = parsed_data["metrics_2"]
