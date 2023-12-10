@@ -1,4 +1,7 @@
+import json
 import sys
+
+from Shared.MSG_ENUM import msg_type
 
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
@@ -6,7 +9,6 @@ sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
 # print(sys.path)
 
 import copy
-import json
 import os
 import time
 from typing import Union
@@ -134,7 +136,7 @@ class DetectionSystem:
 
     def poll_queues(self):
         while True:
-            LOGGER.info('Fetching messages..')
+            # LOGGER.info('Fetching messages..')
 
             try:
                 msg_body = self.connector.receive_messages()
@@ -143,7 +145,20 @@ class DetectionSystem:
                 raise KeyboardInterrupt
 
             if msg_body:
-                parsed = Utils.parse_update_msg(msg_body)
+
+                json_dict = json.loads(msg_body)
+
+                if json_dict['MSG_TYPE'] == str(msg_type.MODEL_UPDATE_MSG):
+                    LOGGER.info('Parsed an UPDATE MODELS message, updating from S3.')
+                    self.storage.loader.s3_models()
+
+                    self.storage.layer1, self.storage.layer2 = (
+                        self.storage.loader.load_models('NSL_l1_classifier.pkl', 'NSL_l2_classifier.pkl')
+                    )
+
+                    LOGGER.info('Replaced current models with models from S3.')
+                else:
+                    LOGGER.info(f'Received unexpected message of type {json_dict["MSG_TYPE"]}')
 
             time.sleep(self.polling_timer)
 
@@ -151,7 +166,7 @@ class DetectionSystem:
         while True:
             try:
                 with self.metrics.get_lock():
-                    LOGGER.info('Classifying data..')
+                    # LOGGER.info('Classifying data..')
                     sample, actual = self.runner.get_packet()
                     self.classify(sample, actual)
             except Exception as e:
@@ -163,7 +178,7 @@ class DetectionSystem:
     def snapshot_metrics(self):
         while True:
             with self.metrics.get_lock():
-                LOGGER.info('Snapshotting metrics..')
+                # LOGGER.info('Snapshotting metrics..')
                 json_output = self.metrics.snapshot_metrics()
                 msg_body = json_output if json_output is not None else "ERROR"
 

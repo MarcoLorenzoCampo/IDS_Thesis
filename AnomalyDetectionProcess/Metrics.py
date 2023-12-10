@@ -4,6 +4,7 @@ import os
 import threading
 
 from Shared import Utils
+from Shared.MSG_ENUM import msg_type
 
 LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
@@ -205,6 +206,7 @@ class Metrics:
         LOGGER.info('Building a json snapshot of current metrics')
 
         metrics_dict = {
+            "MSG_TYPE": str(msg_type.METRICS_SNAPSHOT_MSG),
             "metrics_1": {
                 "accuracy": self._metrics_1['accuracy'],
                 "precision": self._metrics_1['precision'],

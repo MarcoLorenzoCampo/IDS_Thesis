@@ -37,24 +37,39 @@ class Tuner:
         objs_l1 = objectives['layer1']
         objs_l2 = objectives['layer2']
 
+        # Tuning for the first objectives set
+
         fun_calls1 = []
         for obj in objs_l1:
             fun_calls1.append(function_mapping[obj][0])
+
+        if len(fun_calls1) > 0:
+            if self.DEBUG:
+                print(f'# funcs l1: {len(fun_calls1)}')
+
+            new_layer1 = self.__layer1_tuning(fun_calls1)
+
+            with open('AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl', 'wb') as f:
+                pickle.dump(new_layer1, f)
+        else:
+            LOGGER.info('No new objectives received for layer1.')
+
+        # Tuning for the second objectives set
 
         fun_calls2 = []
         for obj in objs_l2:
             fun_calls2.append(function_mapping[obj][1])
 
-        if self.DEBUG:
-            print(f'# funcs l1: {len(fun_calls1)}, # funcs l2: {len(fun_calls2)}')
+        if len(fun_calls1) > 0:
+            if self.DEBUG:
+                print(f'# funcs l2: {len(fun_calls2)}')
 
-        new_layer1 = self.__layer1_tuning(fun_calls1)
-        new_layer2 = self.__layer2_tuning(fun_calls2)
+            new_layer2 = self.__layer2_tuning(fun_calls2)
 
-        with open('AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl', 'wb') as f:
-            pickle.dump(new_layer1, f)
-        with open('AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl', 'wb') as f:
-            pickle.dump(new_layer2, f)
+            with open('AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl', 'wb') as f:
+                pickle.dump(new_layer2, f)
+        else:
+            LOGGER.info('No new objectives received for layer2.')
 
         self.optimizer.unset()
 

@@ -134,7 +134,7 @@ class Storage:
         LOGGER.info('Query was executed correctly.')
         return result_df
 
-    def update_s3_models(self):
+    def publish_s3_models(self):
 
         LOGGER.info(f'Updating models in the S3 bucket {self.bucket_name}.')
 

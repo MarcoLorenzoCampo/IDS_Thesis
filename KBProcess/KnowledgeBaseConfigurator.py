@@ -6,6 +6,7 @@ import boto3
 from KBStorage import Storage
 import FeaturesSelector
 
+from Shared.MSG_ENUM import msg_type
 from Shared import SQSWrapper, Utils
 
 LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
@@ -52,10 +53,10 @@ class KnowledgeBase:
         if feature_selection_func(self.storage.perform_query(query_dict)):
 
             update_msg = {
-                'UPDATE': 'FEATURES'
+                "MSG_TYPE": str(msg_type.MODEL_UPDATE_MSG)
             }
 
-            self.connector.send_message_to_queues(update_msg, None)
+            self.connector.send_message_to_queues(update_msg)
 
         else:
             LOGGER.error('Feature selection function failed. Retry.')
@@ -70,7 +71,7 @@ class KnowledgeBase:
             5: FeaturesSelector.analyze_datasets
         }
 
-        LOGGER.info('Running background tasks..')
+        LOGGER.info('Running tasks..')
         time.sleep(2)
 
         try:

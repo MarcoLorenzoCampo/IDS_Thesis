@@ -1,12 +1,8 @@
 import argparse
 import copy
-import json
 import logging
 import os
-import re
 from datetime import datetime, timedelta
-from pprint import pprint
-from typing import List
 
 import pandas as pd
 
@@ -37,26 +33,17 @@ def data_process(incoming_data, scaler, ohe, pca, features, cat_features):
     return pca_transformed
 
 
-def parse_update_msg(message):
-    LOGGER.info('Received messages: %s', message)
-
-    input_string = json.loads(message)
-
-    to_update = input_string["UPDATE"]
+def parse_update_msg(json_dict: dict):
+    to_update = json_dict["UPDATE"]
 
     if to_update is not None:
         LOGGER.info(f'Objects to update from S3: {to_update}')
         return to_update
 
-    LOGGER.error("Message body does not match the required syntax. Discarding it.")
     return None
 
 
-def parse_metrics_msg(json_string):
-    try:
-        parsed_data = json.loads(json.loads(json_string))
-    except Exception as e:
-        raise ValueError(f"Failed to parse JSON: {e}")
+def parse_metrics_msg(parsed_data: dict):
 
     try:
         metrics_1 = parsed_data["metrics_1"]
@@ -167,11 +154,10 @@ def save_current_timestamp():
         file.write(current_timestamp)
 
 
-def parse_objs(json_string: str):
-    data = json.loads(json_string)
+def parse_objs(data: dict):
 
-    layer1_list = data.get("layer1", [])
-    layer2_list = data.get("layer2", [])
+    layer1_list = data.get("objs_layer1", [])
+    layer2_list = data.get("objs_layer2", [])
 
     LOGGER.info(f'Parsed objectives. Layer1: {layer1_list}, Layer2: {layer2_list}')
 

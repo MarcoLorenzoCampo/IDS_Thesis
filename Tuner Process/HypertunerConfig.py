@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import threading
@@ -7,6 +8,7 @@ import time
 
 import pandas as pd
 
+from Shared.MSG_ENUM import msg_type
 from Tuner import Tuner
 from HypertunerStorage import Storage
 from Shared import Utils
@@ -70,32 +72,41 @@ class Hypertuner:
             try:
                 msg_body = self.connector.receive_messages()
 
-                # build a switch case to determine the procedure based on the message type
-
             except Exception as e:
                 LOGGER.error(f"Error in fetching messages from queue: {e}")
                 raise KeyboardInterrupt
 
             if msg_body:
-                if not self.OPTIMIZATION_LOCK:
-                    LOGGER.info(f'Parsing message: {json.dumps(msg_body, indent=2)}')
-                    objectives = Utils.parse_objs(msg_body)
 
-                    self.OPTIMIZATION_LOCK = True
+                json_dict = json.loads(msg_body)
 
-                    #self.tuner.objs_map(objectives)
-                    #self.storage.update_s3_models()
+                if json_dict['MSG_TYPE'] == str(msg_type.MODEL_UPDATE_MSG):
+                    LOGGER.info(f'Received update notification: {json_dict}')
+                    self.storage.loader.s3_models()
 
-                    LOGGER.info('Models have been tuned and updated. Forwarding models update notification.')
-                    msg_body = {
-                        'UPDATE': 'MODELS'
-                    }
+                if json_dict['MSG_TYPE'] == str(msg_type.OBJECTIVES_MSG):
+                    LOGGER.info(f'Received objectives notification: {json_dict}')
 
-                    self.connector.send_message_to_queues(msg_body)
+                    if not self.OPTIMIZATION_LOCK:
+                        LOGGER.info(f'Parsing message: {json_dict}')
+                        objectives = Utils.parse_objs(json_dict)
 
-                    self.OPTIMIZATION_LOCK = False
-                else:
-                    LOGGER.info('Process locked. Optimization in progress.')
+                        self.OPTIMIZATION_LOCK = True
+
+                        self.tuner.objs_map(objectives)
+                        self.storage.publish_s3_models()
+
+                        LOGGER.info('Models have been tuned and updated. Forwarding models update notification.')
+
+                        msg_body = {
+                            "MSG_TYPE": str(msg_type.MODEL_UPDATE_MSG)
+                        }
+
+                        self.connector.send_message_to_queues(msg_body)
+
+                        self.OPTIMIZATION_LOCK = False
+                    else:
+                        LOGGER.info('Process locked. Optimization in progress.')
 
             time.sleep(2)
 

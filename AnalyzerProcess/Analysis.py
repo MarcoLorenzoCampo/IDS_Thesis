@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import threading
 import time
@@ -8,6 +7,8 @@ import boto3
 
 from Shared import Utils
 from Shared.SQSWrapper import Connector
+from Shared.MSG_ENUM import msg_type
+
 
 LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
@@ -50,20 +51,23 @@ class Analyzer:
         self.connector.close()
 
     def analyze(self, metrics1: dict, metrics2: dict, classification_metrics: dict):
+
         objectives = {
-            "layer1": [],
-            "layer2": []
+            "MSG_TYPE": str(msg_type.OBJECTIVES_MSG),
+            "objs_layer1": [],
+            "objs_layer2": []
         }
+
         for metric, value in metrics1.items():
             if metrics1[metric] < self._metrics_thresholds_1[metric]:
-                objectives['layer1'].append(metric)
+                objectives['objs_layer1'].append(metric)
 
         for metric, value in metrics2.items():
             if metrics2[metric] < self._metrics_thresholds_2[metric]:
-                objectives['layer2'].append(metric)
+                objectives['objs_layer2'].append(metric)
 
-        LOGGER.info(f'Identified {len(objectives["layer1"])} objective(s) for layer1: [{objectives["layer1"]}]')
-        LOGGER.info(f'Identified {len(objectives["layer2"])} objective(s) for layer2: [{objectives["layer2"]}]')
+        LOGGER.info(f'Identified {len(objectives["objs_layer1"])} objective(s) for layer1: [{objectives["objs_layer1"]}]')
+        LOGGER.info(f'Identified {len(objectives["objs_layer2"])} objective(s) for layer2: [{objectives["objs_layer2"]}]')
 
         return objectives
 
@@ -79,10 +83,15 @@ class Analyzer:
 
             if msg_body:
                 LOGGER.info(f'Parsing message: {msg_body}')
-                metrics1, metrics2, classification_metrics = Utils.parse_metrics_msg(msg_body)
-                objectives = self.analyze(metrics1, metrics2, classification_metrics)
+                json_dict = json.loads(msg_body)
 
-                self.connector.send_message_to_queues(objectives)
+                if json_dict['MSG_TYPE'] == str(msg_type.METRICS_SNAPSHOT_MSG):
+                    metrics1, metrics2, classification_metrics = Utils.parse_metrics_msg(json_dict)
+                    objectives = self.analyze(metrics1, metrics2, classification_metrics)
+
+                    self.connector.send_message_to_queues(objectives)
+                else:
+                    LOGGER.info(f'Received message of type {json_dict["MSG_TYPE"]}')
 
             time.sleep(self.polling_timer)
 
