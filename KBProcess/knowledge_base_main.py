@@ -21,6 +21,7 @@ class KnowledgeBase:
 
         LOGGER.info('Creating an instance of KnowledgeBase.')
         self.storage = Storage()
+        self.features_selector = features_selector.DataManager()
 
         self.__sqs_setup()
 
@@ -79,7 +80,8 @@ class KnowledgeBase:
         if feature_selection_func(self.storage.perform_query(query_dict)):
 
             update_msg = {
-                "MSG_TYPE": str(msg_type.MODEL_UPDATE_MSG)
+                "MSG_TYPE": str(msg_type.MULTIPLE_UPDATE_MSG),
+                "UPDATE": ['FEATURES', 'TRAIN', 'VALIDATE']
             }
 
             self.connector.send_message_to_queues(update_msg)
@@ -90,11 +92,11 @@ class KnowledgeBase:
     def input_reading(self):
 
         action_mapping = {
-            1: features_selector.perform_icfs,
-            2: features_selector.perform_sfs,
-            3: features_selector.perform_bfs,
-            4: features_selector.perform_fisher,
-            5: features_selector.analyze_datasets
+            1: self.features_selector.perform_icfs,
+            2: self.features_selector.perform_sfs,
+            3: self.features_selector.perform_bfs,
+            4: self.features_selector.perform_fisher,
+            5: self.features_selector.analyze_datasets
         }
 
         while True:

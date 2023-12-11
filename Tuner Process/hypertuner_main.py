@@ -1,12 +1,9 @@
-import copy
 import json
 import os
 import threading
 
 import boto3
 import time
-
-import pandas as pd
 
 from Shared.msg_enum import msg_type
 from tuner import Tuner
@@ -15,7 +12,6 @@ from Shared import utils
 from Shared.sqs_wrapper import Connector
 
 LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
-pd.set_option('display.width', 1000)
 
 
 class Hypertuner:
