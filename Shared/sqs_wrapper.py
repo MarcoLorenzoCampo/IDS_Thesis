@@ -4,11 +4,11 @@ import random
 import string
 from typing import List
 
-from Shared import Utils
+from Shared import utils
 from botocore.exceptions import ClientError
 
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Connector:

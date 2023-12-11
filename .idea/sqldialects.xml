@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
-    <file url="file://$PROJECT_DIR$/AnomalyDetectionProcess/DetectionSysStorage.py" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/KBProcess/KBStorage.py" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/KBProcess/KnowledgeBaseConfigurator.py" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/Shared/Utils.py" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/Tuner Process/HypertunerConfig.py" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/Tuner Process/HypertunerStorage.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/AnomalyDetectionProcess/storage.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/KBProcess/knowledge_base_main.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/KBProcess/storage.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/Shared/utils.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/Tuner Process/hypertuner_main.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/Tuner Process/storage.py" dialect="GenericSQL" />
   </component>
 </project>

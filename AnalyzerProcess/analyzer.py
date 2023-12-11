@@ -5,12 +5,12 @@ import time
 
 import boto3
 
-from Shared import Utils
-from Shared.SQSWrapper import Connector
-from Shared.MSG_ENUM import msg_type
+from Shared import utils
+from Shared.sqs_wrapper import Connector
+from Shared.msg_enum import msg_type
 
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Analyzer:
@@ -86,7 +86,7 @@ class Analyzer:
                 json_dict = json.loads(msg_body)
 
                 if json_dict['MSG_TYPE'] == str(msg_type.METRICS_SNAPSHOT_MSG):
-                    metrics1, metrics2, classification_metrics = Utils.parse_metrics_msg(json_dict)
+                    metrics1, metrics2, classification_metrics = utils.parse_metrics_msg(json_dict)
                     objectives = self.analyze(metrics1, metrics2, classification_metrics)
 
                     self.connector.send_message_to_queues(objectives)
@@ -105,7 +105,7 @@ class Analyzer:
                 time.sleep(1)
         except KeyboardInterrupt:
             LOGGER.info("Received keyboard interrupt. Preparing to terminate threads.")
-            Utils.save_current_timestamp()
+            utils.save_current_timestamp()
 
         finally:
             LOGGER.info('Terminating DetectionSystem instance.')
@@ -113,7 +113,7 @@ class Analyzer:
 
 
 if __name__ == '__main__':
-    arg1, arg2, arg3 = Utils.process_command_line_args()
+    arg1, arg2, arg3 = utils.process_command_line_args()
     analyzer = Analyzer(polling_timer=arg2)
 
     try:

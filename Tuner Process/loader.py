@@ -4,9 +4,9 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from Shared import Utils
+from Shared import utils
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Loader:
     def __init__(self, s3_resource):

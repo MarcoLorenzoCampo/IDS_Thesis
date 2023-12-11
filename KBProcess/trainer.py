@@ -1,14 +1,13 @@
-import logging
 import os
 import pickle
 
-from Shared import Utils
+from Shared import utils
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 def train_models(self, model_name1: str, model_name2: str):
     # we reach this branch is there are no models to load or some specific model is required

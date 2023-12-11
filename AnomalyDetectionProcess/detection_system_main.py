@@ -1,7 +1,7 @@
 import json
 import sys
 
-from Shared.MSG_ENUM import msg_type
+from Shared.msg_enum import msg_type
 
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
@@ -18,14 +18,14 @@ import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
 
-from Runner import Runner
-from DetectionSysStorage import Storage
-from Shared.SQSWrapper import Connector
-from Metrics import Metrics
+from artificial_traffic import Runner
+from storage import Storage
+from Shared.sqs_wrapper import Connector
+from metrics import Metrics
 
-from Shared import Utils
+from Shared import utils
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class DetectionSystem:
@@ -91,12 +91,12 @@ class DetectionSystem:
                 self.__finalize_clf(incoming_data, [0, 'QUARANTINE'], actual)
 
     def __clf_layer1(self, unprocessed_sample):
-        sample = Utils.data_process(unprocessed_sample, self.storage.scaler1, self.storage.ohe1,
+        sample = utils.data_process(unprocessed_sample, self.storage.scaler1, self.storage.ohe1,
                                     self.storage.pca1, self.storage.features_l1, self.storage.cat_features)
         return self.storage.layer1.predict(sample)
 
     def __clf_layer2(self, unprocessed_sample):
-        sample = Utils.data_process(unprocessed_sample, self.storage.scaler2, self.storage.ohe2,
+        sample = utils.data_process(unprocessed_sample, self.storage.scaler2, self.storage.ohe2,
                                     self.storage.pca2, self.storage.features_l2, self.storage.cat_features)
         return self.storage.layer2.predict_proba(sample)
 
@@ -204,14 +204,14 @@ class DetectionSystem:
                 time.sleep(1)
         except KeyboardInterrupt:
             LOGGER.info("Received keyboard interrupt. Preparing to terminate threads.")
-            Utils.save_current_timestamp()
+            utils.save_current_timestamp()
         finally:
             LOGGER.info('Terminating DetectionSystem instance.')
             raise KeyboardInterrupt
 
 
 if __name__ == '__main__':
-    arg1, arg2, arg3 = Utils.process_command_line_args()
+    arg1, arg2, arg3 = utils.process_command_line_args()
     ds = DetectionSystem(arg1, arg2, arg3)
 
     try:

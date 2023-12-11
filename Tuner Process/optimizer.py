@@ -6,9 +6,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score, accuracy_score
 from sklearn.svm import SVC
 
-from Shared import Utils
+from Shared import utils
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Optimizer:

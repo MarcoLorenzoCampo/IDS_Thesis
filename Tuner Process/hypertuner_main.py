@@ -8,13 +8,13 @@ import time
 
 import pandas as pd
 
-from Shared.MSG_ENUM import msg_type
-from Tuner import Tuner
-from HypertunerStorage import Storage
-from Shared import Utils
-from Shared.SQSWrapper import Connector
+from Shared.msg_enum import msg_type
+from tuner import Tuner
+from storage import Storage
+from Shared import utils
+from Shared.sqs_wrapper import Connector
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 pd.set_option('display.width', 1000)
 
 
@@ -89,7 +89,7 @@ class Hypertuner:
 
                     if not self.OPTIMIZATION_LOCK:
                         LOGGER.info(f'Parsing message: {json_dict}')
-                        objectives = Utils.parse_objs(json_dict)
+                        objectives = utils.parse_objs(json_dict)
 
                         self.OPTIMIZATION_LOCK = True
 
@@ -119,7 +119,7 @@ class Hypertuner:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            Utils.save_current_timestamp()
+            utils.save_current_timestamp()
 
         finally:
             LOGGER.info('Terminating Hypertuner instance.')

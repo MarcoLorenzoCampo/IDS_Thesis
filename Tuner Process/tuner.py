@@ -4,10 +4,10 @@ from pprint import pprint
 import optuna
 import pandas as pd
 
-from HypertunerStorage import Storage
-from Shared.Utils import LOGGER
+from storage import Storage
+from Shared.utils import LOGGER
 
-from Optimizer import Optimizer
+from optimizer import Optimizer
 
 
 class Tuner:

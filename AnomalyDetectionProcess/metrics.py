@@ -3,10 +3,10 @@ import logging
 import os
 import threading
 
-from Shared import Utils
-from Shared.MSG_ENUM import msg_type
+from Shared import utils
+from Shared.msg_enum import msg_type
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Metrics:
     def __init__(self):

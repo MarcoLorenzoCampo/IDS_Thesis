@@ -1,13 +1,12 @@
-import logging
 import pandas as pd
 import os
 import boto3
 import sqlite3
 
-from Shared.S3Downloader import Loader
-from Shared import Utils
+from Shared.s3_wrapper import Loader
+from Shared import utils
 
-LOGGER = Utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
+LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Storage:
 
@@ -34,7 +33,7 @@ class Storage:
         self.s3_resource = boto3.client('s3')
         self.loader = Loader(s3_resource=self.s3_resource, bucket_name=self.bucket_name)
 
-        if self.__s3_files_ok() and not Utils.need_s3_update():
+        if self.__s3_files_ok() and not utils.need_s3_update():
             LOGGER.info('S3 is already setup and loaded.')
             return
 
