@@ -6,7 +6,7 @@ from Shared.msg_enum import msg_type
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
 sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
-# print(sys.path)
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
 
 import copy
 import os
@@ -18,7 +18,7 @@ import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
 
-from artificial_traffic import Runner
+from Other.artificial_traffic import Runner
 from storage import Storage
 from Shared.sqs_wrapper import Connector
 from metrics import Metrics
@@ -56,6 +56,7 @@ class DetectionSystem:
         self.queue_urls = [
             'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo',
         ]
+
         self.queue_names = [
             'forward-metrics.fifo',
         ]
@@ -155,8 +156,22 @@ class DetectionSystem:
                     self.storage.layer1, self.storage.layer2 = (
                         self.storage.loader.load_models('NSL_l1_classifier.pkl', 'NSL_l2_classifier.pkl')
                     )
-
                     LOGGER.info('Replaced current models with models from S3.')
+
+                elif json_dict['MSG_TYPE'] == str(msg_type.MULTIPLE_UPDATE_MSG):
+                    to_update = json_dict['UPDATE']
+
+                    LOGGER.info(f'Received multiple update notification: {to_update}')
+
+                    update_calls = {
+                        'FEATURES': self.storage.loader.s3_features,
+                        'TRAIN': self.storage.loader.s3_train,
+                        'VALIDATE': self.storage.loader.s3_validate,
+                    }
+
+                    for update in to_update:
+                        update_calls[update]()
+
                 else:
                     LOGGER.info(f'Received unexpected message of type {json_dict["MSG_TYPE"]}')
 

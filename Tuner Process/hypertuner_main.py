@@ -84,7 +84,21 @@ class Hypertuner:
                     LOGGER.info(f'Received update notification: {json_dict}')
                     self.storage.loader.s3_models()
 
-                if json_dict['MSG_TYPE'] == str(msg_type.OBJECTIVES_MSG):
+                elif json_dict['MSG_TYPE'] == str(msg_type.MULTIPLE_UPDATE_MSG):
+                    to_update = json_dict['UPDATE']
+
+                    LOGGER.info(f'Received multiple update notification: {to_update}')
+
+                    update_calls = {
+                        'FEATURES': self.storage.loader.s3_features,
+                        'TRAIN': self.storage.loader.s3_train,
+                        'VALIDATE': self.storage.loader.s3_validate,
+                    }
+
+                    for update in to_update:
+                        update_calls[update]()
+
+                elif json_dict['MSG_TYPE'] == str(msg_type.OBJECTIVES_MSG):
                     LOGGER.info(f'Received objectives notification: {json_dict}')
 
                     if not self.OPTIMIZATION_LOCK:
@@ -94,6 +108,7 @@ class Hypertuner:
                         self.OPTIMIZATION_LOCK = True
 
                         self.tuner.objs_map(objectives)
+
                         self.storage.publish_s3_models()
 
                         LOGGER.info('Models have been tuned and updated. Forwarding models update notification.')
