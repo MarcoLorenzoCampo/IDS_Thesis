@@ -19,24 +19,24 @@ class DataManager:
         return 1
 
     def perform_fisher(x_train: pd.DataFrame):
-        LOGGER.info('Performing fisher score.')
+        LOGGER.debug('Performing fisher score.')
 
 
 
         return 1
 
     def perform_bfs(x_train: pd.DataFrame):
-        LOGGER.info('Performing BFS.')
+        LOGGER.debug('Performing BFS.')
 
         return 1
 
     def perform_sfs(x_train: pd.DataFrame):
-        LOGGER.info('Performing SFS.')
+        LOGGER.debug('Performing SFS.')
 
         return 1
 
     def analyze_datasets(self, x_train: pd.DataFrame):
-        LOGGER.info('Analyzing datasets.')
+        LOGGER.debug('Analyzing datasets.')
 
         old_dataset_properties = json.loads("dataset_properties")
 
@@ -49,7 +49,7 @@ class DataManager:
         if (old_dataset_properties["features_num"] != new_dataset_properties["features_num"] or
                 old_dataset_properties["features"] != new_dataset_properties["features"] or
                 old_dataset_properties["train_samples"] != new_dataset_properties["train_samples"]):
-            LOGGER.info(f'New dataset properties identified.')
+            LOGGER.debug(f'New dataset properties identified.')
             return True
 
         return False

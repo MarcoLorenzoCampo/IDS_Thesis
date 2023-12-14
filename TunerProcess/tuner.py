@@ -24,7 +24,7 @@ class Tuner:
 
         self.__optimizer_setup()
 
-        LOGGER.info("MAXIMIZE direction only, evaluating 1/FNR and 1/FPR for tuning.")
+        LOGGER.debug("MAXIMIZE direction only, evaluating 1/FNR and 1/FPR for tuning.")
         function_mapping = {
             'accuracy': [self.optimizer.objective_accuracy_l1, self.optimizer.objective_accuracy_l2],
             'precision': [self.optimizer.objective_precision_l1, self.optimizer.objective_precision_l2],
@@ -53,12 +53,12 @@ class Tuner:
             new_layer1 = self.__layer1_tuning(fun_calls1)
 
             taken = time.time() - start
-            print(f"Optimization of layer1 took: {taken}")
+            LOGGER.info(f"Optimization of layer1 took: {taken}")
 
             with open('AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer1, f)
         else:
-            LOGGER.info('No new objectives received for layer1.')
+            LOGGER.warning('No new objectives received for layer1.')
 
         # Tuning for the second objectives set
         fun_calls2 = []
@@ -74,12 +74,12 @@ class Tuner:
             new_layer2 = self.__layer2_tuning(fun_calls2)
 
             taken = time.time() - start
-            print(f"Optimization of layer2 took: {taken}")
+            LOGGER.info(f"Optimization of layer2 took: {taken}")
 
             with open('AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer2, f)
         else:
-            LOGGER.info('No new objectives received for layer2.')
+            LOGGER.warning('No new objectives received for layer2.')
 
         self.optimizer.unset()
 
@@ -98,7 +98,7 @@ class Tuner:
 
         best_hps = self.__get_hps_from_trials(study_l1)
 
-        LOGGER.info(f"Found new optimal hyperparameters for layer 1: {best_hps}")
+        LOGGER.debug(f"Found new optimal hyperparameters for layer 1: {best_hps}")
 
         return self.optimizer.train_new_hps('RandomForest', best_hps)
 
@@ -117,7 +117,7 @@ class Tuner:
 
         best_hps = self.__get_hps_from_trials(study_l2)
 
-        LOGGER.info(f"Found new optimal hyperparameters for layer 2: {best_hps}")
+        LOGGER.debug(f"Found new optimal hyperparameters for layer 2: {best_hps}")
 
         return self.optimizer.train_new_hps('SVM', best_hps)
 
@@ -146,7 +146,7 @@ class Tuner:
             'select': "*"
         }
 
-        LOGGER.info('Obtaining the datasets from SQLite3 in memory database.')
+        LOGGER.debug('Obtaining the datasets from SQLite3 in memory database.')
         datasets = []
         for dataset in ['x_train_l1', 'x_train_l2', 'x_validate_l1', 'x_validate_l2']:
             query['from'] = str(dataset)

@@ -35,13 +35,13 @@ class Storage:
         self.loader = s3_wrapper.Loader(bucket_name=self.bucket_name, s3_resource=self.s3_resource)
 
         if self.__s3_ok() and not utils.need_s3_update():
-            LOGGER.info('S3 is already setup and loaded.')
+            LOGGER.debug('S3 is already setup and loaded.')
             return
 
         self.__s3_load()
 
     def __s3_load(self):
-        LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
+        LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
 
         self.loader.s3_min_features()
         self.loader.s3_one_hot_encoders()
@@ -50,7 +50,7 @@ class Storage:
         self.loader.s3_models()
         self.loader.s3_original_test_set()
 
-        LOGGER.info('Loading from S3 bucket complete.')
+        LOGGER.debug('Loading from S3 bucket complete.')
 
     def __s3_ok(self):
         l = self.loader
@@ -64,24 +64,24 @@ class Storage:
         )
 
     def __load_data_instances(self):
-        LOGGER.info('Loading test set.')
+        LOGGER.debug('Loading test set.')
         self.x_test, self.y_test = s3_wrapper.Loader.load_test_set()
 
-        LOGGER.info('Loading one hot encoders.')
+        LOGGER.debug('Loading one hot encoders.')
         self.ohe1, self.ohe2 = s3_wrapper.Loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
 
-        LOGGER.info('Loading scalers.')
+        LOGGER.debug('Loading scalers.')
         self.scaler1, self.scaler2 = s3_wrapper.Loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
 
-        LOGGER.info('Loading pca transformers.')
+        LOGGER.debug('Loading pca transformers.')
         self.pca1, self.pca2 = s3_wrapper.Loader.load_pca_transformers('layer1_pca_transformer.pkl',
                                                                          'layer2_pca_transformer.pkl')
 
-        LOGGER.info('Loading models.')
+        LOGGER.debug('Loading models.')
         self.layer1, self.layer2 = s3_wrapper.Loader.load_models('NSL_l1_classifier.pkl',
                                                                    'NSL_l2_classifier.pkl')
 
-        LOGGER.info('Loading minimal features.')
+        LOGGER.debug('Loading minimal features.')
         self.features_l1 = s3_wrapper.Loader.load_features('NSL_features_l1.txt')
         self.features_l2 = s3_wrapper.Loader.load_features('NSL_features_l2.txt')
 
@@ -92,17 +92,17 @@ class Storage:
         self.normal_traffic = pd.DataFrame(columns=self.x_test.columns)
 
     def __sqlite3_setup(self):
-        LOGGER.info('Connecting to sqlite3 in-memory database.')
+        LOGGER.debug('Connecting to sqlite3 in-memory database.')
         self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.sql_connection.cursor()
 
-        LOGGER.info('Instantiating the needed SQL in-memory tables.')
+        LOGGER.debug('Instantiating the needed SQL in-memory tables.')
         self.__fill_tables()
 
-        LOGGER.info('Removing local instances.')
+        LOGGER.debug('Removing local instances.')
         self.__clean()
 
-        LOGGER.info('Completed sqlite3 in-memory databases setup.')
+        LOGGER.debug('Completed sqlite3 in-memory databases setup.')
 
     def __fill_tables(self):
         self.x_test.to_sql('x_test', self.sql_connection, index=False, if_exists='replace')

@@ -11,7 +11,7 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 def train_models(self, model_name1: str, model_name2: str):
     # we reach this branch is there are no models to load or some specific model is required
-    LOGGER.info('Training new models.')
+    LOGGER.debug('Training new models.')
     classifier1, classifier2 = None, None
 
     # Start with training classifier 1

@@ -1,3 +1,11 @@
+import argparse
+import sys
+
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
+
 import json
 import os
 import threading
@@ -66,14 +74,14 @@ class Analyzer:
             if metrics2[metric] < self._metrics_thresholds_2[metric]:
                 objectives['objs_layer2'].append(metric)
 
-        LOGGER.info(f'Identified {len(objectives["objs_layer1"])} objective(s) for layer1: [{objectives["objs_layer1"]}]')
-        LOGGER.info(f'Identified {len(objectives["objs_layer2"])} objective(s) for layer2: [{objectives["objs_layer2"]}]')
+        LOGGER.debug(f'Identified {len(objectives["objs_layer1"])} objective(s) for layer1: [{objectives["objs_layer1"]}]')
+        LOGGER.debug(f'Identified {len(objectives["objs_layer2"])} objective(s) for layer2: [{objectives["objs_layer2"]}]')
 
         return objectives
 
     def poll_queues(self):
         while True:
-            LOGGER.info('Fetching messages..')
+            LOGGER.debug('Fetching messages..')
 
             try:
                 msg_body = self.connector.receive_messages()
@@ -82,7 +90,7 @@ class Analyzer:
                 raise KeyboardInterrupt
 
             if msg_body:
-                LOGGER.info(f'Parsing message: {msg_body}')
+                LOGGER.debug(f'Parsing message: {msg_body}')
                 json_dict = json.loads(msg_body)
 
                 if json_dict['MSG_TYPE'] == str(msg_type.METRICS_SNAPSHOT_MSG):
@@ -91,7 +99,7 @@ class Analyzer:
 
                     self.connector.send_message_to_queues(objectives)
                 else:
-                    LOGGER.info(f'Received message of type {json_dict["MSG_TYPE"]}')
+                    LOGGER.debug(f'Received message of type {json_dict["MSG_TYPE"]}')
 
             time.sleep(self.polling_timer)
 
@@ -104,23 +112,42 @@ class Analyzer:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            LOGGER.info("Received keyboard interrupt. Preparing to terminate threads.")
+            LOGGER.debug("Received keyboard interrupt. Preparing to terminate threads.")
             utils.save_current_timestamp()
 
         finally:
-            LOGGER.info('Terminating DetectionSystem instance.')
+            LOGGER.debug('Terminating DetectionSystem instance.')
             raise KeyboardInterrupt
 
 
+def process_command_line_args():
+    parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')
+
+    parser.add_argument('-polling_timer',
+                        type=float,
+                        default=5,
+                        help='Specify the polling timer (float)'
+                        )
+
+    args = parser.parse_args()
+
+    polling_timer = args.polling_timer
+
+    if polling_timer is not None:
+        LOGGER.debug(f'Polling Timer: {polling_timer}')
+
+    return polling_timer
+
+
 if __name__ == '__main__':
-    arg1, arg2, arg3 = utils.process_command_line_args()
-    analyzer = Analyzer(polling_timer=arg2)
+    arg = process_command_line_args()
+    analyzer = Analyzer(polling_timer=arg)
 
     try:
         analyzer.run_tasks()
     except KeyboardInterrupt:
         if analyzer.FULL_CLOSE:
             analyzer.terminate()
-            LOGGER.info('Deleting queues..')
+            LOGGER.debug('Deleting queues..')
         else:
-            LOGGER.info('Received keyboard interrupt. Preparing to terminate threads.')
+            LOGGER.debug('Received keyboard interrupt. Preparing to terminate threads.')

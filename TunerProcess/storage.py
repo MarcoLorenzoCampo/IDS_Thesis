@@ -25,19 +25,19 @@ class Storage:
         self.loader = Loader(s3_resource=self.s3_resource, bucket_name=self.bucket_name)
 
         if self.__s3_files_ok() and not utils.need_s3_update():
-            LOGGER.info('S3 is already setup and loaded.')
+            LOGGER.debug('S3 is already setup and loaded.')
             return
 
         self.__s3_load()
 
     def __s3_load(self):
-        LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
+        LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
 
         self.loader.s3_processed_train_sets()
         self.loader.s3_processed_validation_sets()
         self.loader.s3_models()
 
-        LOGGER.info('Loading from S3 bucket complete.')
+        LOGGER.debug('Loading from S3 bucket complete.')
 
     def __s3_files_ok(self):
         l = self.loader
@@ -49,7 +49,7 @@ class Storage:
 
     def __load_data_instances(self):
 
-        LOGGER.info('Loading train sets.')
+        LOGGER.debug('Loading train sets.')
         self.x_train_l1, self.y_train_l1 = self.loader.load_dataset(
             'KDDTrain+_l1_pca.pkl',
             'KDDTrain+_l1_targets.npy'
@@ -59,7 +59,7 @@ class Storage:
             'KDDTrain+_l2_targets.npy'
         )
 
-        LOGGER.info('Loading validation sets.')
+        LOGGER.debug('Loading validation sets.')
         self.x_validate_l1, self.y_validate_l1 = self.loader.load_dataset(
             'KDDValidate+_l1_pca.pkl',
             'KDDValidate+_l1_targets.npy'
@@ -69,22 +69,22 @@ class Storage:
             'KDDValidate+_l2_targets.npy'
         )
 
-        LOGGER.info('Loading models.')
+        LOGGER.debug('Loading models.')
         self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
                                                            'NSL_l2_classifier.pkl')
 
     def __sqlite3_setup(self):
-        LOGGER.info('Connecting to sqlite3 in memory database.')
+        LOGGER.debug('Connecting to sqlite3 in memory database.')
         self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.sql_connection.cursor()
 
-        LOGGER.info('Instantiating the needed SQL in memory tables.')
+        LOGGER.debug('Instantiating the needed SQL in memory tables.')
         self.__fill_tables()
 
-        LOGGER.info('Removing local instances.')
+        LOGGER.debug('Removing local instances.')
         self.__clean()
 
-        LOGGER.info('Completed sqlite3 in memory databases setup.')
+        LOGGER.debug('Completed sqlite3 in memory databases setup.')
 
     def __fill_tables(self):
         # create a table for each train set
@@ -123,7 +123,7 @@ class Storage:
             else:
                 sql_query = f'SELECT {select_clause} FROM {from_clause} WHERE {where_clause}'
 
-            LOGGER.info(f'Executing the query: {sql_query}')
+            LOGGER.debug(f'Executing the query: {sql_query}')
 
             result_df = pd.read_sql_query(sql_query, self.sql_connection)
 
@@ -131,12 +131,12 @@ class Storage:
             LOGGER.exception('Could not fulfill the requests.')
             return None
 
-        LOGGER.info('Query was executed correctly.')
+        LOGGER.debug('Query was executed correctly.')
         return result_df
 
     def publish_s3_models(self):
 
-        LOGGER.info(f'Updating models in the S3 bucket {self.bucket_name}.')
+        LOGGER.debug(f'Updating models in the S3 bucket {self.bucket_name}.')
 
         classifier1_path = 'AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl'
         classifier2_path = 'AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl'

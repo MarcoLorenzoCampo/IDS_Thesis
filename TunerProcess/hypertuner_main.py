@@ -1,3 +1,11 @@
+import argparse
+import sys
+
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
+
 import json
 import os
 import threading
@@ -63,7 +71,7 @@ class Hypertuner:
 
     def poll_queues(self):
         while True:
-            LOGGER.info('Fetching messages..')
+            LOGGER.debug('Fetching messages..')
 
             try:
                 msg_body = self.connector.receive_messages()
@@ -77,13 +85,13 @@ class Hypertuner:
                 json_dict = json.loads(msg_body)
 
                 if json_dict['MSG_TYPE'] == str(msg_type.MODEL_UPDATE_MSG):
-                    LOGGER.info(f'Received update notification: {json_dict}')
+                    LOGGER.debug(f'Received update notification: {json_dict}')
                     self.storage.loader.s3_models()
 
                 elif json_dict['MSG_TYPE'] == str(msg_type.MULTIPLE_UPDATE_MSG):
                     to_update = json_dict['UPDATE']
 
-                    LOGGER.info(f'Received multiple update notification: {to_update}')
+                    LOGGER.debug(f'Received multiple update notification: {to_update}')
 
                     update_calls = {
                         'FEATURES': self.storage.loader.s3_features,
@@ -95,10 +103,10 @@ class Hypertuner:
                         update_calls[update]()
 
                 elif json_dict['MSG_TYPE'] == str(msg_type.OBJECTIVES_MSG):
-                    LOGGER.info(f'Received objectives notification: {json_dict}')
+                    LOGGER.debug(f'Received objectives notification: {json_dict}')
 
                     if not self.OPTIMIZATION_LOCK:
-                        LOGGER.info(f'Parsing message: {json_dict}')
+                        LOGGER.debug(f'Parsing message: {json_dict}')
                         objectives = utils.parse_objs(json_dict)
 
                         self.OPTIMIZATION_LOCK = True
@@ -107,7 +115,7 @@ class Hypertuner:
 
                         self.storage.publish_s3_models()
 
-                        LOGGER.info('Models have been tuned and updated. Forwarding models update notification.')
+                        LOGGER.debug('Models have been tuned and updated. Forwarding models update notification.')
 
                         msg_body = {
                             "MSG_TYPE": str(msg_type.MODEL_UPDATE_MSG)
@@ -117,13 +125,13 @@ class Hypertuner:
 
                         self.OPTIMIZATION_LOCK = False
                     else:
-                        LOGGER.info('Process locked. Optimization in progress.')
+                        LOGGER.debug('Process locked. Optimization in progress.')
 
             time.sleep(2)
 
     def run_test(self):
 
-        LOGGER.info('Testing the tuning engine with a fake objectives set.')
+        LOGGER.warning('TEST: Testing the tuning engine with a fake objectives set.')
         test_objs = {
             "layer1": ['accuracy', 'precision'],
             "layer2": ['tpr', 'fpr']
@@ -144,10 +152,47 @@ class Hypertuner:
                 time.sleep(1)
         except KeyboardInterrupt:
             utils.save_current_timestamp()
-
-        finally:
-            LOGGER.info('Terminating Hypertuner instance.')
+            LOGGER.error('Terminating Hypertuner instance.')
             raise KeyboardInterrupt
+
+
+def process_command_line_args():
+    parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')
+
+    parser.add_argument('-metrics_snapshot_timer',
+                        type=float,
+                        default=10,
+                        help='Specify the metrics snapshot timer (float)'
+                        )
+    parser.add_argument('-polling_timer',
+                        type=float,
+                        default=5,
+                        help='Specify the polling timer (float)'
+                        )
+    parser.add_argument('-classification_delay',
+                        type=float,
+                        default=1,
+                        help='Specify the classification delay (float)'
+                        )
+
+    args = parser.parse_args()
+
+    # Access the arguments using dot notation
+    metrics_snapshot_timer = args.metrics_snapshot_timer
+    polling_timer = args.polling_timer
+    classification_delay = args.classification_delay
+
+    # You can check if the arguments are provided and then use them in your script
+    if metrics_snapshot_timer is not None:
+        LOGGER.debug(f'Metrics Snapshot Timer: {metrics_snapshot_timer}')
+
+    if polling_timer is not None:
+        LOGGER.debug(f'Polling Timer: {polling_timer}')
+
+    if classification_delay is not None:
+        LOGGER.debug(f'Classification Delay: {classification_delay}')
+
+    return metrics_snapshot_timer, polling_timer, classification_delay
 
 
 if __name__ == '__main__':
@@ -158,6 +203,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         if hypertuner.FULL_CLOSE:
             hypertuner.terminate()
-            LOGGER.info('Deleting queues..')
+            LOGGER.error('Deleting queues..')
         else:
-            LOGGER.info('Received keyboard interrupt. Preparing to terminate threads.')
+            LOGGER.error('Received keyboard interrupt. Preparing to terminate threads.')

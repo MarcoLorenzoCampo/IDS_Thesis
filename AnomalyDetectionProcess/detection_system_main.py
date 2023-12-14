@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 
@@ -111,7 +112,7 @@ class DetectionSystem:
         switch_function()
 
     def __set_switchers(self):
-        LOGGER.info('Loading the switch cases.')
+        LOGGER.debug('Loading the switch cases.')
         self.clf_switcher = {
             'QUARANTINE': self.storage.add_to_quarantine,
             'L1_ANOMALY': self.storage.add_to_anomaly1,
@@ -137,7 +138,7 @@ class DetectionSystem:
 
     def poll_queues(self):
         while True:
-            # LOGGER.info('Fetching messages..')
+            # LOGGER.debug('Fetching messages..')
 
             try:
                 msg_body = self.connector.receive_messages()
@@ -150,18 +151,18 @@ class DetectionSystem:
                 json_dict = json.loads(msg_body)
 
                 if json_dict['MSG_TYPE'] == str(msg_type.MODEL_UPDATE_MSG):
-                    LOGGER.info('Parsed an UPDATE MODELS message, updating from S3.')
+                    LOGGER.debug('Parsed an UPDATE MODELS message, updating from S3.')
                     self.storage.loader.s3_models()
 
                     self.storage.layer1, self.storage.layer2 = (
                         self.storage.loader.load_models('NSL_l1_classifier.pkl', 'NSL_l2_classifier.pkl')
                     )
-                    LOGGER.info('Replaced current models with models from S3.')
+                    LOGGER.debug('Replaced current models with models from S3.')
 
                 elif json_dict['MSG_TYPE'] == str(msg_type.MULTIPLE_UPDATE_MSG):
                     to_update = json_dict['UPDATE']
 
-                    LOGGER.info(f'Received multiple update notification: {to_update}')
+                    LOGGER.debug(f'Received multiple update notification: {to_update}')
 
                     update_calls = {
                         'FEATURES': self.storage.loader.s3_features,
@@ -173,7 +174,7 @@ class DetectionSystem:
                         update_calls[update]()
 
                 else:
-                    LOGGER.info(f'Received unexpected message of type {json_dict["MSG_TYPE"]}')
+                    LOGGER.debug(f'Received unexpected message of type {json_dict["MSG_TYPE"]}')
 
             time.sleep(self.polling_timer)
 
@@ -181,7 +182,7 @@ class DetectionSystem:
         while True:
             try:
                 with self.metrics.get_lock():
-                    # LOGGER.info('Classifying data..')
+                    # LOGGER.debug('Classifying data..')
                     sample, actual = self.runner.get_packet()
                     self.classify(sample, actual)
             except Exception as e:
@@ -194,7 +195,7 @@ class DetectionSystem:
         while True:
             if self.metrics.ALLOW_SNAPSHOT:
                 with self.metrics.get_lock():
-                    # LOGGER.info('Snapshotting metrics..')
+                    # LOGGER.debug('Snapshotting metrics..')
                     json_output = self.metrics.snapshot_metrics()
                     msg_body = json_output if json_output is not None else "ERROR"
 
@@ -219,15 +220,54 @@ class DetectionSystem:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            LOGGER.info("Received keyboard interrupt. Preparing to terminate threads.")
+            LOGGER.debug("Received keyboard interrupt. Preparing to terminate threads.")
             utils.save_current_timestamp()
         finally:
-            LOGGER.info('Terminating DetectionSystem instance.')
+            LOGGER.debug('Terminating DetectionSystem instance.')
             raise KeyboardInterrupt
 
 
+def process_command_line_args():
+    parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')
+
+    parser.add_argument('-metrics_snapshot_timer',
+                        type=float,
+                        default=10,
+                        help='Specify the metrics snapshot timer (float)'
+                        )
+    parser.add_argument('-polling_timer',
+                        type=float,
+                        default=5,
+                        help='Specify the polling timer (float)'
+                        )
+    parser.add_argument('-classification_delay',
+                        type=float,
+                        default=1,
+                        help='Specify the classification delay (float)'
+                        )
+
+    args = parser.parse_args()
+
+    # Access the arguments using dot notation
+    metrics_snapshot_timer = args.metrics_snapshot_timer
+    polling_timer = args.polling_timer
+    classification_delay = args.classification_delay
+
+    # You can check if the arguments are provided and then use them in your script
+    if metrics_snapshot_timer is not None:
+        LOGGER.debug(f'Metrics Snapshot Timer: {metrics_snapshot_timer}')
+
+    if polling_timer is not None:
+        LOGGER.debug(f'Polling Timer: {polling_timer}')
+
+    if classification_delay is not None:
+        LOGGER.debug(f'Classification Delay: {classification_delay}')
+
+    return metrics_snapshot_timer, polling_timer, classification_delay
+
+
 if __name__ == '__main__':
-    arg1, arg2, arg3 = utils.process_command_line_args()
+    arg1, arg2, arg3 = process_command_line_args()
     ds = DetectionSystem(arg1, arg2, arg3)
 
     try:
@@ -235,6 +275,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         if ds.FULL_CLOSE:
             ds.terminate()
-            LOGGER.info('Deleting queues..')
+            LOGGER.debug('Deleting queues..')
         else:
-            LOGGER.info('Received keyboard interrupt. Preparing to terminate threads.')
+            LOGGER.debug('Received keyboard interrupt. Preparing to terminate threads.')

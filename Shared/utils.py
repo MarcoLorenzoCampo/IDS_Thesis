@@ -1,6 +1,7 @@
 import argparse
 import copy
 import logging
+import colorlog
 import os
 from datetime import datetime, timedelta
 
@@ -8,10 +9,56 @@ import pandas as pd
 
 
 def get_logger(name):
-    LOG_FORMAT = '%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d: %(message)s'
-    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+    logger = colorlog.getLogger(name)
+    logger.setLevel(logging.DEBUG)
 
-    return logging.getLogger(name)
+    formatter_info = colorlog.ColoredFormatter(
+        '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
+        log_colors={
+            'DEBUG': 'white',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'bold_red',
+        }
+    )
+
+    formatter_warning = colorlog.ColoredFormatter(
+        '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
+        log_colors={
+            'DEBUG': 'white',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'bold_red',
+        }
+    )
+
+    formatter_error = colorlog.ColoredFormatter(
+        '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
+        log_colors={
+            'DEBUG': 'white',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'bold_red',
+        }
+    )
+
+    handler_info = colorlog.StreamHandler()
+    handler_info.setFormatter(formatter_info)
+    handler_warning = colorlog.StreamHandler()
+    handler_warning.setFormatter(formatter_warning)
+    handler_warning.setLevel(logging.WARNING)
+    handler_error = colorlog.StreamHandler()
+    handler_error.setFormatter(formatter_error)
+    handler_error.setLevel(logging.ERROR)
+
+    logger.addHandler(handler_info)
+    logger.addHandler(handler_warning)
+    logger.addHandler(handler_error)
+
+    return logger
 
 
 LOGGER = get_logger(os.path.splitext(os.path.basename(__file__))[0])
@@ -37,7 +84,7 @@ def parse_update_msg(json_dict: dict):
     to_update = json_dict["UPDATE"]
 
     if to_update is not None:
-        LOGGER.info(f'Objects to update from S3: {to_update}')
+        LOGGER.debug(f'Objects to update from S3: {to_update}')
         return to_update
 
     return None
@@ -93,46 +140,6 @@ def parse_metrics_msg(parsed_data: dict):
 
     return metrics1, metrics2, classification_metrics
 
-
-def process_command_line_args():
-    parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')
-
-    parser.add_argument('-metrics_snapshot_timer',
-                        type=float,
-                        default=10,
-                        help='Specify the metrics snapshot timer (float)'
-                        )
-    parser.add_argument('-polling_timer',
-                        type=float,
-                        default=5,
-                        help='Specify the polling timer (float)'
-                        )
-    parser.add_argument('-classification_delay',
-                        type=float,
-                        default=1,
-                        help='Specify the classification delay (float)'
-                        )
-
-    args = parser.parse_args()
-
-    # Access the arguments using dot notation
-    metrics_snapshot_timer = args.metrics_snapshot_timer
-    polling_timer = args.polling_timer
-    classification_delay = args.classification_delay
-
-    # You can check if the arguments are provided and then use them in your script
-    if metrics_snapshot_timer is not None:
-        LOGGER.info(f'Metrics Snapshot Timer: {metrics_snapshot_timer}')
-
-    if polling_timer is not None:
-        LOGGER.info(f'Polling Timer: {polling_timer}')
-
-    if classification_delay is not None:
-        LOGGER.info(f'Classification Delay: {classification_delay}')
-
-    return metrics_snapshot_timer, polling_timer, classification_delay
-
-
 def need_s3_update():
     try:
         with open('../AnomalyDetectionProcess/last_online.txt', 'r') as last_online_file:
@@ -148,7 +155,7 @@ def need_s3_update():
 
 
 def save_current_timestamp():
-    LOGGER.info('Saving last online timestamp.')
+    LOGGER.debug('Saving last online timestamp.')
     current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open('../AnomalyDetectionProcess/last_online.txt', 'w') as file:
         file.write(current_timestamp)
@@ -159,7 +166,7 @@ def parse_objs(data: dict):
     layer1_list = data.get("objs_layer1", [])
     layer2_list = data.get("objs_layer2", [])
 
-    LOGGER.info(f'Parsed objectives. Layer1: {layer1_list}, Layer2: {layer2_list}')
+    LOGGER.debug(f'Parsed objectives. Layer1: {layer1_list}, Layer2: {layer2_list}')
 
     return {
         "layer1": layer1_list,

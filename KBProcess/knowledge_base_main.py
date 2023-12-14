@@ -1,3 +1,11 @@
+import argparse
+import sys
+
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
+sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
+
 import json
 import os
 import threading
@@ -19,7 +27,7 @@ class KnowledgeBase:
 
     def __init__(self):
 
-        LOGGER.info('Creating an instance of KnowledgeBase.')
+        LOGGER.debug('Creating an instance of KnowledgeBase.')
         self.storage = Storage()
         self.features_selector = features_selector.DataManager(self.storage)
 
@@ -50,7 +58,7 @@ class KnowledgeBase:
 
     def poll_queues(self):
         while True:
-            LOGGER.info('Fetching messages..')
+            LOGGER.debug('Fetching messages..')
 
             try:
                 msg_body = self.connector.receive_messages()
@@ -64,10 +72,10 @@ class KnowledgeBase:
                 json_dict = json.loads(msg_body)
 
                 if json_dict['MSG_TYPE'] == str(msg_type.MODEL_UPDATE_MSG):
-                    LOGGER.info(f'Received update notification: {json_dict}')
+                    LOGGER.debug(f'Received update notification: {json_dict}')
                     self.storage.loader.s3_models()
                 else:
-                    LOGGER.info(f'Unexpected message type received: {json_dict["MSG_TYPE"]}')
+                    LOGGER.debug(f'Unexpected message type received: {json_dict["MSG_TYPE"]}')
 
             time.sleep(2)
 
@@ -144,8 +152,46 @@ class KnowledgeBase:
             utils.save_current_timestamp()
 
         finally:
-            LOGGER.info('Terminating KnowledgeBase instance.')
+            LOGGER.debug('Terminating KnowledgeBase instance.')
             raise KeyboardInterrupt
+
+def process_command_line_args():
+    parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')
+
+    parser.add_argument('-metrics_snapshot_timer',
+                        type=float,
+                        default=10,
+                        help='Specify the metrics snapshot timer (float)'
+                        )
+    parser.add_argument('-polling_timer',
+                        type=float,
+                        default=5,
+                        help='Specify the polling timer (float)'
+                        )
+    parser.add_argument('-classification_delay',
+                        type=float,
+                        default=1,
+                        help='Specify the classification delay (float)'
+                        )
+
+    args = parser.parse_args()
+
+    # Access the arguments using dot notation
+    metrics_snapshot_timer = args.metrics_snapshot_timer
+    polling_timer = args.polling_timer
+    classification_delay = args.classification_delay
+
+    # You can check if the arguments are provided and then use them in your script
+    if metrics_snapshot_timer is not None:
+        LOGGER.debug(f'Metrics Snapshot Timer: {metrics_snapshot_timer}')
+
+    if polling_timer is not None:
+        LOGGER.debug(f'Polling Timer: {polling_timer}')
+
+    if classification_delay is not None:
+        LOGGER.debug(f'Classification Delay: {classification_delay}')
+
+    return metrics_snapshot_timer, polling_timer, classification_delay
 
 
 if __name__ == '__main__':
@@ -156,7 +202,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         if kb.FULL_CLOSE:
             kb.terminate()
-            LOGGER.info('Deleting queues..')
+            LOGGER.debug('Deleting queues..')
 
         utils.save_current_timestamp()
-        LOGGER.info('Received keyboard interrupt. Terminating knowledge base instance.')
+        LOGGER.debug('Received keyboard interrupt. Terminating knowledge base instance.')

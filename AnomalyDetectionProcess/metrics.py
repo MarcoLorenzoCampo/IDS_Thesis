@@ -163,28 +163,28 @@ class Metrics:
 
     def show_metrics(self):
 
-        LOGGER.info('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
-        LOGGER.info('Precision for layer 1: %s', self._metrics_1['precision'])
-        LOGGER.info('F-score for layer 1: %s', self._metrics_1['fscore'])
-        LOGGER.info('TPR for layer 1: %s', self._metrics_1['tpr'])
-        LOGGER.info('FPR for layer 1: %s', self._metrics_1['fpr'])
-        LOGGER.info('TNR for layer 1: %s', self._metrics_1['tnr'])
-        LOGGER.info('FNR for layer 1: %s', self._metrics_1['fnr'])
-        LOGGER.info('\n')
+        LOGGER.debug('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
+        LOGGER.debug('Precision for layer 1: %s', self._metrics_1['precision'])
+        LOGGER.debug('F-score for layer 1: %s', self._metrics_1['fscore'])
+        LOGGER.debug('TPR for layer 1: %s', self._metrics_1['tpr'])
+        LOGGER.debug('FPR for layer 1: %s', self._metrics_1['fpr'])
+        LOGGER.debug('TNR for layer 1: %s', self._metrics_1['tnr'])
+        LOGGER.debug('FNR for layer 1: %s', self._metrics_1['fnr'])
+        LOGGER.debug('\n')
 
-        LOGGER.info('Accuracy for layer 2: %s', self._metrics_2['accuracy'])
-        LOGGER.info('Precision for layer 2: %s', self._metrics_2['precision'])
-        LOGGER.info('F-score for layer 2: %s', self._metrics_2['fscore'])
-        LOGGER.info('TPR for layer 2: %s', self._metrics_2['tpr'])
-        LOGGER.info('FPR for layer 2: %s', self._metrics_2['fpr'])
-        LOGGER.info('TNR for layer 2: %s', self._metrics_2['tnr'])
-        LOGGER.info('FNR for layer 2: %s', self._metrics_2['fnr'])
-        LOGGER.info('\n')
+        LOGGER.debug('Accuracy for layer 2: %s', self._metrics_2['accuracy'])
+        LOGGER.debug('Precision for layer 2: %s', self._metrics_2['precision'])
+        LOGGER.debug('F-score for layer 2: %s', self._metrics_2['fscore'])
+        LOGGER.debug('TPR for layer 2: %s', self._metrics_2['tpr'])
+        LOGGER.debug('FPR for layer 2: %s', self._metrics_2['fpr'])
+        LOGGER.debug('TNR for layer 2: %s', self._metrics_2['tnr'])
+        LOGGER.debug('FNR for layer 2: %s', self._metrics_2['fnr'])
+        LOGGER.debug('\n')
 
-        LOGGER.info('Normal ratio: %s', self._classification_metrics['normal_ratio'])
-        LOGGER.info('L1 anomalies ratio: %s', self._classification_metrics['l1_anomaly_ratio'])
-        LOGGER.info('L2 anomalies ratio: %s', self._classification_metrics['l2_anomaly_ratio'])
-        LOGGER.info('Quarantined ratio: %s', self._classification_metrics['quarantine_ratio'])
+        LOGGER.debug('Normal ratio: %s', self._classification_metrics['normal_ratio'])
+        LOGGER.debug('L1 anomalies ratio: %s', self._classification_metrics['l1_anomaly_ratio'])
+        LOGGER.debug('L2 anomalies ratio: %s', self._classification_metrics['l2_anomaly_ratio'])
+        LOGGER.debug('Quarantined ratio: %s', self._classification_metrics['quarantine_ratio'])
 
     def reset(self):
         # reset the metrics and counts
@@ -206,7 +206,7 @@ class Metrics:
         return self._metrics_1, self._metrics_2, self._classification_metrics
 
     def snapshot_metrics(self):
-        LOGGER.info('Building a json snapshot of current metrics')
+        LOGGER.debug('Building a json snapshot of current metrics')
 
         metrics_dict = {
             "MSG_TYPE": str(msg_type.METRICS_SNAPSHOT_MSG),

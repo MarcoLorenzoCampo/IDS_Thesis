@@ -14,9 +14,9 @@ class Loader:
         self.s3_resource = s3_resource
 
     def s3_load(self):
-        LOGGER.info(f'Loading data from S3 bucket {self.bucket_name}.')
+        LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
 
-        LOGGER.info('Loading models.')
+        LOGGER.debug('Loading models.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='Models/StartingModels',
@@ -30,7 +30,7 @@ class Loader:
             download_path="AWS Downloads/Models/StartingModels/"
         )
 
-        LOGGER.info('Loading fully processed train sets.')
+        LOGGER.debug('Loading fully processed train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/PCAEncoded',
@@ -44,7 +44,7 @@ class Loader:
             download_path='AWS Downloads/Datasets/'
         )
 
-        LOGGER.info('Loading target variables for train sets.')
+        LOGGER.debug('Loading target variables for train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
@@ -58,7 +58,7 @@ class Loader:
             download_path='AWS Downloads/Datasets/'
         )
 
-        LOGGER.info('Loading fully processed validation sets.')
+        LOGGER.debug('Loading fully processed validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/PCAEncoded',
@@ -72,7 +72,7 @@ class Loader:
             download_path='AWS Downloads/Datasets/'
         )
 
-        LOGGER.info('Loading target variables for validation sets.')
+        LOGGER.debug('Loading target variables for validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
@@ -97,7 +97,7 @@ class Loader:
 
     @staticmethod
     def __aws_download_callback(bytes):
-        LOGGER.info(f'Downloaded {bytes} bytes')
+        LOGGER.debug(f'Downloaded {bytes} bytes')
         pass
 
     @staticmethod
