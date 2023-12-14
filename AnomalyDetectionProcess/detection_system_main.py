@@ -18,7 +18,7 @@ import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
 
-from Other.artificial_traffic import Runner
+from AnomalyDetectionProcess.artificial_traffic import Runner
 from storage import Storage
 from Shared.sqs_wrapper import Connector
 from metrics import Metrics
@@ -192,18 +192,19 @@ class DetectionSystem:
 
     def snapshot_metrics(self):
         while True:
-            with self.metrics.get_lock():
-                # LOGGER.info('Snapshotting metrics..')
-                json_output = self.metrics.snapshot_metrics()
-                msg_body = json_output if json_output is not None else "ERROR"
+            if self.metrics.ALLOW_SNAPSHOT:
+                with self.metrics.get_lock():
+                    # LOGGER.info('Snapshotting metrics..')
+                    json_output = self.metrics.snapshot_metrics()
+                    msg_body = json_output if json_output is not None else "ERROR"
 
-            try:
-                self.connector.send_message_to_queues(msg_body)
-            except ClientError as e:
-                LOGGER.error(f"Error in snapshot metrics: {e}")
-                raise KeyboardInterrupt
+                try:
+                    self.connector.send_message_to_queues(msg_body)
+                except ClientError as e:
+                    LOGGER.error(f"Error in snapshot metrics: {e}")
+                    raise KeyboardInterrupt
 
-            time.sleep(self.metrics_snapshot_timer)
+                time.sleep(self.metrics_snapshot_timer)
 
     def run_tasks(self):
         queue_reading_thread = threading.Thread(target=self.poll_queues, daemon=True)

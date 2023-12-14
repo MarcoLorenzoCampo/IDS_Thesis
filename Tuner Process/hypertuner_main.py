@@ -121,10 +121,23 @@ class Hypertuner:
 
             time.sleep(2)
 
+    def run_test(self):
+
+        LOGGER.info('Testing the tuning engine with a fake objectives set.')
+        test_objs = {
+            "layer1": ['accuracy', 'precision'],
+            "layer2": ['tpr', 'fpr']
+        }
+
+        self.tuner.objs_map(test_objs)
+
     def run_tasks(self):
         queue_reading_thread = threading.Thread(target=self.poll_queues, daemon=True)
 
-        queue_reading_thread.start()
+        if not self.DEBUG:
+            queue_reading_thread.start()
+        else:
+            self.run_test()
 
         try:
             while True:
@@ -138,7 +151,7 @@ class Hypertuner:
 
 
 if __name__ == '__main__':
-    hypertuner = Hypertuner(n_trials=1)
+    hypertuner = Hypertuner(n_trials=100)
 
     try:
         hypertuner.run_tasks()

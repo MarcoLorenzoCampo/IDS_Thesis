@@ -21,7 +21,7 @@ class KnowledgeBase:
 
         LOGGER.info('Creating an instance of KnowledgeBase.')
         self.storage = Storage()
-        self.features_selector = features_selector.DataManager()
+        self.features_selector = features_selector.DataManager(self.storage)
 
         self.__sqs_setup()
 

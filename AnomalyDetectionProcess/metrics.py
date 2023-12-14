@@ -1,5 +1,4 @@
-import json
-import logging
+import ray
 import os
 import threading
 
@@ -9,6 +8,9 @@ from Shared.msg_enum import msg_type
 LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Metrics:
+
+    ALLOW_SNAPSHOT = False
+
     def __init__(self):
 
         self.metrics_lock = threading.Lock()
@@ -133,6 +135,7 @@ class Metrics:
 
         # Compute metrics only if enough samples have been collected
         if all(val != 0 for val in count_dict.values()):
+            self.ALLOW_SNAPSHOT = True
             self.__compute_performance_metrics(target=layer)
         else:
             LOGGER.error(f'Not enough data for LAYER{layer}, skipping metrics computation for now.')

@@ -1,22 +1,24 @@
 import pickle
+import time
 from pprint import pprint
 
 import optuna
 import pandas as pd
 
-from storage import Storage
 from Shared.utils import LOGGER
-
 from optimizer import Optimizer
+from storage import Storage
 
 
 class Tuner:
     DEBUG = False
+    N_CORES = -1    # -1 means use all available cores
 
     def __init__(self, n_trials: int, storage: Storage):
         self.storage = storage
-        self.optimizer = Optimizer()
         self.N_TRIALS = n_trials
+
+        self.optimizer = Optimizer()
 
     def objs_map(self, objectives: dict):
 
@@ -38,7 +40,6 @@ class Tuner:
         objs_l2 = objectives['layer2']
 
         # Tuning for the first objectives set
-
         fun_calls1 = []
         for obj in objs_l1:
             fun_calls1.append(function_mapping[obj][0])
@@ -47,7 +48,12 @@ class Tuner:
             if self.DEBUG:
                 print(f'# funcs l1: {len(fun_calls1)}')
 
+            start = time.time()
+
             new_layer1 = self.__layer1_tuning(fun_calls1)
+
+            taken = time.time() - start
+            print(f"Optimization of layer1 took: {taken}")
 
             with open('AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer1, f)
@@ -55,7 +61,6 @@ class Tuner:
             LOGGER.info('No new objectives received for layer1.')
 
         # Tuning for the second objectives set
-
         fun_calls2 = []
         for obj in objs_l2:
             fun_calls2.append(function_mapping[obj][1])
@@ -64,7 +69,12 @@ class Tuner:
             if self.DEBUG:
                 print(f'# funcs l2: {len(fun_calls2)}')
 
+            start = time.time()
+
             new_layer2 = self.__layer2_tuning(fun_calls2)
+
+            taken = time.time() - start
+            print(f"Optimization of layer2 took: {taken}")
 
             with open('AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer2, f)
@@ -82,7 +92,8 @@ class Tuner:
 
         study_l1.optimize(
             lambda trial: self.optimizer.optimize_wrapper(fun_calls1, trial),
-            n_trials=self.N_TRIALS
+            n_trials=self.N_TRIALS,
+            n_jobs=self.N_CORES
         )
 
         best_hps = self.__get_hps_from_trials(study_l1)
@@ -101,6 +112,7 @@ class Tuner:
         study_l2.optimize(
             lambda trial: self.optimizer.optimize_wrapper(fun_calls2, trial),
             n_trials=self.N_TRIALS,
+            n_jobs=self.N_CORES
         )
 
         best_hps = self.__get_hps_from_trials(study_l2)

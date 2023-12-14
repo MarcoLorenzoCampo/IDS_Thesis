@@ -12,7 +12,6 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 class Optimizer:
-
     DEBUG = True
 
     def __init__(self):
@@ -35,8 +34,14 @@ class Optimizer:
         del self.x_validate_l1, self.y_validate_l1
         del self.x_validate_l2, self.y_validate_l2
 
-    def optimize_wrapper(self, fun_calls: List[Callable], trial: optuna.Trial):
-
+    @staticmethod
+    def optimize_wrapper(fun_calls: List[Callable], trial: optuna.Trial):
+        """
+        This function wraps the objective functions and optimizes them using Optuna.
+        :param fun_calls: A list of objective function calls.
+        :param trial: An Optuna trial object.
+        :return: A list of outputs from the objective functions.
+        """
         outputs = {}
         for fun_call in fun_calls:
             try:
@@ -104,12 +109,13 @@ class Optimizer:
             return tpr
 
     def objective_inv_fpr_l1(self, trial: optuna.Trial) -> float:
-        LOGGER.info(f'Calling optimization function: Objective FPR for layer 1')
         """
         This function defines the objective to maximize the true positive rate
         :param trial:
         :return: True positive rate
         """
+        LOGGER.info(f'Calling optimization function: Objective FPR for layer 1')
+
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
@@ -132,7 +138,7 @@ class Optimizer:
             fpr = fp / (fp + tn) if (fp + tn) != 0 else 0.0
 
             try:
-                return 1/fpr
+                return 1 / fpr
             except ZeroDivisionError:
                 return 0.0
 
@@ -269,7 +275,7 @@ class Optimizer:
             fnr = fn / (fn + tp) if (fn + tp) != 0 else 0.0
 
             try:
-                return 1/fnr
+                return 1 / fnr
             except ZeroDivisionError:
                 return 0.0
 
@@ -444,7 +450,6 @@ class Optimizer:
             return fscore
 
     def objective_quarantine_rate_l2(self, trial: optuna.Trial) -> float:
-        # providing a choice of classifiers to use in the 'choices' array
         classifier_name = trial.suggest_categorical('classifier', ['SVC'])
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
