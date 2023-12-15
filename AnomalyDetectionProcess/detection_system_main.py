@@ -1,29 +1,24 @@
 import argparse
 import json
+import logging
 import sys
-
-from Shared.msg_enum import msg_type
-
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
-
 import copy
 import os
 import time
-from typing import Union
 import threading
-
 import boto3
 import pandas as pd
+
+from typing import Union
 from botocore.exceptions import ClientError
 
-from AnomalyDetectionProcess.artificial_traffic import Runner
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+
+from artificial_traffic import Runner
 from storage import Storage
 from Shared.sqs_wrapper import Connector
 from metrics import Metrics
-
+from Shared.msg_enum import msg_type
 from Shared import utils
 
 LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
@@ -31,7 +26,6 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class DetectionSystem:
     FULL_CLOSE = False
-    DEBUG = True
 
     def __init__(self, metrics_snapshot_timer: float, polling_timer: float, classification_delay: float):
 
@@ -138,7 +132,7 @@ class DetectionSystem:
 
     def poll_queues(self):
         while True:
-            # LOGGER.debug('Fetching messages..')
+            # LOGGER.info('Fetching messages..')
 
             try:
                 msg_body = self.connector.receive_messages()
@@ -182,7 +176,7 @@ class DetectionSystem:
         while True:
             try:
                 with self.metrics.get_lock():
-                    # LOGGER.debug('Classifying data..')
+                    # LOGGER.info('Classifying data..')
                     sample, actual = self.runner.get_packet()
                     self.classify(sample, actual)
             except Exception as e:
@@ -195,7 +189,7 @@ class DetectionSystem:
         while True:
             if self.metrics.ALLOW_SNAPSHOT:
                 with self.metrics.get_lock():
-                    # LOGGER.debug('Snapshotting metrics..')
+                    LOGGER.info('Snapshotting metrics..')
                     json_output = self.metrics.snapshot_metrics()
                     msg_body = json_output if json_output is not None else "ERROR"
 
@@ -221,7 +215,7 @@ class DetectionSystem:
                 time.sleep(1)
         except KeyboardInterrupt:
             LOGGER.debug("Received keyboard interrupt. Preparing to terminate threads.")
-            utils.save_current_timestamp()
+            utils.save_current_timestamp("")
         finally:
             LOGGER.debug('Terminating DetectionSystem instance.')
             raise KeyboardInterrupt
@@ -245,8 +239,16 @@ def process_command_line_args():
                         default=1,
                         help='Specify the classification delay (float)'
                         )
+    parser.add_argument('-verbose',
+                        action='store_true',
+                        help='Set the logging default to "DEBUG"'
+                        )
 
     args = parser.parse_args()
+
+    verbose = args.verbose
+    if verbose:
+        LOGGER.setLevel(logging.DEBUG)
 
     # Access the arguments using dot notation
     metrics_snapshot_timer = args.metrics_snapshot_timer
@@ -266,9 +268,9 @@ def process_command_line_args():
     return metrics_snapshot_timer, polling_timer, classification_delay
 
 
-if __name__ == '__main__':
-    arg1, arg2, arg3 = process_command_line_args()
-    ds = DetectionSystem(arg1, arg2, arg3)
+def main():
+    snapshot_timer, poll_timer, clf_delay = process_command_line_args()
+    ds = DetectionSystem(snapshot_timer, poll_timer, clf_delay)
 
     try:
         ds.run_tasks()
@@ -278,3 +280,7 @@ if __name__ == '__main__':
             LOGGER.debug('Deleting queues..')
         else:
             LOGGER.debug('Received keyboard interrupt. Preparing to terminate threads.')
+
+
+if __name__ == '__main__':
+    main()

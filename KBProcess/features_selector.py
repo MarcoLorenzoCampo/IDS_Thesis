@@ -6,37 +6,38 @@ import pandas as pd
 from KBProcess.storage import Storage
 from Shared import utils
 
-LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
-
 class DataManager:
 
     def __init__(self, storage: Storage):
-        pass
+
+        import knowledge_base_main
+        self.LOGGER = knowledge_base_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
+
 
     def perform_icfs(x_train: pd.DataFrame):
-        LOGGER.info('Performing ICFS.')
+        self.LOGGER.info('Performing ICFS.')
 
         return 1
 
     def perform_fisher(x_train: pd.DataFrame):
-        LOGGER.debug('Performing fisher score.')
+        self.LOGGER.debug('Performing fisher score.')
 
 
 
         return 1
 
     def perform_bfs(x_train: pd.DataFrame):
-        LOGGER.debug('Performing BFS.')
+        self.LOGGER.debug('Performing BFS.')
 
         return 1
 
     def perform_sfs(x_train: pd.DataFrame):
-        LOGGER.debug('Performing SFS.')
+        self.LOGGER.debug('Performing SFS.')
 
         return 1
 
     def analyze_datasets(self, x_train: pd.DataFrame):
-        LOGGER.debug('Analyzing datasets.')
+        self.LOGGER.debug('Analyzing datasets.')
 
         old_dataset_properties = json.loads("dataset_properties")
 
@@ -49,7 +50,7 @@ class DataManager:
         if (old_dataset_properties["features_num"] != new_dataset_properties["features_num"] or
                 old_dataset_properties["features"] != new_dataset_properties["features"] or
                 old_dataset_properties["train_samples"] != new_dataset_properties["train_samples"]):
-            LOGGER.debug(f'New dataset properties identified.')
+            self.LOGGER.debug(f'New dataset properties identified.')
             return True
 
         return False

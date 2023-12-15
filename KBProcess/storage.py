@@ -6,27 +6,29 @@ import sqlite3
 from Shared.s3_wrapper import Loader
 from Shared import utils
 
-LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
-
 class Storage:
 
     def __init__(self):
+
+        import knowledge_base_main
+        self.LOGGER = knowledge_base_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
+
         self.__s3_setup()
         self.__load_data_instances()
         self.__sqlite3_setup()
 
     def __sqlite3_setup(self):
-        LOGGER.debug('Connecting to sqlite3 in memory database.')
+        self.LOGGER.debug('Connecting to sqlite3 in memory database.')
         self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.sql_connection.cursor()
 
-        LOGGER.debug('Instantiating the needed SQL in memory tables.')
+        self.LOGGER.debug('Instantiating the needed SQL in memory tables.')
         self.__fill_tables()
 
-        LOGGER.debug('Removing local instances.')
+        self.LOGGER.debug('Removing local instances.')
         self.__clean()
 
-        LOGGER.debug('Completed sqlite3 in memory databases setup.')
+        self.LOGGER.debug('Completed sqlite3 in memory databases setup.')
 
     def __s3_setup(self):
         self.bucket_name = 'nsl-kdd-datasets'
@@ -34,13 +36,13 @@ class Storage:
         self.loader = Loader(s3_resource=self.s3_resource, bucket_name=self.bucket_name)
 
         if self.__s3_files_ok() and not utils.need_s3_update():
-            LOGGER.debug('S3 is already setup and loaded.')
+            self.LOGGER.debug('S3 is already setup and loaded.')
             return
 
         self.__s3_load()
 
     def __s3_load(self):
-        LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
+        self.LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
 
         self.loader.s3_processed_validation_sets()
         self.loader.s3_processed_train_sets()
@@ -50,7 +52,7 @@ class Storage:
         self.loader.s3_one_hot_encoders()
         self.loader.s3_min_features()
 
-        LOGGER.debug('Loading from S3 bucket complete.')
+        self.LOGGER.debug('Loading from S3 bucket complete.')
 
     def __s3_files_ok(self):
         l = self.loader
@@ -66,12 +68,12 @@ class Storage:
         )
 
     def __load_data_instances(self):
-        LOGGER.debug('Loading original train set.')
+        self.LOGGER.debug('Loading original train set.')
         self.x_train = self.loader.load_og_dataset('KDDTrain+_with_labels.txt')
-        LOGGER.debug('Loading original reduced train set.')
+        self.LOGGER.debug('Loading original reduced train set.')
         self.x_train_20p = self.loader.load_og_dataset('KDDTrain+20_percent_with_labels.txt')
 
-        LOGGER.debug('Loading train sets.')
+        self.LOGGER.debug('Loading train sets.')
         self.x_train_l1, self.y_train_l1 = self.loader.load_dataset(
             'KDDTrain+_l1_pca.pkl',
             'KDDTrain+_l1_targets.npy'
@@ -81,7 +83,7 @@ class Storage:
             'KDDTrain+_l2_targets.npy'
         )
 
-        LOGGER.debug('Loading validation sets.')
+        self.LOGGER.debug('Loading validation sets.')
         self.x_validate_l1, self.y_validate_l1 = self.loader.load_dataset(
             'KDDValidate+_l1_pca.pkl',
             'KDDValidate+_l1_targets.npy'
@@ -91,21 +93,21 @@ class Storage:
             'KDDValidate+_l2_targets.npy'
         )
 
-        LOGGER.debug('Loading scalers.')
+        self.LOGGER.debug('Loading scalers.')
         self.scaler1, self.scaler2 = self.loader.load_scalers('Scaler_l1.pkl', 'Scaler_l2.pkl')
 
-        LOGGER.debug('Loading one hot encoders.')
+        self.LOGGER.debug('Loading one hot encoders.')
         self.ohe1, self.ohe2 = self.loader.load_encoders('OneHotEncoder_l1.pkl', 'OneHotEncoder_l2.pkl')
 
-        LOGGER.debug('Loading pca transformers.')
+        self.LOGGER.debug('Loading pca transformers.')
         self.pca1, self.pca2 = self.loader.load_pca_transformers('layer1_pca_transformer.pkl',
                                                                  'layer2_pca_transformer.pkl')
 
-        LOGGER.debug('Loading models.')
+        self.LOGGER.debug('Loading models.')
         self.pca1, self.pca2 = self.loader.load_models('NSL_l1_classifier.pkl',
                                                        'NSL_l2_classifier.pkl')
 
-        LOGGER.debug('Loading minimal features.')
+        self.LOGGER.debug('Loading minimal features.')
         self.features_l1 = self.loader.load_features('NSL_features_l1.txt')
         self.features_l2 = self.loader.load_features('NSL_features_l2.txt')
 
@@ -144,7 +146,7 @@ class Storage:
         del self.x_train, self.x_train_20p
 
     def perform_query(self, received):
-        LOGGER.debug(f'Received a query.')
+        self.LOGGER.debug(f'Received a query.')
 
         try:
             select_clause = received.get("select")
@@ -156,13 +158,13 @@ class Storage:
             else:
                 sql_query = f'SELECT {select_clause} FROM {from_clause} WHERE {where_clause}'
 
-            LOGGER.debug(f'Executing the query: {sql_query}')
+            self.LOGGER.debug(f'Executing the query: {sql_query}')
 
             result_df = pd.read_sql_query(sql_query, self.sql_connection)
 
         except pd.errors.DatabaseError:
-            LOGGER.exception('Could not fulfill the requests.')
+            self.LOGGER.exception('Could not fulfill the requests.')
             return None
 
-        LOGGER.debug('Query was executed correctly.')
+        self.LOGGER.debug('Query was executed correctly.')
         return result_df

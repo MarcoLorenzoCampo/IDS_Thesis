@@ -2,7 +2,6 @@ import os
 import pickle
 
 from Shared import utils
-
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC

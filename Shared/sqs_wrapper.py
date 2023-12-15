@@ -37,7 +37,7 @@ class Connector:
             self.__create_queues()
 
     def __create_queues(self):
-        LOGGER.debug('Creating a queue for each queue name provided.')
+        LOGGER.info('Creating a queue for each queue name provided.')
         for queue_name in self.queue_names:
             attributes = {
                 'FifoQueue': 'true',
@@ -64,7 +64,7 @@ class Connector:
             )
             self.queues[queue_name] = queue
 
-            LOGGER.debug("Created FIFO queue '%s' with URL=%s", queue_name, queue.url)
+            LOGGER.info("Created FIFO queue '%s' with URL=%s", queue_name, queue.url)
         except ClientError as error:
             LOGGER.exception("Couldn't create queue named '%s'.", queue_name)
             raise error
@@ -104,8 +104,8 @@ class Connector:
                 MessageAttributes=message_attributes,
                 MessageDeduplicationId=deduplication_id,
             )
-            LOGGER.debug(f"Sent message #{self.msg_counter}: '{message_body}' to '{queue_name}'.")
-            LOGGER.debug(f"Sent message with message_id: {response['MessageId']}")
+            LOGGER.info(f"Sent message #{self.msg_counter}: '{message_body}' to '{queue_name}'.")
+            LOGGER.info(f"Sent message with message_id: {response['MessageId']}")
             self.msg_counter += 1
 
         except ClientError as error:
@@ -141,7 +141,7 @@ class Connector:
                     receipt_handle = message['ReceiptHandle']
                     message_body = message['Body']
 
-                    LOGGER.debug(f"Received message from queue: {message_body}")
+                    LOGGER.info(f"Received message from queue: {message_body}")
 
                     try:
                         self.sqs_client.delete_message(
@@ -167,7 +167,7 @@ class Connector:
         for queue in self.queues.values():
             try:
                 queue.delete()
-                LOGGER.debug("Deleted queue with URL=%s.", queue.url)
+                LOGGER.info("Deleted queue with URL=%s.", queue.url)
             except ClientError as error:
                 LOGGER.exception("Couldn't delete queue with URL=%s!", queue.url)
                 raise error

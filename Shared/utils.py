@@ -10,7 +10,6 @@ import pandas as pd
 
 def get_logger(name):
     logger = colorlog.getLogger(name)
-    logger.setLevel(logging.DEBUG)
 
     formatter_info = colorlog.ColoredFormatter(
         '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
@@ -58,6 +57,8 @@ def get_logger(name):
     logger.addHandler(handler_warning)
     logger.addHandler(handler_error)
 
+    logger.setLevel(logging.INFO)
+
     return logger
 
 
@@ -84,7 +85,7 @@ def parse_update_msg(json_dict: dict):
     to_update = json_dict["UPDATE"]
 
     if to_update is not None:
-        LOGGER.debug(f'Objects to update from S3: {to_update}')
+        LOGGER.info(f'Objects to update from S3: {to_update}')
         return to_update
 
     return None
@@ -154,10 +155,10 @@ def need_s3_update():
         return False
 
 
-def save_current_timestamp():
-    LOGGER.debug('Saving last online timestamp.')
+def save_current_timestamp(path: str):
+    LOGGER.info('Saving last online timestamp.')
     current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open('../AnomalyDetectionProcess/last_online.txt', 'w') as file:
+    with open(path + 'last_online.txt', 'w') as file:
         file.write(current_timestamp)
 
 
@@ -166,7 +167,7 @@ def parse_objs(data: dict):
     layer1_list = data.get("objs_layer1", [])
     layer2_list = data.get("objs_layer2", [])
 
-    LOGGER.debug(f'Parsed objectives. Layer1: {layer1_list}, Layer2: {layer2_list}')
+    LOGGER.info(f'Parsed objectives. Layer1: {layer1_list}, Layer2: {layer2_list}')
 
     return {
         "layer1": layer1_list,

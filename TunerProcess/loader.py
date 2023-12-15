@@ -4,19 +4,20 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from Shared import utils
-
-LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Loader:
     def __init__(self, s3_resource):
+
+        import hypertuner_main
+        self.LOGGER = hypertuner_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
+
         self.bucket_name = 'nsl-kdd-datasets'
         self.s3_resource = s3_resource
 
     def s3_load(self):
-        LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
+        self.LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
 
-        LOGGER.debug('Loading models.')
+        self.LOGGER.debug('Loading models.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='Models/StartingModels',
@@ -30,7 +31,7 @@ class Loader:
             download_path="AWS Downloads/Models/StartingModels/"
         )
 
-        LOGGER.debug('Loading fully processed train sets.')
+        self.LOGGER.debug('Loading fully processed train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/PCAEncoded',
@@ -44,7 +45,7 @@ class Loader:
             download_path='AWS Downloads/Datasets/'
         )
 
-        LOGGER.debug('Loading target variables for train sets.')
+        self.LOGGER.debug('Loading target variables for train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
@@ -58,7 +59,7 @@ class Loader:
             download_path='AWS Downloads/Datasets/'
         )
 
-        LOGGER.debug('Loading fully processed validation sets.')
+        self.LOGGER.debug('Loading fully processed validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/PCAEncoded',
@@ -72,7 +73,7 @@ class Loader:
             download_path='AWS Downloads/Datasets/'
         )
 
-        LOGGER.debug('Loading target variables for validation sets.')
+        self.LOGGER.debug('Loading target variables for validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
@@ -95,9 +96,8 @@ class Loader:
             Callback=self.__aws_download_callback
         )
 
-    @staticmethod
-    def __aws_download_callback(bytes):
-        LOGGER.debug(f'Downloaded {bytes} bytes')
+    def __aws_download_callback(self, bytes):
+        self.LOGGER.debug(f'Downloaded {bytes} bytes')
         pass
 
     @staticmethod

@@ -1,17 +1,13 @@
 import argparse
 import sys
-
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
-
 import json
 import os
 import threading
 import time
-
 import boto3
+import logging
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 from Shared import utils
 from Shared.sqs_wrapper import Connector
@@ -26,13 +22,13 @@ class Analyzer:
 
     def __init__(self, polling_timer: float):
 
-        self.polling_timer = polling_timer
-        path = 'thresholds.json'
-        with open(path, 'r') as f:
-            json_file = json.load(f)
+        self._polling_timer = polling_timer
 
-        self._metrics_thresholds_1 = json_file['_metrics_thresh_1']
-        self._metrics_thresholds_2 = json_file['_metrics_thresh_2']
+        with open('thresholds.json', 'r') as f:
+            _json_file = json.load(f)
+
+        self._metrics_thresholds_1 = _json_file['_metrics_thresh_1']
+        self._metrics_thresholds_2 = _json_file['_metrics_thresh_2']
 
         self.__sqs_setup()
 
@@ -54,11 +50,11 @@ class Analyzer:
             queue_names=self.queue_names
         )
 
-    def terminate(self):
+    def terminate_instance(self):
         self.FULL_CLOSE = True
         self.connector.close()
 
-    def analyze(self, metrics1: dict, metrics2: dict, classification_metrics: dict):
+    def __analyze_incoming_metrics(self, metrics1: dict, metrics2: dict, classification_metrics: dict):
 
         objectives = {
             "MSG_TYPE": str(msg_type.OBJECTIVES_MSG),
@@ -95,13 +91,13 @@ class Analyzer:
 
                 if json_dict['MSG_TYPE'] == str(msg_type.METRICS_SNAPSHOT_MSG):
                     metrics1, metrics2, classification_metrics = utils.parse_metrics_msg(json_dict)
-                    objectives = self.analyze(metrics1, metrics2, classification_metrics)
+                    objectives = self.__analyze_incoming_metrics(metrics1, metrics2, classification_metrics)
 
                     self.connector.send_message_to_queues(objectives)
                 else:
-                    LOGGER.debug(f'Received message of type {json_dict["MSG_TYPE"]}')
+                    LOGGER.error(f'Received message of type {json_dict["MSG_TYPE"]}')
 
-            time.sleep(self.polling_timer)
+            time.sleep(self._polling_timer)
 
     def run_tasks(self):
         queue_reading_thread = threading.Thread(target=self.poll_queues, daemon=True)
@@ -113,14 +109,14 @@ class Analyzer:
                 time.sleep(1)
         except KeyboardInterrupt:
             LOGGER.debug("Received keyboard interrupt. Preparing to terminate threads.")
-            utils.save_current_timestamp()
+            utils.save_current_timestamp("")
 
         finally:
-            LOGGER.debug('Terminating DetectionSystem instance.')
             raise KeyboardInterrupt
 
 
 def process_command_line_args():
+    # Args: -polling_timer: time to wait each cycle to read messages, -verbose
     parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')
 
     parser.add_argument('-polling_timer',
@@ -128,26 +124,37 @@ def process_command_line_args():
                         default=5,
                         help='Specify the polling timer (float)'
                         )
+    parser.add_argument('-verbose',
+                        action='store_true',
+                        help='Set the logging default to "DEBUG"'
+                        )
 
     args = parser.parse_args()
 
-    polling_timer = args.polling_timer
+    verbose = args.verbose
+    if verbose:
+        LOGGER.setLevel(logging.DEBUG)
 
+    polling_timer = args.polling_timer
     if polling_timer is not None:
         LOGGER.debug(f'Polling Timer: {polling_timer}')
 
     return polling_timer
 
 
-if __name__ == '__main__':
-    arg = process_command_line_args()
-    analyzer = Analyzer(polling_timer=arg)
+def main():
+    timer = process_command_line_args()
+    analyzer = Analyzer(polling_timer=timer)
 
     try:
         analyzer.run_tasks()
     except KeyboardInterrupt:
         if analyzer.FULL_CLOSE:
-            analyzer.terminate()
+            analyzer.terminate_instance()
             LOGGER.debug('Deleting queues..')
         else:
             LOGGER.debug('Received keyboard interrupt. Preparing to terminate threads.')
+
+
+if __name__ == '__main__':
+    main()

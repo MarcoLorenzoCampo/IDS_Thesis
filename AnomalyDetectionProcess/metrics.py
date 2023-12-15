@@ -1,17 +1,17 @@
-import ray
 import os
 import threading
 
-from Shared import utils
 from Shared.msg_enum import msg_type
 
-LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Metrics:
 
     ALLOW_SNAPSHOT = False
 
     def __init__(self):
+
+        import detection_system_main
+        self.LOGGER = detection_system_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
 
         self.metrics_lock = threading.Lock()
 
@@ -138,7 +138,7 @@ class Metrics:
             self.ALLOW_SNAPSHOT = True
             self.__compute_performance_metrics(target=layer)
         else:
-            LOGGER.error(f'Not enough data for LAYER{layer}, skipping metrics computation for now.')
+            self.LOGGER.error(f'Not enough data for LAYER{layer}, skipping metrics computation for now.')
 
         self.__compute_classification_metrics()
 
@@ -163,28 +163,28 @@ class Metrics:
 
     def show_metrics(self):
 
-        LOGGER.debug('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
-        LOGGER.debug('Precision for layer 1: %s', self._metrics_1['precision'])
-        LOGGER.debug('F-score for layer 1: %s', self._metrics_1['fscore'])
-        LOGGER.debug('TPR for layer 1: %s', self._metrics_1['tpr'])
-        LOGGER.debug('FPR for layer 1: %s', self._metrics_1['fpr'])
-        LOGGER.debug('TNR for layer 1: %s', self._metrics_1['tnr'])
-        LOGGER.debug('FNR for layer 1: %s', self._metrics_1['fnr'])
-        LOGGER.debug('\n')
+        self.LOGGER.debug('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
+        self.LOGGER.debug('Precision for layer 1: %s', self._metrics_1['precision'])
+        self.LOGGER.debug('F-score for layer 1: %s', self._metrics_1['fscore'])
+        self.LOGGER.debug('TPR for layer 1: %s', self._metrics_1['tpr'])
+        self.LOGGER.debug('FPR for layer 1: %s', self._metrics_1['fpr'])
+        self.LOGGER.debug('TNR for layer 1: %s', self._metrics_1['tnr'])
+        self.LOGGER.debug('FNR for layer 1: %s', self._metrics_1['fnr'])
+        self.LOGGER.debug('\n')
 
-        LOGGER.debug('Accuracy for layer 2: %s', self._metrics_2['accuracy'])
-        LOGGER.debug('Precision for layer 2: %s', self._metrics_2['precision'])
-        LOGGER.debug('F-score for layer 2: %s', self._metrics_2['fscore'])
-        LOGGER.debug('TPR for layer 2: %s', self._metrics_2['tpr'])
-        LOGGER.debug('FPR for layer 2: %s', self._metrics_2['fpr'])
-        LOGGER.debug('TNR for layer 2: %s', self._metrics_2['tnr'])
-        LOGGER.debug('FNR for layer 2: %s', self._metrics_2['fnr'])
-        LOGGER.debug('\n')
+        self.LOGGER.debug('Accuracy for layer 2: %s', self._metrics_2['accuracy'])
+        self.LOGGER.debug('Precision for layer 2: %s', self._metrics_2['precision'])
+        self.LOGGER.debug('F-score for layer 2: %s', self._metrics_2['fscore'])
+        self.LOGGER.debug('TPR for layer 2: %s', self._metrics_2['tpr'])
+        self.LOGGER.debug('FPR for layer 2: %s', self._metrics_2['fpr'])
+        self.LOGGER.debug('TNR for layer 2: %s', self._metrics_2['tnr'])
+        self.LOGGER.debug('FNR for layer 2: %s', self._metrics_2['fnr'])
+        self.LOGGER.debug('\n')
 
-        LOGGER.debug('Normal ratio: %s', self._classification_metrics['normal_ratio'])
-        LOGGER.debug('L1 anomalies ratio: %s', self._classification_metrics['l1_anomaly_ratio'])
-        LOGGER.debug('L2 anomalies ratio: %s', self._classification_metrics['l2_anomaly_ratio'])
-        LOGGER.debug('Quarantined ratio: %s', self._classification_metrics['quarantine_ratio'])
+        self.LOGGER.debug('Normal ratio: %s', self._classification_metrics['normal_ratio'])
+        self.LOGGER.debug('L1 anomalies ratio: %s', self._classification_metrics['l1_anomaly_ratio'])
+        self.LOGGER.debug('L2 anomalies ratio: %s', self._classification_metrics['l2_anomaly_ratio'])
+        self.LOGGER.debug('Quarantined ratio: %s', self._classification_metrics['quarantine_ratio'])
 
     def reset(self):
         # reset the metrics and counts
@@ -206,7 +206,7 @@ class Metrics:
         return self._metrics_1, self._metrics_2, self._classification_metrics
 
     def snapshot_metrics(self):
-        LOGGER.debug('Building a json snapshot of current metrics')
+        self.LOGGER.debug('Building a json snapshot of current metrics')
 
         metrics_dict = {
             "MSG_TYPE": str(msg_type.METRICS_SNAPSHOT_MSG),

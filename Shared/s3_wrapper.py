@@ -30,7 +30,7 @@ class Loader:
         )
 
     def s3_original_test_set(self):
-        LOGGER.debug('Loading the test set.')
+        LOGGER.info('Loading the test set.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='OriginalDatasets',
@@ -45,7 +45,7 @@ class Loader:
         )
 
     def s3_min_features(self):
-        LOGGER.debug('Loading set of minimal features.')
+        LOGGER.info('Loading set of minimal features.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='AdditionalFiles/MinimalFeatures',
@@ -60,7 +60,7 @@ class Loader:
         )
 
     def s3_one_hot_encoders(self):
-        LOGGER.debug('Loading set of one hot encoders.')
+        LOGGER.info('Loading set of one hot encoders.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='AdditionalFiles/OneHotEncoders',
@@ -75,7 +75,7 @@ class Loader:
         )
 
     def s3_pca_encoders(self):
-        LOGGER.debug('Loading set of PCA encoders.')
+        LOGGER.info('Loading set of PCA encoders.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='AdditionalFiles/PCAEncoders',
@@ -90,7 +90,7 @@ class Loader:
         )
 
     def s3_scalers(self):
-        LOGGER.debug('Loading set of scalers.')
+        LOGGER.info('Loading set of scalers.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='AdditionalFiles/Scalers',
@@ -105,7 +105,7 @@ class Loader:
         )
 
     def s3_models(self):
-        LOGGER.debug('Loading models.')
+        LOGGER.info('Loading models.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='Models/StartingModels',
@@ -120,7 +120,7 @@ class Loader:
         )
 
     def s3_processed_train_sets(self):
-        LOGGER.debug('Loading fully processed train sets.')
+        LOGGER.info('Loading fully processed train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/PCAEncoded',
@@ -133,7 +133,7 @@ class Loader:
             file_name='KDDTrain+_l2_pca.pkl',
             download_path='../KBProcess/AWS Downloads/Datasets/PCAEncoded/'
         )
-        LOGGER.debug('Loading target variables for train sets.')
+        LOGGER.info('Loading target variables for train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
@@ -148,7 +148,7 @@ class Loader:
         )
 
     def s3_processed_validation_sets(self):
-        LOGGER.debug('Loading fully processed validation sets.')
+        LOGGER.info('Loading fully processed validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/PCAEncoded',
@@ -161,7 +161,7 @@ class Loader:
             file_name='KDDValidate+_l2_pca.pkl',
             download_path='../KBProcess/AWS Downloads/Datasets/PCAEncoded/'
         )
-        LOGGER.debug('Loading target variables for validation sets.')
+        LOGGER.info('Loading target variables for validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
@@ -186,7 +186,7 @@ class Loader:
 
     @staticmethod
     def __aws_download_callback(downloaded_bytes):
-        LOGGER.debug(f'Downloaded {downloaded_bytes} bytes')
+        LOGGER.info(f'Downloaded {downloaded_bytes} bytes')
         pass
 
     @staticmethod

@@ -1,22 +1,27 @@
+import os
 import pickle
 import time
-from pprint import pprint
-
 import optuna
 import pandas as pd
 
+from pprint import pprint
 from Shared.utils import LOGGER
-from optimizer import Optimizer
-from storage import Storage
+from TunerProcess.optimizer import Optimizer
+from TunerProcess.storage import Storage
 
 
 class Tuner:
     DEBUG = False
-    N_CORES = -1    # -1 means use all available cores
 
-    def __init__(self, n_trials: int, storage: Storage):
+    def __init__(self, n_trials: int, storage: Storage, cores: int):
+
+        import hypertuner_main
+        self.LOGGER = hypertuner_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
+
         self.storage = storage
+
         self.N_TRIALS = n_trials
+        self.N_CORES = cores
 
         self.optimizer = Optimizer()
 

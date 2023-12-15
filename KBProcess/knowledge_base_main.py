@@ -1,20 +1,16 @@
 import argparse
+import logging
 import sys
-
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
-
 import json
 import os
 import threading
 import time
 import boto3
 
-from storage import Storage
-import features_selector
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
+from KBProcess.storage import Storage
+from KBProcess import features_selector
 from Shared.msg_enum import msg_type
 from Shared import sqs_wrapper, utils
 
@@ -25,7 +21,9 @@ class KnowledgeBase:
     FULL_CLOSE = False
     DEBUG = True
 
-    def __init__(self):
+    def __init__(self, polling_timer: int):
+
+        self.polling_timer = polling_timer
 
         LOGGER.debug('Creating an instance of KnowledgeBase.')
         self.storage = Storage()
@@ -77,7 +75,7 @@ class KnowledgeBase:
                 else:
                     LOGGER.debug(f'Unexpected message type received: {json_dict["MSG_TYPE"]}')
 
-            time.sleep(2)
+            time.sleep(self.polling_timer)
 
     def __select_features_procedure(self, feature_selection_func):
 
@@ -149,7 +147,7 @@ class KnowledgeBase:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            utils.save_current_timestamp()
+            utils.save_current_timestamp("/")
 
         finally:
             LOGGER.debug('Terminating KnowledgeBase instance.')
@@ -173,29 +171,33 @@ def process_command_line_args():
                         default=1,
                         help='Specify the classification delay (float)'
                         )
+    parser.add_argument('-DEBUG',
+                        type=bool,
+                        default=False,
+                        help='Specify the if additional prints are needed'
+                        )
+    parser.add_argument('-verbose',
+                        action='store_true',
+                        help='Set the logging default to "DEBUG"'
+                        )
 
     args = parser.parse_args()
 
-    # Access the arguments using dot notation
-    metrics_snapshot_timer = args.metrics_snapshot_timer
-    polling_timer = args.polling_timer
-    classification_delay = args.classification_delay
+    verbose = args.verbose
+    if verbose:
+        LOGGER.setLevel(logging.DEBUG)
 
-    # You can check if the arguments are provided and then use them in your script
-    if metrics_snapshot_timer is not None:
-        LOGGER.debug(f'Metrics Snapshot Timer: {metrics_snapshot_timer}')
+    polling_timer = args.polling_timer
 
     if polling_timer is not None:
         LOGGER.debug(f'Polling Timer: {polling_timer}')
 
-    if classification_delay is not None:
-        LOGGER.debug(f'Classification Delay: {classification_delay}')
-
-    return metrics_snapshot_timer, polling_timer, classification_delay
+    return polling_timer
 
 
-if __name__ == '__main__':
-    kb = KnowledgeBase()
+def main():
+    poll_timer = process_command_line_args()
+    kb = KnowledgeBase(poll_timer)
 
     try:
         kb.run_tasks()
@@ -204,5 +206,8 @@ if __name__ == '__main__':
             kb.terminate()
             LOGGER.debug('Deleting queues..')
 
-        utils.save_current_timestamp()
         LOGGER.debug('Received keyboard interrupt. Terminating knowledge base instance.')
+
+
+if __name__ == '__main__':
+    main()

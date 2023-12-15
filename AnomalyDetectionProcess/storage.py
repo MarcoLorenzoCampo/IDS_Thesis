@@ -1,12 +1,11 @@
 import json
 import os
 import sqlite3
-from typing import Tuple
-
 import boto3
 import pandas as pd
-
+from typing import Tuple
 from Shared import s3_wrapper, utils
+
 
 LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
@@ -14,6 +13,10 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 class Storage:
 
     def __init__(self):
+
+        import detection_system_main
+        self.LOGGER = detection_system_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
+
         self.bucket_name = 'nsl-kdd-datasets'
         self.__s3_setup()
         self.__load_data_instances()

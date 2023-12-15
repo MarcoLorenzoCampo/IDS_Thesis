@@ -1,19 +1,20 @@
 import os
 import sqlite3
-
 import boto3
 import pandas as pd
-from botocore.exceptions import ClientError
 
+from botocore.exceptions import ClientError
 from Shared import utils
 from Shared.s3_wrapper import Loader
 
 
-LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
-
 class Storage:
 
     def __init__(self):
+
+        import hypertuner_main
+        self.LOGGER = hypertuner_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
+
         self.bucket_name = 'nsl-kdd-datasets'
         self.__s3_setup()
         self.__load_data_instances()
@@ -25,19 +26,19 @@ class Storage:
         self.loader = Loader(s3_resource=self.s3_resource, bucket_name=self.bucket_name)
 
         if self.__s3_files_ok() and not utils.need_s3_update():
-            LOGGER.debug('S3 is already setup and loaded.')
+            self.LOGGER.debug('S3 is already setup and loaded.')
             return
 
         self.__s3_load()
 
     def __s3_load(self):
-        LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
+        self.LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
 
         self.loader.s3_processed_train_sets()
         self.loader.s3_processed_validation_sets()
         self.loader.s3_models()
 
-        LOGGER.debug('Loading from S3 bucket complete.')
+        self.LOGGER.debug('Loading from S3 bucket complete.')
 
     def __s3_files_ok(self):
         l = self.loader
@@ -49,7 +50,7 @@ class Storage:
 
     def __load_data_instances(self):
 
-        LOGGER.debug('Loading train sets.')
+        self.LOGGER.debug('Loading train sets.')
         self.x_train_l1, self.y_train_l1 = self.loader.load_dataset(
             'KDDTrain+_l1_pca.pkl',
             'KDDTrain+_l1_targets.npy'
@@ -59,7 +60,7 @@ class Storage:
             'KDDTrain+_l2_targets.npy'
         )
 
-        LOGGER.debug('Loading validation sets.')
+        self.LOGGER.debug('Loading validation sets.')
         self.x_validate_l1, self.y_validate_l1 = self.loader.load_dataset(
             'KDDValidate+_l1_pca.pkl',
             'KDDValidate+_l1_targets.npy'
@@ -69,22 +70,22 @@ class Storage:
             'KDDValidate+_l2_targets.npy'
         )
 
-        LOGGER.debug('Loading models.')
+        self.LOGGER.debug('Loading models.')
         self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
                                                            'NSL_l2_classifier.pkl')
 
     def __sqlite3_setup(self):
-        LOGGER.debug('Connecting to sqlite3 in memory database.')
+        self.LOGGER.debug('Connecting to sqlite3 in memory database.')
         self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.sql_connection.cursor()
 
-        LOGGER.debug('Instantiating the needed SQL in memory tables.')
+        self.LOGGER.debug('Instantiating the needed SQL in memory tables.')
         self.__fill_tables()
 
-        LOGGER.debug('Removing local instances.')
+        self.LOGGER.debug('Removing local instances.')
         self.__clean()
 
-        LOGGER.debug('Completed sqlite3 in memory databases setup.')
+        self.LOGGER.debug('Completed sqlite3 in memory databases setup.')
 
     def __fill_tables(self):
         # create a table for each train set
@@ -123,20 +124,20 @@ class Storage:
             else:
                 sql_query = f'SELECT {select_clause} FROM {from_clause} WHERE {where_clause}'
 
-            LOGGER.debug(f'Executing the query: {sql_query}')
+            self.LOGGER.debug(f'Executing the query: {sql_query}')
 
             result_df = pd.read_sql_query(sql_query, self.sql_connection)
 
         except pd.errors.DatabaseError:
-            LOGGER.exception('Could not fulfill the requests.')
+            self.LOGGER.exception('Could not fulfill the requests.')
             return None
 
-        LOGGER.debug('Query was executed correctly.')
+        self.LOGGER.debug('Query was executed correctly.')
         return result_df
 
     def publish_s3_models(self):
 
-        LOGGER.debug(f'Updating models in the S3 bucket {self.bucket_name}.')
+        self.LOGGER.debug(f'Updating models in the S3 bucket {self.bucket_name}.')
 
         classifier1_path = 'AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl'
         classifier2_path = 'AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl'
@@ -155,7 +156,7 @@ class Storage:
             )
 
         except ClientError as e:
-            LOGGER.error(f'Error when uploading file: {e}')
+            self.LOGGER.error(f'Error when uploading file: {e}')
             return False
 
         return True

@@ -1,21 +1,16 @@
 import argparse
 import sys
-
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/AnomalyDetectionProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/KBProcess')
-sys.path.append('C:/Users/marco/PycharmProjects/IDS_Thesis/Other')
-
-import json
 import os
+import json
 import threading
-
-import boto3
 import time
+import boto3
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 from Shared.msg_enum import msg_type
-from tuner import Tuner
-from storage import Storage
+from TunerProcess.tuner import Tuner
+from TunerProcess.storage import Storage
 from Shared import utils
 from Shared.sqs_wrapper import Connector
 
@@ -24,14 +19,17 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class Hypertuner:
     FULL_CLOSE = False
-    DEBUG = True
+    DEBUG = False
 
     OPTIMIZATION_LOCK = False
 
-    def __init__(self, n_trials: int):
+    def __init__(self, n_trials: int, n_cores: int, reading_timer: float):
+
+        self.polling_timer = reading_timer
+        self.n_cores = n_cores
 
         self.storage = Storage()
-        self.tuner = Tuner(n_trials=n_trials, storage=self.storage)
+        self.tuner = Tuner(n_trials=n_trials, storage=self.storage, cores=self.n_cores)
         self.__sqs_setup()
 
         # new optimal models
@@ -127,7 +125,7 @@ class Hypertuner:
                     else:
                         LOGGER.debug('Process locked. Optimization in progress.')
 
-            time.sleep(2)
+            time.sleep(self.polling_timer)
 
     def run_test(self):
 
@@ -151,52 +149,58 @@ class Hypertuner:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            utils.save_current_timestamp()
+            utils.save_current_timestamp("")
             LOGGER.error('Terminating Hypertuner instance.')
             raise KeyboardInterrupt
 
 
 def process_command_line_args():
+    # Args: -n_cores, -polling_timer, -verbose
     parser = argparse.ArgumentParser(description='Process command line arguments for a Python script.')
 
-    parser.add_argument('-metrics_snapshot_timer',
-                        type=float,
-                        default=10,
-                        help='Specify the metrics snapshot timer (float)'
+    parser.add_argument('-n_cores',
+                        type=int,
+                        default=-1,
+                        help='Specify the number of cores (int)'
                         )
     parser.add_argument('-polling_timer',
                         type=float,
                         default=5,
                         help='Specify the polling timer (float)'
                         )
-    parser.add_argument('-classification_delay',
-                        type=float,
-                        default=1,
-                        help='Specify the classification delay (float)'
+    parser.add_argument('-n_trials',
+                        type=int,
+                        default=100,
+                        help='Specify the number of trials for tuning (default 100) (int)'
+                        )
+    parser.add_argument('-verbose',
+                        action='store_true',
+                        help='Specify the verbosity'
                         )
 
     args = parser.parse_args()
 
     # Access the arguments using dot notation
-    metrics_snapshot_timer = args.metrics_snapshot_timer
-    polling_timer = args.polling_timer
-    classification_delay = args.classification_delay
+    cores = args.n_cores
+    timer = args.polling_timer
+    trials = args.n_trials
 
     # You can check if the arguments are provided and then use them in your script
-    if metrics_snapshot_timer is not None:
-        LOGGER.debug(f'Metrics Snapshot Timer: {metrics_snapshot_timer}')
+    if cores is not None:
+        LOGGER.debug(f'Number of Cores: {cores}')
 
-    if polling_timer is not None:
-        LOGGER.debug(f'Polling Timer: {polling_timer}')
+    if timer is not None:
+        LOGGER.debug(f'Polling Timer: {timer}')
 
-    if classification_delay is not None:
-        LOGGER.debug(f'Classification Delay: {classification_delay}')
+    if trials is not None:
+        LOGGER.debug(f'Number of Trials: {trials}')
 
-    return metrics_snapshot_timer, polling_timer, classification_delay
+    return cores, timer, trials
 
 
-if __name__ == '__main__':
-    hypertuner = Hypertuner(n_trials=100)
+def main():
+    cores, polling_timer, trials = process_command_line_args()
+    hypertuner = Hypertuner(n_trials=trials, n_cores=cores, reading_timer=polling_timer)
 
     try:
         hypertuner.run_tasks()
@@ -206,3 +210,7 @@ if __name__ == '__main__':
             LOGGER.error('Deleting queues..')
         else:
             LOGGER.error('Received keyboard interrupt. Preparing to terminate threads.')
+
+
+if __name__ == '__main__':
+    main()
