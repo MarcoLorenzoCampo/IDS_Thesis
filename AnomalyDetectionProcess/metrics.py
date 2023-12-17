@@ -1,12 +1,14 @@
+import json
 import os
 import threading
 
+from Shared import utils
 from Shared.msg_enum import msg_type
 
 
 class Metrics:
 
-    ALLOW_SNAPSHOT = False
+    BEGIN_SNAPSHOTS = False
 
     def __init__(self):
 
@@ -135,7 +137,7 @@ class Metrics:
 
         # Compute metrics only if enough samples have been collected
         if all(val != 0 for val in count_dict.values()):
-            self.ALLOW_SNAPSHOT = True
+            self.BEGIN_SNAPSHOTS = True
             self.__compute_performance_metrics(target=layer)
         else:
             self.LOGGER.error(f'Not enough data for LAYER{layer}, skipping metrics computation for now.')
@@ -235,5 +237,11 @@ class Metrics:
                 "quarantined_ratio": self._classification_metrics['quarantine_ratio']
             }
         }
+
+        # Save metrics just before forwarding them
+        utils.pprint_to_file(
+            "performance_log.txt",
+            json.dumps(metrics_dict)
+        )
 
         return metrics_dict

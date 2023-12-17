@@ -1,68 +1,53 @@
-import argparse
 import copy
+import pprint
+import time
+import os
+import pandas as pd
 import logging
 import colorlog
-import os
-from datetime import datetime, timedelta
 
-import pandas as pd
+from datetime import datetime, timedelta
 
 
 def get_logger(name):
     logger = colorlog.getLogger(name)
 
-    formatter_info = colorlog.ColoredFormatter(
-        '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
-        log_colors={
-            'DEBUG': 'white',
-            'INFO': 'green',
-            'WARNING': 'yellow',
-            'ERROR': 'red',
-            'CRITICAL': 'bold_red',
-        }
-    )
-
-    formatter_warning = colorlog.ColoredFormatter(
-        '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
-        log_colors={
-            'DEBUG': 'white',
-            'INFO': 'green',
-            'WARNING': 'yellow',
-            'ERROR': 'red',
-            'CRITICAL': 'bold_red',
-        }
-    )
-
-    formatter_error = colorlog.ColoredFormatter(
-        '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
-        log_colors={
-            'DEBUG': 'white',
-            'INFO': 'green',
-            'WARNING': 'yellow',
-            'ERROR': 'red',
-            'CRITICAL': 'bold_red',
-        }
-    )
-
-    handler_info = colorlog.StreamHandler()
-    handler_info.setFormatter(formatter_info)
-    handler_warning = colorlog.StreamHandler()
-    handler_warning.setFormatter(formatter_warning)
-    handler_warning.setLevel(logging.WARNING)
-    handler_error = colorlog.StreamHandler()
-    handler_error.setFormatter(formatter_error)
-    handler_error.setLevel(logging.ERROR)
-
-    logger.addHandler(handler_info)
-    logger.addHandler(handler_warning)
-    logger.addHandler(handler_error)
-
+    # Set the logger level to the lowest level you want to capture
     logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    # Clear existing handlers to avoid duplication
+    logger.handlers = []
+
+    formatter = colorlog.ColoredFormatter(
+        '%(log_color)s%(asctime)-15s %(levelname)-10s %(name)-40s %(funcName)-35s %(lineno)-5d:%(reset)s %(message)s',
+        log_colors={
+            'DEBUG': 'white',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'bold_red',
+        }
+    )
+
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.DEBUG)
+
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
 
     return logger
 
 
 LOGGER = get_logger(os.path.splitext(os.path.basename(__file__))[0])
+
+def pprint_to_file(path: str, file_content: str):
+    LOGGER.info("Writing metrics to file.")
+
+    with open(path, "a") as log_file:
+        log_file.write("\n\n")
+        pprint.pprint(file_content, log_file)
 
 
 def data_process(incoming_data, scaler, ohe, pca, features, cat_features):

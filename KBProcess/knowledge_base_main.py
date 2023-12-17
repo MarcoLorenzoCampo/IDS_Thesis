@@ -87,7 +87,8 @@ class KnowledgeBase:
 
             update_msg = {
                 "MSG_TYPE": str(msg_type.MULTIPLE_UPDATE_MSG),
-                "UPDATE": ['FEATURES', 'TRAIN', 'VALIDATE']
+                "UPDATE": ['FEATURES', 'TRAIN', 'VALIDATE'],
+                "SENDER": 'KnowledgeBase'
             }
 
             self.connector.send_message_to_queues(update_msg)
@@ -98,21 +99,13 @@ class KnowledgeBase:
     def input_reading(self):
 
         action_mapping = {
-            1: self.features_selector.perform_icfs,
-            2: self.features_selector.perform_sfs,
-            3: self.features_selector.perform_bfs,
-            4: self.features_selector.perform_fisher,
-            5: self.features_selector.analyze_datasets
+            1: self.features_selector.analyze_datasets
         }
 
         while True:
 
             print("\nSelect the number of the action to perform:"
-                  "\n1. ICFS feature selection"
-                  "\n2. SFS feature selection"
-                  "\n3. BFS feature selection"
-                  "\n4. Fisher feature selection"
-                  "\n5. Analyze the dataset for changes"
+                  "\n1. Analyze the dataset for changes"
                   "\n'exit' to quit to program.")
 
             choice = input('>> ')
@@ -126,7 +119,7 @@ class KnowledgeBase:
                 if selected_function:
                     self.__select_features_procedure(selected_function)
                 else:
-                    print("Invalid action number. Please enter a number between 1 and 4.")
+                    print("Invalid action number.")
                     continue
 
             except ValueError:

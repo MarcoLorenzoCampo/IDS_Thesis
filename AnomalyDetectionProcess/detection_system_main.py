@@ -26,8 +26,11 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class DetectionSystem:
     FULL_CLOSE = False
+    stop_forward_metrics = threading.Event()
 
     def __init__(self, metrics_snapshot_timer: float, polling_timer: float, classification_delay: float):
+
+        self.snapshot_event = threading.Event()
 
         self.metrics_snapshot_timer = metrics_snapshot_timer
         self.polling_timer = polling_timer
@@ -50,8 +53,8 @@ class DetectionSystem:
 
         self.queue_urls = [
             'https://sqs.eu-west-3.amazonaws.com/818750160971/detection-system-update.fifo',
+            'https://sqs.eu-west-3.amazonaws.com/818750160971/tuned-models-ds.fifo'
         ]
-
         self.queue_names = [
             'forward-metrics.fifo',
         ]
@@ -132,7 +135,7 @@ class DetectionSystem:
 
     def poll_queues(self):
         while True:
-            # LOGGER.info('Fetching messages..')
+            LOGGER.info('Fetching messages..')
 
             try:
                 msg_body = self.connector.receive_messages()
@@ -144,15 +147,24 @@ class DetectionSystem:
 
                 json_dict = json.loads(msg_body)
 
+                # Case 1: Update models sent from Hypertuner or KnowledgeBase
                 if json_dict['MSG_TYPE'] == str(msg_type.MODEL_UPDATE_MSG):
                     LOGGER.debug('Parsed an UPDATE MODELS message, updating from S3.')
+
                     self.storage.loader.s3_models()
 
                     self.storage.layer1, self.storage.layer2 = (
                         self.storage.loader.load_models('NSL_l1_classifier.pkl', 'NSL_l2_classifier.pkl')
                     )
+
+                    # Activate snapshots only after the models have been updated
+                    if json_dict['SENDER'] == 'Hypertuner':
+                        LOGGER.debug('Update message from the tuner, starting snapshots back.')
+                        self.snapshot_event.set()
+
                     LOGGER.debug('Replaced current models with models from S3.')
 
+                # Case 2: Multiple objects update from KnowledgeBase
                 elif json_dict['MSG_TYPE'] == str(msg_type.MULTIPLE_UPDATE_MSG):
                     to_update = json_dict['UPDATE']
 
@@ -176,7 +188,7 @@ class DetectionSystem:
         while True:
             try:
                 with self.metrics.get_lock():
-                    # LOGGER.info('Classifying data..')
+                    LOGGER.info('Classifying data..')
                     sample, actual = self.runner.get_packet()
                     self.classify(sample, actual)
             except Exception as e:
@@ -186,18 +198,27 @@ class DetectionSystem:
             time.sleep(self.classification_delay)
 
     def snapshot_metrics(self):
+
         while True:
-            if self.metrics.ALLOW_SNAPSHOT:
+            if self.metrics.BEGIN_SNAPSHOTS:
+
+                # Reset the wait event before forwarding metrics
+                self.snapshot_event.clear()
+
                 with self.metrics.get_lock():
                     LOGGER.info('Snapshotting metrics..')
-                    json_output = self.metrics.snapshot_metrics()
-                    msg_body = json_output if json_output is not None else "ERROR"
+                    metrics_json = self.metrics.snapshot_metrics()
+
+                    msg_body = metrics_json if metrics_json is not None else "ERROR"
 
                 try:
                     self.connector.send_message_to_queues(msg_body)
                 except ClientError as e:
                     LOGGER.error(f"Error in snapshot metrics: {e}")
                     raise KeyboardInterrupt
+
+                # After sending the snapshot, suspend the snapshot process until an answer is received
+                self.snapshot_event.wait()
 
                 time.sleep(self.metrics_snapshot_timer)
 
@@ -226,7 +247,7 @@ def process_command_line_args():
 
     parser.add_argument('-metrics_snapshot_timer',
                         type=float,
-                        default=10,
+                        default=120,
                         help='Specify the metrics snapshot timer (float)'
                         )
     parser.add_argument('-polling_timer',
@@ -236,7 +257,7 @@ def process_command_line_args():
                         )
     parser.add_argument('-classification_delay',
                         type=float,
-                        default=1,
+                        default=0.5,
                         help='Specify the classification delay (float)'
                         )
     parser.add_argument('-verbose',

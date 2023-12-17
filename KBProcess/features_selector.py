@@ -13,29 +13,6 @@ class DataManager:
         import knowledge_base_main
         self.LOGGER = knowledge_base_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
 
-
-    def perform_icfs(x_train: pd.DataFrame):
-        self.LOGGER.info('Performing ICFS.')
-
-        return 1
-
-    def perform_fisher(x_train: pd.DataFrame):
-        self.LOGGER.debug('Performing fisher score.')
-
-
-
-        return 1
-
-    def perform_bfs(x_train: pd.DataFrame):
-        self.LOGGER.debug('Performing BFS.')
-
-        return 1
-
-    def perform_sfs(x_train: pd.DataFrame):
-        self.LOGGER.debug('Performing SFS.')
-
-        return 1
-
     def analyze_datasets(self, x_train: pd.DataFrame):
         self.LOGGER.debug('Analyzing datasets.')
 
@@ -54,6 +31,3 @@ class DataManager:
             return True
 
         return False
-
-    def __split_two_layers(x_train: pd.DataFrame):
-        pass

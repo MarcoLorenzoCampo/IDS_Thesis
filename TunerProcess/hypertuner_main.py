@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 import os
 import json
@@ -100,6 +101,7 @@ class Hypertuner:
                     for update in to_update:
                         update_calls[update]()
 
+                # Case 3: Objectives message received, start the optimization process
                 elif json_dict['MSG_TYPE'] == str(msg_type.OBJECTIVES_MSG):
                     LOGGER.debug(f'Received objectives notification: {json_dict}')
 
@@ -116,7 +118,8 @@ class Hypertuner:
                         LOGGER.debug('Models have been tuned and updated. Forwarding models update notification.')
 
                         msg_body = {
-                            "MSG_TYPE": str(msg_type.MODEL_UPDATE_MSG)
+                            "MSG_TYPE": str(msg_type.MODEL_UPDATE_MSG),
+                            "SENDER": 'Hypertuner'
                         }
 
                         self.connector.send_message_to_queues(msg_body)
@@ -150,7 +153,8 @@ class Hypertuner:
                 time.sleep(1)
         except KeyboardInterrupt:
             utils.save_current_timestamp("")
-            LOGGER.error('Terminating Hypertuner instance.')
+        finally:
+            LOGGER.debug('Terminating DetectionSystem instance.')
             raise KeyboardInterrupt
 
 
@@ -175,10 +179,14 @@ def process_command_line_args():
                         )
     parser.add_argument('-verbose',
                         action='store_true',
-                        help='Specify the verbosity'
+                        help='Set the logging default to "DEBUG"'
                         )
 
     args = parser.parse_args()
+
+    verbose = args.verbose
+    if verbose:
+        LOGGER.setLevel(logging.DEBUG)
 
     # Access the arguments using dot notation
     cores = args.n_cores
