@@ -18,11 +18,12 @@ from Shared.sqs_wrapper import Connector
 LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 
-class Hypertuner:
-    FULL_CLOSE = False
-    DEBUG = False
+class HypertunerMain:
 
+    FULL_CLOSE = False
+    DEBUG = True
     OPTIMIZATION_LOCK = False
+    INCOMPLETE_TUNING = False
 
     def __init__(self, n_trials: int, n_cores: int, reading_timer: float):
 
@@ -32,10 +33,6 @@ class Hypertuner:
         self.storage = Storage()
         self.tuner = Tuner(n_trials=n_trials, storage=self.storage, cores=self.n_cores)
         self.__sqs_setup()
-
-        # new optimal models
-        self.new_opt_layer1 = None
-        self.new_opt_layer2 = None
 
     def __sqs_setup(self):
         """
@@ -105,6 +102,8 @@ class Hypertuner:
                 elif json_dict['MSG_TYPE'] == str(msg_type.OBJECTIVES_MSG):
                     LOGGER.debug(f'Received objectives notification: {json_dict}')
 
+                    self.INCOMPLETE_TUNING = True
+
                     if not self.OPTIMIZATION_LOCK:
                         LOGGER.debug(f'Parsing message: {json_dict}')
                         objectives = utils.parse_objs(json_dict)
@@ -124,6 +123,7 @@ class Hypertuner:
 
                         self.connector.send_message_to_queues(msg_body)
 
+                        self.INCOMPLETE_TUNING = False
                         self.OPTIMIZATION_LOCK = False
                     else:
                         LOGGER.debug('Process locked. Optimization in progress.')
@@ -208,7 +208,7 @@ def process_command_line_args():
 
 def main():
     cores, polling_timer, trials = process_command_line_args()
-    hypertuner = Hypertuner(n_trials=trials, n_cores=cores, reading_timer=polling_timer)
+    hypertuner = HypertunerMain(n_trials=trials, n_cores=cores, reading_timer=polling_timer)
 
     try:
         hypertuner.run_tasks()
@@ -217,6 +217,15 @@ def main():
             hypertuner.terminate()
             LOGGER.error('Deleting queues..')
         else:
+            if hypertuner.INCOMPLETE_TUNING:
+
+                msg_body = {
+                    "MSG_TYPE": str(msg_type.MODEL_UPDATE_MSG),
+                    "SENDER": 'Hypertuner'
+                }
+
+                hypertuner.connector.send_message_to_queues(msg_body)
+
             LOGGER.error('Received keyboard interrupt. Preparing to terminate threads.')
 
 

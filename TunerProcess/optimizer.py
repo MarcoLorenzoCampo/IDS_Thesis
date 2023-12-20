@@ -60,16 +60,18 @@ class Optimizer:
 
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
-            rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
             rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
             rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
-            rf_max_features = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            min_samples_split = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            min_samples_leaf = trial.suggest_int(name='min_samples_leaf', low=1, high=10, step=1)
+            max_features = trial.suggest_categorical('max_features', ['auto', 'sqrt', 'log2'])
 
             parameters = {
-                'n_estimators': rf_n_estimators,
                 'max_depth': rf_max_depth,
                 'criterion': rf_criterion,
-                'max_features': rf_max_features
+                'min_samples_split': min_samples_split,
+                'min_samples_leaf': min_samples_leaf,
+                'max_features': max_features
             }
 
             classifier = self.train_new_hps(classifier_name, parameters)
@@ -88,11 +90,23 @@ class Optimizer:
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
             svc_c = trial.suggest_float(name='svc_c', low=1e-10, high=1e10)
+            kernel = trial.suggest_categorical('kernel', ['poly', 'rbf', 'sigmoid'])
 
             # add to parameters all the hyperparameters that need tuning
             parameters = {
-                'C': svc_c
+                'C': svc_c,
+                'kernel': kernel
             }
+
+            if kernel == 'rbf':
+                gamma = trial.suggest_float(name='gamma', low=1e-10, high=1e10)
+                parameters['gamma'] = gamma
+
+            if kernel in ['sigmoid', 'poly']:
+                degree = trial.suggest_int('degree', 2, 5)
+                coef0 = trial.suggest_float('coef0', -1.0, 1.0)
+                parameters['degree'] = degree
+                parameters['coef0'] = coef0
 
             classifier = self.train_new_hps(classifier_name, parameters)
             predicted = classifier.predict(self.x_validate_l2)
@@ -113,16 +127,24 @@ class Optimizer:
 
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
+            """
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
             rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
             rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
-            rf_max_features = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            """
+            min_samples_split = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            min_samples_leaf = trial.suggest_int(name='min_samples_leaf', low=1, high=10, step=1)
+            max_features = trial.suggest_categorical('max_features', [None, 'sqrt', 'log2'])
 
             parameters = {
+                """
                 'n_estimators': rf_n_estimators,
                 'max_depth': rf_max_depth,
                 'criterion': rf_criterion,
-                'max_features': rf_max_features
+                """
+                'max_features': min_samples_split,
+                'min_samples_leaf': min_samples_leaf,
+                'max_features': max_features
             }
 
             classifier = self.train_new_hps(classifier_name, parameters)
@@ -144,11 +166,23 @@ class Optimizer:
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
             svc_c = trial.suggest_float(name='svc_c', low=1e-10, high=1e10)
+            kernel = trial.suggest_categorical('kernel', ['poly', 'rbf', 'sigmoid'])
 
             # add to parameters all the hyperparameters that need tuning
             parameters = {
-                'C': svc_c
+                'C': svc_c,
+                'kernel': kernel
             }
+
+            if kernel == 'rbf':
+                gamma = trial.suggest_float(name='gamma', low=1e-10, high=1e10)
+                parameters['gamma'] = gamma
+
+            if kernel in ['sigmoid', 'poly']:
+                degree = trial.suggest_int('degree', 2, 5)
+                coef0 = trial.suggest_float('coef0', -1.0, 1.0)
+                parameters['degree'] = degree
+                parameters['coef0'] = coef0
 
             classifier = self.train_new_hps(classifier_name, parameters)
             predicted = classifier.predict(self.x_validate_l2)
@@ -175,13 +209,15 @@ class Optimizer:
             rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
             rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
             rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
-            rf_max_features = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            min_samples_split = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            max_features = trial.suggest_categorical('max_features', [None, 'sqrt', 'log2'])
 
             parameters = {
                 'n_estimators': rf_n_estimators,
                 'max_depth': rf_max_depth,
                 'criterion': rf_criterion,
-                'max_features': rf_max_features
+                'max_features': max_features,
+                'min_samples_split': min_samples_split
             }
 
             classifier = self.train_new_hps(classifier_name, parameters)
@@ -200,11 +236,23 @@ class Optimizer:
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
             svc_c = trial.suggest_float(name='svc_c', low=1e-10, high=1e10)
+            kernel = trial.suggest_categorical('kernel', ['poly', 'rbf', 'sigmoid'])
 
             # add to parameters all the hyperparameters that need tuning
             parameters = {
-                'C': svc_c
+                'C': svc_c,
+                'kernel': kernel
             }
+
+            if kernel == 'rbf':
+                gamma = trial.suggest_float(name='gamma', low=1e-10, high=1e10)
+                parameters['gamma'] = gamma
+
+            if kernel in ['sigmoid', 'poly']:
+                degree = trial.suggest_int('degree', 2, 5)
+                coef0 = trial.suggest_float('coef0', -1.0, 1.0)
+                parameters['degree'] = degree
+                parameters['coef0'] = coef0
 
             classifier = self.train_new_hps(classifier_name, parameters)
             predicted = classifier.predict(self.x_validate_l2)
@@ -225,16 +273,16 @@ class Optimizer:
 
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
-            rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
+            # rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
             rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
             rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
-            rf_max_features = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            min_samples_split = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
 
             parameters = {
-                'n_estimators': rf_n_estimators,
+                # 'n_estimators': rf_n_estimators,
                 'max_depth': rf_max_depth,
                 'criterion': rf_criterion,
-                'max_features': rf_max_features
+                'max_features': min_samples_split
             }
 
             classifier = self.train_new_hps(classifier_name, parameters)
@@ -256,11 +304,23 @@ class Optimizer:
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
             svc_c = trial.suggest_float(name='svc_c', low=1e-10, high=1e10)
+            kernel = trial.suggest_categorical('kernel', ['poly', 'rbf', 'sigmoid'])
 
             # add to parameters all the hyperparameters that need tuning
             parameters = {
-                'C': svc_c
+                'C': svc_c,
+                'kernel': kernel
             }
+
+            if kernel == 'rbf':
+                gamma = trial.suggest_float(name='gamma', low=1e-10, high=1e10)
+                parameters['gamma'] = gamma
+
+            if kernel in ['sigmoid', 'poly']:
+                degree = trial.suggest_int('degree', 2, 5)
+                coef0 = trial.suggest_float('coef0', -1.0, 1.0)
+                parameters['degree'] = degree
+                parameters['coef0'] = coef0
 
             classifier = self.train_new_hps(classifier_name, parameters)
             predicted = classifier.predict(self.x_validate_l2)
@@ -279,16 +339,20 @@ class Optimizer:
 
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
-            rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
+            rf_n_estimators = trial.suggest_int(name='n_estimators', low=10, high=100, step=5)
+            """
             rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
             rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
-            rf_max_features = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            """
+            max_features = trial.suggest_categorical('max_features', [None, 'sqrt', 'log2'])
 
             parameters = {
                 'n_estimators': rf_n_estimators,
+                """
                 'max_depth': rf_max_depth,
                 'criterion': rf_criterion,
-                'max_features': rf_max_features
+                """
+                'max_features': max_features
             }
 
             classifier = self.train_new_hps(classifier_name, parameters)
@@ -305,11 +369,23 @@ class Optimizer:
         if classifier_name == 'SVC':
             # list now the hyperparameters that need tuning
             svc_c = trial.suggest_float(name='svc_c', low=1e-10, high=1e10)
+            kernel = trial.suggest_categorical('kernel', ['poly', 'rbf', 'sigmoid'])
 
             # add to parameters all the hyperparameters that need tuning
             parameters = {
-                'C': svc_c
+                'C': svc_c,
+                'kernel': kernel
             }
+
+            if kernel == 'rbf':
+                gamma = trial.suggest_float(name='gamma', low=1e-10, high=1e10)
+                parameters['gamma'] = gamma
+
+            if kernel in ['sigmoid', 'poly']:
+                degree = trial.suggest_int('degree', 2, 5)
+                coef0 = trial.suggest_float('coef0', -1.0, 1.0)
+                parameters['degree'] = degree
+                parameters['coef0'] = coef0
 
             classifier = self.train_new_hps(classifier_name, parameters)
             predicted = classifier.predict(self.x_validate_l2)
@@ -322,16 +398,19 @@ class Optimizer:
 
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])
         if classifier_name == 'RandomForest':
-            rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
+            # rf_n_estimators = trial.suggest_int(name='n_estimators', low=1, high=19, step=2)
             rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
             rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
-            rf_max_features = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            min_samples_split = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
+            min_samples_leaf = trial.suggest_int(name='min_samples_leaf', low=2, high=10, step=1)
+            rf_n_estimators = trial.suggest_int(name='n_estimators', low=10, high=100, step=5)
 
             parameters = {
                 'n_estimators': rf_n_estimators,
                 'max_depth': rf_max_depth,
                 'criterion': rf_criterion,
-                'max_features': rf_max_features
+                'max_features': min_samples_split,
+                'min_samples_leaf': min_samples_leaf
             }
 
             classifier = self.train_new_hps(classifier_name, parameters)
@@ -362,6 +441,7 @@ class Optimizer:
 
             return precision
 
+    """
     def objective_fscore_l1(self, trial: optuna.Trial) -> float:
         self.LOGGER.debug(f'Calling optimization function: Objective FSCORE for layer 1')
 
@@ -416,6 +496,7 @@ class Optimizer:
             fscore = 2 * precision * tpr / (precision + tpr)
 
             return fscore
+    """
 
     def objective_quarantine_rate_l1(self, trial: optuna.Trial) -> float:
         classifier_name = trial.suggest_categorical('classifier', ['RandomForest'])

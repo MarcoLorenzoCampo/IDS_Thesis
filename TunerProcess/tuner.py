@@ -33,7 +33,8 @@ class Tuner:
         function_mapping = {
             'accuracy': [self.optimizer.objective_accuracy_l1, self.optimizer.objective_accuracy_l2],
             'precision': [self.optimizer.objective_precision_l1, self.optimizer.objective_precision_l2],
-            'fscore': [self.optimizer.objective_fscore_l1, self.optimizer.objective_fscore_l2],
+            # 'fscore': [self.optimizer.objective_fscore_l1, self.optimizer.objective_fscore_l2],
+            'fscore': [LOGGER.info("objective fscore_l1"), LOGGER.info("objective fscore_l2")],
             'tpr': [self.optimizer.objective_tpr_l1, self.optimizer.objective_tpr_l2],
             'tnr': [self.optimizer.objective_tnr_l1, self.optimizer.objective_tnr_l2],
             'fnr': [self.optimizer.objective_inv_fpr_l1, self.optimizer.objective_inv_fpr_l2],

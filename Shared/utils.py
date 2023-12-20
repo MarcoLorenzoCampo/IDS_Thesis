@@ -8,6 +8,8 @@ import colorlog
 
 from datetime import datetime, timedelta
 
+from Shared import msg_enum
+
 
 def get_logger(name):
     logger = colorlog.getLogger(name)

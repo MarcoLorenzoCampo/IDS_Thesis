@@ -1,9 +1,9 @@
 {
   "_metrics_thresh_1": {
-    "accuracy": 0.8,
-    "precision": 0.9,
+    "accuracy": 0.85,
+    "precision": 0.8,
     "fscore": 0.7,
-    "tpr": 0.85,
+    "tpr": 0.8,
     "fpr": 0.1,
     "tnr": 0.9,
     "fnr": 0.2
