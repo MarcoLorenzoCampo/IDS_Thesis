@@ -1,0 +1,8 @@
+
+
+('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
+ '0.8888888888888888, "precision": 0.875, "fscore": 0.875, "tpr": 0.875, '
+ '"fpr": 0.1, "tnr": 0.9, "fnr": 0.1}, "metrics_2": {"accuracy": 0.0, '
+ '"precision": 0.0, "fscore": 0.0, "tpr": 0.0, "fpr": 0.0, "tnr": 0.0, "fnr": '
+ '0.0}, "classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": '
+ '0.0, "l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')

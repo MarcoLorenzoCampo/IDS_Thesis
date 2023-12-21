@@ -163,31 +163,6 @@ class Metrics:
     def get_lock(self):
         return self.metrics_lock
 
-    def show_metrics(self):
-
-        self.LOGGER.debug('Accuracy for layer 1: %s', self._metrics_1['accuracy'])
-        self.LOGGER.debug('Precision for layer 1: %s', self._metrics_1['precision'])
-        self.LOGGER.debug('F-score for layer 1: %s', self._metrics_1['fscore'])
-        self.LOGGER.debug('TPR for layer 1: %s', self._metrics_1['tpr'])
-        self.LOGGER.debug('FPR for layer 1: %s', self._metrics_1['fpr'])
-        self.LOGGER.debug('TNR for layer 1: %s', self._metrics_1['tnr'])
-        self.LOGGER.debug('FNR for layer 1: %s', self._metrics_1['fnr'])
-        self.LOGGER.debug('\n')
-
-        self.LOGGER.debug('Accuracy for layer 2: %s', self._metrics_2['accuracy'])
-        self.LOGGER.debug('Precision for layer 2: %s', self._metrics_2['precision'])
-        self.LOGGER.debug('F-score for layer 2: %s', self._metrics_2['fscore'])
-        self.LOGGER.debug('TPR for layer 2: %s', self._metrics_2['tpr'])
-        self.LOGGER.debug('FPR for layer 2: %s', self._metrics_2['fpr'])
-        self.LOGGER.debug('TNR for layer 2: %s', self._metrics_2['tnr'])
-        self.LOGGER.debug('FNR for layer 2: %s', self._metrics_2['fnr'])
-        self.LOGGER.debug('\n')
-
-        self.LOGGER.debug('Normal ratio: %s', self._classification_metrics['normal_ratio'])
-        self.LOGGER.debug('L1 anomalies ratio: %s', self._classification_metrics['l1_anomaly_ratio'])
-        self.LOGGER.debug('L2 anomalies ratio: %s', self._classification_metrics['l2_anomaly_ratio'])
-        self.LOGGER.debug('Quarantined ratio: %s', self._classification_metrics['quarantine_ratio'])
-
     def reset(self):
         # reset the metrics and counts
         self._count_1 = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0, 'all': 0}

@@ -22,6 +22,7 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 class MsgHandler(MetricsMsgHandler):
 
     def __init__(self, polling_timer: float, analyzer: Analyzer):
+
         self._polling_timer = polling_timer
         self.analyzer = analyzer
 

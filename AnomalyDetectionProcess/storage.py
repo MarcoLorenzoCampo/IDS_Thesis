@@ -3,7 +3,6 @@ import os
 import sqlite3
 import boto3
 import pandas as pd
-from typing import Tuple
 from Shared import s3_wrapper, utils
 
 
@@ -20,7 +19,6 @@ class Storage:
         self.bucket_name = 'nsl-kdd-datasets'
         self.__s3_setup()
         self.__load_data_instances()
-        self.__set_local_storage()
         self.__sqlite3_setup()
         self.__parse_detection_parameters()
 
@@ -37,7 +35,7 @@ class Storage:
         self.s3_resource = boto3.client('s3')
         self.loader = s3_wrapper.Loader(bucket_name=self.bucket_name, s3_resource=self.s3_resource)
 
-        if self.__s3_ok() and not utils.need_s3_update():
+        if self.__s3_ok() and not utils.need_s3_update("AnomalyDetectionProcess/"):
             LOGGER.debug('S3 is already setup and loaded.')
             return
 
@@ -88,12 +86,6 @@ class Storage:
         self.features_l1 = s3_wrapper.Loader.load_features('NSL_features_l1.txt')
         self.features_l2 = s3_wrapper.Loader.load_features('NSL_features_l2.txt')
 
-    def __set_local_storage(self):
-        self.quarantine_samples = pd.DataFrame(columns=self.x_test.columns)
-        self.anomaly_by_l1 = pd.DataFrame(columns=self.x_test.columns)
-        self.anomaly_by_l2 = pd.DataFrame(columns=self.x_test.columns)
-        self.normal_traffic = pd.DataFrame(columns=self.x_test.columns)
-
     def __sqlite3_setup(self):
         LOGGER.debug('Connecting to sqlite3 in-memory database.')
         self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False)
@@ -118,23 +110,3 @@ class Storage:
 
     def __clean(self):
         del self.x_test
-
-    def add_to_quarantine(self, sample: pd.DataFrame) -> Tuple[str, int]:
-        self.quarantine_samples = pd.concat([self.quarantine_samples, sample], axis=0)
-        return 'quarantine', 1
-
-    def add_to_anomaly1(self, sample: pd.DataFrame) -> Tuple[str, int]:
-        self.anomaly_by_l1 = pd.concat([self.anomaly_by_l1, sample], axis=0)
-        return 'l1_anomaly', 1
-
-    def add_to_anomaly2(self, sample: pd.DataFrame) -> Tuple[str, int]:
-        self.anomaly_by_l2 = pd.concat([self.anomaly_by_l2, sample], axis=0)
-        return 'l2_anomaly', 1
-
-    def add_to_normal1(self, sample: pd.DataFrame) -> Tuple[str, int]:
-        self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
-        return 'normal_traffic', 1
-
-    def add_to_normal2(self, sample: pd.DataFrame) -> Tuple[str, int]:
-        self.normal_traffic = pd.concat([self.normal_traffic, sample], axis=0)
-        return 'normal_traffic', 1

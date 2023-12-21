@@ -18,17 +18,7 @@ class Runner:
         self.y_test_expanded = np.load('Files/KDDTest+_expanded_only_targets.npy', allow_pickle=True)
 
     def oversample(self):
-        """
-        This function uses SMOTE-NC to oversample the data, and then saves the oversampled data to csv and npy files.
 
-        Args:
-            None
-
-        Returns:
-            None
-
-        """
-        # define dataset
         x, y = copy.deepcopy(self.x_test), copy.deepcopy(self.y_test)
 
         del x['label']

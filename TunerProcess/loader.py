@@ -98,8 +98,8 @@ class Loader:
             Callback=self.__aws_download_callback
         )
 
-    def __aws_download_callback(self, bytes):
-        self.LOGGER.debug(f'Downloaded {bytes} bytes')
+    def __aws_download_callback(self, read_bytes):
+        self.LOGGER.debug(f'Downloaded {read_bytes} bytes')
         pass
 
     @staticmethod
