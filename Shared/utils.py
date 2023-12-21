@@ -128,9 +128,9 @@ def parse_metrics_msg(parsed_data: dict):
 
     return metrics1, metrics2, classification_metrics
 
-def need_s3_update():
+def need_s3_update(path: str):
     try:
-        with open('../AnomalyDetectionProcess/last_online.txt', 'r') as last_online_file:
+        with open(path + 'last_online.txt', 'r') as last_online_file:
             last_online_str = last_online_file.read().strip()
 
         last_online = datetime.strptime(last_online_str, "%Y-%m-%d %H:%M:%S")

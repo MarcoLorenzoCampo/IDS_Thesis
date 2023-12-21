@@ -13,13 +13,13 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from Shared import utils
 from Shared.sqs_wrapper import Connector
 from Shared.msg_enum import msg_type
-from Shared.message_handler import MessageHandler
+from Shared.message_handler import MetricsMsgHandler
 from analyzer import Analyzer
 
 
 LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
-class SQSManager(MessageHandler):
+class MsgHandler(MetricsMsgHandler):
 
     def __init__(self, polling_timer: float, analyzer: Analyzer):
         self._polling_timer = polling_timer
@@ -45,7 +45,7 @@ class SQSManager(MessageHandler):
             queue_names=self.queue_names
         )
 
-    def handle_message(self, msg_body: str):
+    def handle_metrics_msg(self, msg_body: str):
 
         if msg_body:
             LOGGER.debug(f'Parsing message: {msg_body}')
@@ -66,7 +66,7 @@ class SQSManager(MessageHandler):
             try:
                 msg_body = self.connector.receive_messages()
                 if msg_body:
-                    self.handle_message(msg_body)
+                    self.handle_metrics_msg(msg_body)
             except Exception as e:
                 LOGGER.error(f"Error in fetching messages from queue: {e}")
                 raise KeyboardInterrupt
@@ -76,7 +76,7 @@ class SQSManager(MessageHandler):
 
 class AnalyzerMain:
 
-    def __init__(self, sqs_manager: SQSManager, analyzer: Analyzer):
+    def __init__(self, sqs_manager: MsgHandler, analyzer: Analyzer):
 
         self.FULL_CLOSE = False
         self.analyzer = analyzer
@@ -135,7 +135,7 @@ def main():
     timer = CommandLineParser.process_command_line_args()
 
     analyzer = Analyzer("thresholds.json")
-    sqs_manager = SQSManager(polling_timer=timer, analyzer=analyzer)
+    sqs_manager = MsgHandler(polling_timer=timer, analyzer=analyzer)
 
     analyzer_main = AnalyzerMain(analyzer=analyzer, sqs_manager=sqs_manager)
 

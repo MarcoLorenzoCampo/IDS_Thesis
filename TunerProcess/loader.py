@@ -1,17 +1,19 @@
 import os
+import sys
 
 import joblib
 import numpy as np
 import pandas as pd
 
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 class Loader:
-    def __init__(self, s3_resource):
+    def __init__(self, s3_resource, bucket_name: str):
 
         import hypertuner_main
         self.LOGGER = hypertuner_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
 
-        self.bucket_name = 'nsl-kdd-datasets'
+        self.bucket_name = bucket_name
         self.s3_resource = s3_resource
 
     def s3_load(self):
