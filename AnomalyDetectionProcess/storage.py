@@ -18,7 +18,7 @@ class Storage:
 
         self.bucket_name = 'nsl-kdd-datasets'
         self.__s3_setup()
-        self.__load_data_instances()
+        self.__load_data_in_disk()
         self.__sqlite3_setup()
         self.__parse_detection_parameters()
 
@@ -64,7 +64,7 @@ class Storage:
             l.check_scalers()
         )
 
-    def __load_data_instances(self):
+    def __load_data_in_disk(self):
         LOGGER.debug('Loading test set.')
         self.x_test, self.y_test = s3_wrapper.Loader.load_test_set()
 

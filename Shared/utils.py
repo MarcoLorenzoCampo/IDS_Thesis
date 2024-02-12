@@ -48,7 +48,7 @@ def pprint_to_file(path: str, file_content: str):
     LOGGER.info("Writing metrics to file.")
 
     with open(path, "a") as log_file:
-        log_file.write("\n\n")
+        log_file.write(str(datetime.now()) + "\n\n")
         pprint.pprint(file_content, log_file)
 
 

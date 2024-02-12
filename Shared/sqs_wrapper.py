@@ -133,7 +133,7 @@ class Connector:
                     MessageAttributeNames=['All'],
                     MaxNumberOfMessages=1,
                     VisibilityTimeout=5,
-                    WaitTimeSeconds=0
+                    WaitTimeSeconds=20,
                 )
 
                 if 'Messages' in response:

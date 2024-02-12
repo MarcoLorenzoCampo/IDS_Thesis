@@ -25,6 +25,7 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 
 class DetectionSystemMain(FullMsgHandler):
     FULL_CLOSE = False
+    STATIC_EVAL = True
     stop_forward_metrics = threading.Event()
 
     def __init__(self, metrics_snapshot_timer: float, polling_timer: float, classification_delay: float,
@@ -128,7 +129,7 @@ class DetectionSystemMain(FullMsgHandler):
         while True:
             try:
                 with self.classification_pipeline.metrics.get_lock():
-                    LOGGER.info('Classifying data..')
+                    #LOGGER.info('Classifying data..')
                     sample, actual = self.runner.get_packet()
                     self.classification_pipeline.classify(sample, actual)
             except Exception as e:
@@ -151,14 +152,15 @@ class DetectionSystemMain(FullMsgHandler):
 
                     msg_body = metrics_json if metrics_json is not None else "ERROR"
 
-                try:
-                    self.connector.send_message_to_queues(msg_body)
-                except ClientError as e:
-                    LOGGER.error(f"Error in snapshot metrics: {e}")
-                    raise KeyboardInterrupt
+                if not self.STATIC_EVAL:
+                    try:
+                        self.connector.send_message_to_queues(msg_body)
+                    except ClientError as e:
+                        LOGGER.error(f"Error in snapshot metrics: {e}")
+                        raise KeyboardInterrupt
 
-                # After sending the snapshot, suspend the snapshot process until an answer is received
-                self.snapshot_event.wait()
+                    # After sending the snapshot, suspend the snapshot process until an answer is received
+                    self.snapshot_event.wait()
 
                 time.sleep(self.metrics_snapshot_timer)
 
@@ -190,7 +192,7 @@ class CommandLineParser:
 
         parser.add_argument('-metrics_snapshot_timer',
                             type=float,
-                            default=120,
+                            default=30,
                             help='Specify the metrics snapshot timer (float)'
                             )
         parser.add_argument('-polling_timer',
@@ -200,7 +202,7 @@ class CommandLineParser:
                             )
         parser.add_argument('-classification_delay',
                             type=float,
-                            default=0.5,
+                            default=0.000,
                             help='Specify the classification delay (float)'
                             )
         parser.add_argument('-verbose',

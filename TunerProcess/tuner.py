@@ -90,7 +90,10 @@ class Tuner:
             new_layer1 = self.optimization_manager.rf_trainer.train(best_hps)
 
             LOGGER.debug(f"Found new optimal hyperparameters for layer 1: {best_hps}")
-            LOGGER.info(f"Optimization of layer1 took: {time.time() - start}")
+            tune_time = time.time() - start
+            LOGGER.info(f"Optimization of layer1 took: {tune_time}")
+
+            self.report_tuning_info(1, tune_time, best_hps)
 
             with open('AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer1, f)
@@ -107,7 +110,10 @@ class Tuner:
             new_layer2 = self.optimization_manager.svm_trainer.train(best_hps)
 
             LOGGER.debug(f"Found new optimal hyperparameters for layer 2: {best_hps}")
-            LOGGER.info(f"Optimization of layer2 took: {time.time() - start}")
+            tune_time = time.time() - start
+            LOGGER.info(f"Optimization of layer2 took: {tune_time}")
+
+            self.report_tuning_info(2, tune_time, best_hps)
 
             with open('AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer2, f)
@@ -124,6 +130,14 @@ class Tuner:
         best_hps = best_trial.params
 
         return best_hps
+
+    @staticmethod
+    def report_tuning_info(layer, timing, hps):
+
+        with open("optimal_tuning_hps.txt", "a") as f:
+            f.write(f"Layer {layer}:\n")
+            f.write(f"New optimal hyperparamters: [{hps}]\n")
+            f.write(f"Training time: {timing}")
 
 
 class TuningHandler:
@@ -162,7 +176,6 @@ class TuningHandler:
             return new_models_msg
         else:
             LOGGER.debug('Process locked. Optimization in progress.')
-
 
 class TuningStatusManager:
 

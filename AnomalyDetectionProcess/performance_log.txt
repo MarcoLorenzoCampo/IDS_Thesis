@@ -1,8 +1,72 @@
-
+('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
+ '0.8646654368606406, "precision": 0.8925126696092855, "tpr": '
+ '0.8509195760598504, "fpr": 0.11932849364791288, "tnr": 0.8353417111378895, '
+ '"fnr": 0.1646582888621105}, "metrics_2": {"accuracy": 0.8891959351042966, '
+ '"precision": 0.7179236043095005, "tpr": 0.43424170616113744, "fpr": '
+ '0.030220356768100736, "tnr": 0.9063450034323821, "fnr": '
+ '0.09365499656761793}, "classification_metrics": {"normal_ratio": 0.0, '
+ '"l1_anomaly_ratio": 0.0, "l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')
+2024-02-12 15:07:23.521001
 
 ('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
- '0.8888888888888888, "precision": 0.875, "fscore": 0.875, "tpr": 0.875, '
- '"fpr": 0.1, "tnr": 0.9, "fnr": 0.1}, "metrics_2": {"accuracy": 0.0, '
- '"precision": 0.0, "fscore": 0.0, "tpr": 0.0, "fpr": 0.0, "tnr": 0.0, "fnr": '
- '0.0}, "classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": '
- '0.0, "l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')
+ '0.875, "precision": 0.85, "tpr": 0.8947368421052632, "fpr": '
+ '0.14285714285714285, "tnr": 0.9, "fnr": 0.1, "fscore": 0.8717948717948718}, '
+ '"metrics_2": {"accuracy": 0.8888888888888888, "precision": 0.5, "tpr": 0.5, '
+ '"fpr": 0.0625, "tnr": 0.9375, "fnr": 0.0625, "fscore": 0.5}, '
+ '"classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": 0.0, '
+ '"l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')
+2024-02-12 15:07:53.617254
+
+('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
+ '0.866374957926624, "precision": 0.9059696875966594, "tpr": '
+ '0.856683240713659, "fpr": 0.12049147839873167, "tnr": 0.8191214470284238, '
+ '"fnr": 0.18087855297157623, "fscore": 0.880637402285027}, "metrics_2": '
+ '{"accuracy": 0.8722836446816622, "precision": 0.7126436781609196, "tpr": '
+ '0.4170403587443946, "fpr": 0.034451079467156635, "tnr": 0.8899237933954276, '
+ '"fnr": 0.1100762066045724, "fscore": 0.5261669024045262}, '
+ '"classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": 0.0, '
+ '"l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')
+2024-02-12 15:08:23.728557
+
+('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
+ '0.8616325490529176, "precision": 0.9021256345177665, "tpr": '
+ '0.8489326765188834, "fpr": 0.12160031533307056, "tnr": 0.814957030535747, '
+ '"fnr": 0.18504296946425305, "fscore": 0.8747212181804199}, "metrics_2": '
+ '{"accuracy": 0.8732688294441282, "precision": 0.7260536398467433, "tpr": '
+ '0.4192477876106195, "fpr": 0.0327455919395466, "tnr": 0.8894504106127605, '
+ '"fnr": 0.11054958938723942, "fscore": 0.5315568022440392}, '
+ '"classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": 0.0, '
+ '"l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')
+2024-02-12 15:08:53.741975
+
+('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
+ '0.8631842209969874, "precision": 0.9031336015244548, "tpr": '
+ '0.8511423725431507, "fpr": 0.12087186261558784, "tnr": 0.8168651037191604, '
+ '"fnr": 0.18313489628083957, "fscore": 0.8763675586830345}, "metrics_2": '
+ '{"accuracy": 0.8774316592498411, "precision": 0.7371794871794872, "tpr": '
+ '0.43103448275862066, "fpr": 0.03138876129229827, "tnr": 0.8928722653493296, '
+ '"fnr": 0.10712773465067044, "fscore": 0.54399243140965}, '
+ '"classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": 0.0, '
+ '"l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')
+2024-02-12 15:09:23.908174
+
+('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
+ '0.86410774990318, "precision": 0.8976487997369287, "tpr": '
+ '0.8509195760598504, "fpr": 0.11963101758431825, "tnr": 0.8272686230248307, '
+ '"fnr": 0.1727313769751693, "fscore": 0.8736597855656905}, "metrics_2": '
+ '{"accuracy": 0.8858400449522382, "precision": 0.7352056168505516, "tpr": '
+ '0.43424170616113744, "fpr": 0.02936596218020022, "tnr": 0.9013531659952484, '
+ '"fnr": 0.09864683400475158, "fscore": 0.5459962756052141}, '
+ '"classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": 0.0, '
+ '"l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')
+2024-02-12 15:09:53.910890
+
+('{"MSG_TYPE": "msg_type.METRICS_SNAPSHOT_MSG", "metrics_1": {"accuracy": '
+ '0.8651470874732126, "precision": 0.8758321970000802, "tpr": '
+ '0.8509195760598504, "fpr": 0.1206265097794748, "tnr": 0.8550537960297014, '
+ '"fnr": 0.14494620397029853, "fscore": 0.8631961737618088}, "metrics_2": '
+ '{"accuracy": 0.8981126164930692, "precision": 0.6793327154772938, "tpr": '
+ '0.43424170616113744, "fpr": 0.031224618716722316, "tnr": 0.91830624465355, '
+ '"fnr": 0.08169375534644996, "fscore": 0.5298156848572462}, '
+ '"classification_metrics": {"normal_ratio": 0.0, "l1_anomaly_ratio": 0.0, '
+ '"l2_anomaly_ratio": 0.0, "quarantined_ratio": 0.0}}')

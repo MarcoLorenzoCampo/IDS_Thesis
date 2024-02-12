@@ -190,20 +190,20 @@ class Metrics:
             "metrics_1": {
                 "accuracy": self._metrics_1['accuracy'],
                 "precision": self._metrics_1['precision'],
-                "fscore": self._metrics_1['fscore'],
                 "tpr": self._metrics_1['tpr'],
                 "fpr": self._metrics_1['fpr'],
                 "tnr": self._metrics_1['tnr'],
-                "fnr": self._metrics_1['fnr']
+                "fnr": self._metrics_1['fnr'],
+                "fscore": self._metrics_1['fscore']
             },
             "metrics_2": {
                 "accuracy": self._metrics_2['accuracy'],
                 "precision": self._metrics_2['precision'],
-                "fscore": self._metrics_2['fscore'],
                 "tpr": self._metrics_2['tpr'],
                 "fpr": self._metrics_2['fpr'],
                 "tnr": self._metrics_2['tnr'],
-                "fnr": self._metrics_2['fnr']
+                "fnr": self._metrics_2['fnr'],
+                "fscore": self._metrics_2['fscore']
             },
             "classification_metrics": {
                 "normal_ratio": self._classification_metrics['normal_ratio'],
@@ -213,10 +213,14 @@ class Metrics:
             }
         }
 
+        self.write_performance_log(metrics_dict)
+
+        return metrics_dict
+
+    def write_performance_log(self, metrics_dict):
         # Save metrics just before forwarding them
+
         utils.pprint_to_file(
             "performance_log.txt",
             json.dumps(metrics_dict)
         )
-
-        return metrics_dict
