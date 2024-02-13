@@ -6,6 +6,7 @@ import os
 import time
 import threading
 import boto3
+import joblib
 
 from botocore.exceptions import ClientError
 
@@ -26,6 +27,7 @@ LOGGER = utils.get_logger(os.path.splitext(os.path.basename(__file__))[0])
 class DetectionSystemMain(FullMsgHandler):
     FULL_CLOSE = False
     STATIC_EVAL = True
+    DEFAULT_RUN = True
     stop_forward_metrics = threading.Event()
 
     def __init__(self, metrics_snapshot_timer: float, polling_timer: float, classification_delay: float,
@@ -38,6 +40,9 @@ class DetectionSystemMain(FullMsgHandler):
         self.classification_pipeline = classification_pipeline
         self.storage = storage
         self.__sqs_setup()
+
+        if self.DEFAULT_RUN:
+            self.force_default_models()
 
         # only for testing purposes
         self.runner = Runner()
@@ -64,6 +69,12 @@ class DetectionSystemMain(FullMsgHandler):
     def terminate(self):
         self.FULL_CLOSE = True
         self.connector.close()
+
+    def force_default_models(self):
+        LOGGER.warning('FORCING DEFAULT MODELS!')
+
+        self.storage.layer1 = joblib.load("StartingModels/random_forest_model_default.pkl")
+        self.storage.layer2 = joblib.load("StartingModels/support_vector_machine_model_default.pkl")
 
     def poll_queues(self):
         while True:
@@ -126,16 +137,18 @@ class DetectionSystemMain(FullMsgHandler):
         LOGGER.debug('Replaced current models with models from S3.')
 
     def run_classification(self):
+        i = 0
         while True:
             try:
                 with self.classification_pipeline.metrics.get_lock():
-                    #LOGGER.info('Classifying data..')
+                    LOGGER.info(f'Classifying data #{i}')
                     sample, actual = self.runner.get_packet()
                     self.classification_pipeline.classify(sample, actual)
             except Exception as e:
                 LOGGER.error(f"Error in classification: {e}")
                 raise KeyboardInterrupt
 
+            i += 1
             time.sleep(self.classification_delay)
 
     def snapshot_metrics(self):
@@ -192,7 +205,7 @@ class CommandLineParser:
 
         parser.add_argument('-metrics_snapshot_timer',
                             type=float,
-                            default=30,
+                            default=5,
                             help='Specify the metrics snapshot timer (float)'
                             )
         parser.add_argument('-polling_timer',

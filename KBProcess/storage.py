@@ -35,7 +35,7 @@ class Storage:
         self.s3_resource = boto3.client('s3')
         self.loader = Loader(s3_resource=self.s3_resource, bucket_name=self.bucket_name)
 
-        if self.__s3_files_ok() and not utils.need_s3_update():
+        if self.__s3_files_ok() and not utils.need_s3_update(""):
             self.LOGGER.debug('S3 is already setup and loaded.')
             return
 
