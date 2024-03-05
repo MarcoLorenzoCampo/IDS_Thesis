@@ -1,0 +1,29 @@
+Layer 1:
+New optimal hyperparamters: [{'max_depth': 31, 'criterion': 'entropy', 'min_samples_split': 2, 'min_samples_leaf': 2, 'n_estimators': 35, 'max_features': 'log2'}]
+Training time: 585.1603636741638Layer 1:
+New optimal hyperparamters: [{'max_depth': 23, 'criterion': 'gini', 'min_samples_split': 2, 'min_samples_leaf': 1, 'n_estimators': 35, 'max_features': 'sqrt'}]
+Training time: 219.2877812385559Layer 1:
+New optimal hyperparamters: [{'max_depth': 32, 'criterion': 'log_loss', 'min_samples_split': 5, 'min_samples_leaf': 2, 'max_features': 'log2'}]
+Training time: 27.075286149978638Layer 1:
+New optimal hyperparamters: [{'max_depth': 24, 'criterion': 'log_loss', 'min_samples_split': 7, 'min_samples_leaf': 1, 'n_estimators': 70}]
+Training time: 268.97672486305237Layer 1:
+New optimal hyperparamters: [{'max_depth': 22, 'criterion': 'log_loss', 'min_samples_split': 9, 'min_samples_leaf': 1, 'max_features': 'sqrt'}]
+Training time: 24.948865175247192Layer 1:
+New optimal hyperparamters: [{'max_depth': 16, 'criterion': 'entropy', 'min_samples_split': 5, 'min_samples_leaf': 2, 'max_features': 'sqrt'}]
+Training time: 28.166133880615234Layer 1:
+New optimal hyperparamters: [{'max_depth': 32, 'criterion': 'entropy', 'min_samples_split': 7, 'min_samples_leaf': 1, 'max_features': 'sqrt'}]
+Training time: 27.088939666748047Layer 1:
+New optimal hyperparamters: [{'max_depth': 32, 'criterion': 'log_loss', 'min_samples_split': 6, 'min_samples_leaf': 1, 'n_estimators': 20, 'max_features': 'log2'}]
+Training time: 247.6000521183014Layer 1:
+New optimal hyperparamters: [{'max_depth': 19, 'criterion': 'log_loss', 'min_samples_split': 9}]
+Training time: 52.57226014137268Layer 1:
+New optimal hyperparamters: [{'max_depth': 22, 'criterion': 'gini', 'min_samples_split': 8, 'min_samples_leaf': 1, 'n_estimators': 10, 'max_features': 'log2'}]
+Training time: 245.51318502426147Layer 1:
+New optimal hyperparamters: [{'max_depth': 32, 'criterion': 'entropy', 'min_samples_split': 4, 'min_samples_leaf': 1, 'n_estimators': 80}]
+Training time: 236.88316535949707Layer 1:
+New optimal hyperparamters: [{'max_depth': 27, 'criterion': 'gini', 'min_samples_split': 7, 'min_samples_leaf': 1, 'n_estimators': 80, 'max_features': 'sqrt'}]
+Training time: 301.37301421165466Layer 2:
+New optimal hyperparamters: [{'svc_c': 4845848778.474826, 'kernel': 'rbf', 'gamma': 3137176166.7628217}]
+Training time: 116.5221004486084Layer 1:
+New optimal hyperparamters: [{'min_samples_split': 10, 'min_samples_leaf': 1, 'max_features': 'sqrt'}]
+Training time: 237.91856908798218
