@@ -76,7 +76,9 @@ class MsgManager(FullMsgHandler):
         LOGGER.debug(f'Received objectives notification: {json_dict}')
 
         models_update_msg = self.tuner.on_tuning_msg_received(json_dict)
-        self.connector.send_message_to_queues(models_update_msg)
+
+        time.sleep(100000)
+        #self.connector.send_message_to_queues(models_update_msg)
 
     def handle_multiple_updates_msg(self, json_dict: dict):
         to_update = json_dict['UPDATE']
@@ -123,12 +125,12 @@ class HypertunerMain:
         self.__set_full_close()
         self.message_manager.connector.close()
 
-    def run_test(self):
+    def inject_failure(self):
 
-        LOGGER.warning('TEST: Testing the tuning engine with a fake objectives set.')
+        LOGGER.warning('TESTING: Testing the tuning engine with a fake objectives set.')
         test_objs = {
-            "objs_layer1": ['accuracy', 'precision'],
-            "objs_layer2": ['tpr', 'fpr']
+            "objs_layer1": ['fpr'],
+            "objs_layer2": []
         }
         self.tuner.on_tuning_msg_received(test_objs)
 
@@ -138,7 +140,7 @@ class HypertunerMain:
         if not self.DEBUG:
             queue_reading_thread.start()
         else:
-            self.run_test()
+            self.inject_failure()
         try:
             while True:
                 time.sleep(1)
@@ -171,7 +173,7 @@ class CommandLineParser:
                             )
         parser.add_argument('-n_trials',
                             type=int,
-                            default=100,
+                            default=40,
                             help='Specify the number of trials for tuning (default 100) (int)'
                             )
         parser.add_argument('-verbose',

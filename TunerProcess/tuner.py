@@ -2,8 +2,10 @@ import os
 import pickle
 import time
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 import optuna
+optuna.logging.set_verbosity(optuna.logging.INFO)
 
 from Shared import utils
 from Shared.msg_enum import msg_type
@@ -30,7 +32,8 @@ class TunerLayer1(LayerTuner):
 
         study_l1 = optuna.create_study(
             study_name='Layer1 optimization',
-            directions=['maximize' for _ in optimizers]
+            directions=['maximize' for _ in optimizers],
+            #pruner=optuna.pruners.NopPruner()
         )
 
         study_l1.optimize(
@@ -95,7 +98,7 @@ class Tuner:
 
             self.report_tuning_info(1, tune_time, best_hps)
 
-            with open('AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl', 'wb') as f:
+            with open(f'TunedModels/l1_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer1, f)
         else:
             LOGGER.warning('No new objectives received for layer1.')
@@ -115,7 +118,7 @@ class Tuner:
 
             self.report_tuning_info(2, tune_time, best_hps)
 
-            with open('AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl', 'wb') as f:
+            with open('TunedModels/l2_classifier.pkl', 'wb') as f:
                 pickle.dump(new_layer2, f)
         else:
             LOGGER.warning('No new objectives received for layer2.')

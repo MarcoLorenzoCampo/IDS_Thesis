@@ -26,14 +26,18 @@ class S3Manager:
         if self.__s3_files_ok() and not utils.need_s3_update('TunerProcess/'):
             self.LOGGER.debug('S3 is already setup and loaded.')
             return
+
         self.__s3_load()
 
     def __s3_load(self):
         self.LOGGER.debug(f'Loading data from S3 bucket {self.bucket_name}.')
 
-        self.loader.s3_processed_train_sets()
-        self.loader.s3_processed_validation_sets()
-        self.loader.s3_models()
+        self.loader.s3_processed_train_sets('ProcessedDatasets',
+                                            '../TunerProcess/AWS Downloads/Datasets')
+        self.loader.s3_processed_validation_sets('ProcessedDatasets',
+                                                 '../TunerProcess/AWS Downloads/Datasets')
+        self.loader.s3_models('Models/ModelsToUse',
+                              '../TunerProcess/AWS Downloads/Models/ModelsToUse')
 
         self.LOGGER.debug('Loading from S3 bucket complete.')
 
@@ -52,21 +56,27 @@ class S3Manager:
 
         self.LOGGER.debug(f'Updating models in the S3 bucket {self.bucket_name}.')
 
-        classifier1_path = 'AWS Downloads/Models/Tuned/NSL_l1_classifier.pkl'
-        classifier2_path = 'AWS Downloads/Models/Tuned/NSL_l2_classifier.pkl'
+        classifier1_path = 'TunedModels/l1_classifier.pkl'
+        classifier2_path = 'TunedModels/l2_classifier.pkl'
 
         try:
-            self.s3_resource.upload_file(
-                classifier1_path,
-                self.bucket_name,
-                self.bucket_name+'/Models/Tuned/NSL_l1_classifier.pkl'
-            )
+            if os.path.isfile(classifier1_path):
+                self.s3_resource.upload_file(
+                    classifier1_path,
+                    self.bucket_name,
+                    self.bucket_name + '/Models/TunedModels/l1_classifier.pkl'
+                )
+            else:
+                self.LOGGER.warning(f'File {classifier1_path} does not exist locally and will not be uploaded.')
 
-            self.s3_resource.upload_file(
-                classifier2_path,
-                self.bucket_name,
-                self.bucket_name+'/Models/Tuned/NSL_l2_classifier.pkl'
-            )
+            if os.path.isfile(classifier2_path):
+                self.s3_resource.upload_file(
+                    classifier2_path,
+                    self.bucket_name,
+                    self.bucket_name + '/Models/TunedModels/l2_classifier.pkl'
+                )
+            else:
+                self.LOGGER.warning(f'File {classifier2_path} does not exist locally and will not be uploaded.')
 
         except ClientError as e:
             self.LOGGER.error(f'Error when uploading file: {e}')
@@ -90,26 +100,26 @@ class Storage:
 
         self.LOGGER.debug('Loading train sets.')
         self.x_train_l1, self.y_train_l1 = self.loader.load_dataset(
-            'KDDTrain+_l1_pca.pkl',
+            'KDDTrain+_l1_pca.txt',
             'KDDTrain+_l1_targets.npy'
         )
         self.x_train_l2, self.y_train_l2 = self.loader.load_dataset(
-            'KDDTrain+_l2_pca.pkl',
+            'KDDTrain+_l2_pca.txt',
             'KDDTrain+_l2_targets.npy'
         )
         self.LOGGER.debug('Loading validation sets.')
         self.x_validate_l1, self.y_validate_l1 = self.loader.load_dataset(
-            'KDDValidate+_l1_pca.pkl',
+            'KDDValidate+_l1_pca.txt',
             'KDDValidate+_l1_targets.npy'
         )
         self.x_validate_l2, self.y_validate_l2 = self.loader.load_dataset(
-            'KDDValidate+_l2_pca.pkl',
+            'KDDValidate+_l2_pca.txt',
             'KDDValidate+_l2_targets.npy'
         )
         self.LOGGER.debug('Loading models.')
-        self.layer1, self.layer2 = self.loader.load_models('NSL_l1_classifier.pkl',
-                                                           'NSL_l2_classifier.pkl')
-
+        self.layer1, self.layer2 = self.loader.load_models('l1_classifier.pkl',
+                                                           'l2_classifier.pkl')
+        print(self.x_validate_l2.shape, self.y_validate_l2.shape)
 
 class SQLiteManager:
 

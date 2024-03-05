@@ -22,27 +22,27 @@ class Loader:
         self.LOGGER.debug('Loading models.')
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='Models/StartingModels',
-            file_name='NSL_l1_classifier.pkl',
-            download_path="AWS Downloads/Models/StartingModels/"
+            folder_name='Models/ModelsToUse',
+            file_name='l1_classifier.pkl',
+            download_path="AWS Downloads/Models/ModelsToUse/"
         )
         self.__aws_download(
             bucket_name=self.bucket_name,
             folder_name='Models/StartingModels',
-            file_name='NSL_l2_classifier.pkl',
-            download_path="AWS Downloads/Models/StartingModels/"
+            file_name='l2_classifier.pkl',
+            download_path="AWS Downloads/Models/ModelsToUse/"
         )
 
         self.LOGGER.debug('Loading fully processed train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
+            folder_name='ProcessedDatasets',
             file_name='KDDTrain+_l1_pca.pkl',
             download_path='AWS Downloads/Datasets/'
         )
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
+            folder_name='ProcessedDatasets',
             file_name='KDDTrain+_l2_pca.pkl',
             download_path='AWS Downloads/Datasets/'
         )
@@ -50,13 +50,13 @@ class Loader:
         self.LOGGER.debug('Loading target variables for train sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            folder_name='ProcessedDatasets',
             file_name='KDDTrain+_l1_targets.npy',
             download_path='AWS Downloads/Datasets/'
         )
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            folder_name='ProcessedDatasets',
             file_name='KDDTrain+_l2_targets.npy',
             download_path='AWS Downloads/Datasets/'
         )
@@ -64,13 +64,13 @@ class Loader:
         self.LOGGER.debug('Loading fully processed validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
+            folder_name='ProcessedDatasets',
             file_name='KDDValidate+_l1_pca.pkl',
             download_path='AWS Downloads/Datasets/'
         )
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/PCAEncoded',
+            folder_name='ProcessedDatasets',
             file_name='KDDValidate+_l2_pca.pkl',
             download_path='AWS Downloads/Datasets/'
         )
@@ -78,13 +78,13 @@ class Loader:
         self.LOGGER.debug('Loading target variables for validation sets.')
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            folder_name='ProcessedDatasets',
             file_name='KDDValidate+_l1_targets.npy',
             download_path='AWS Downloads/Datasets/'
         )
         self.__aws_download(
             bucket_name=self.bucket_name,
-            folder_name='ProcessedDatasets/ScaledEncoded_no_pca',
+            folder_name='ProcessedDatasets',
             file_name='KDDValidate+_l2_targets.npy',
             download_path='AWS Downloads/Datasets/'
         )
@@ -104,8 +104,8 @@ class Loader:
 
     @staticmethod
     def load_models(model1, model2):
-        model1 = joblib.load(f'AWS Downloads/Models/StartingModels/{model1}')
-        model2 = joblib.load(f'AWS Downloads/Models/StartingModels/{model2}')
+        model1 = joblib.load(f'AWS Downloads/Models/ModelsToUse/{model1}')
+        model2 = joblib.load(f'AWS Downloads/Models/ModelsToUse/{model2}')
         return model1, model2
 
     @staticmethod

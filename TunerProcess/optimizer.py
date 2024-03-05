@@ -102,8 +102,11 @@ class RFTrainer(AbstractTrainer):
             max_samples=parameters.get('max_samples', None)
         )
 
+
+
         classifier.fit(self.temp_storage.x_train_l1, self.temp_storage.y_train_l1)
         self.LOGGER.debug('Trained a new RandomForest classifier.')
+
         return classifier
 
 
@@ -137,6 +140,7 @@ class SVMTrainer(AbstractTrainer):
 
         self.LOGGER.debug('Trained a new SVM classifier.')
         classifier.fit(self.temp_storage.x_train_l2, self.temp_storage.y_train_l2)
+
         return classifier
 
 
@@ -162,7 +166,7 @@ class TPROptimizer_layer1(Optimizer):
         import hypertuner_main
         LOGGER = hypertuner_main.LOGGER.getChild(os.path.splitext(os.path.basename(__file__))[0])
 
-        LOGGER.info("TPR optimizer for layer2")
+        LOGGER.info("TPR optimizer for layer1")
 
         rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
         rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
@@ -520,8 +524,8 @@ class PrecisionOptimizer_layer1(Optimizer):
         rf_max_depth = trial.suggest_int(name='max_depth', low=2, high=32, step=1)
         rf_criterion = trial.suggest_categorical('criterion', ['gini', 'entropy', 'log_loss'])
         min_samples_split = trial.suggest_int(name='min_samples_split', low=2, high=10, step=1)
-        min_samples_leaf = trial.suggest_int(name='min_samples_leaf', low=2, high=10, step=1)
-        rf_n_estimators = trial.suggest_int(name='n_estimators', low=10, high=100, step=5)
+        min_samples_leaf = trial.suggest_int(name='min_samples_leaf', low=1, high=10, step=1)
+        rf_n_estimators = trial.suggest_int(name='n_estimators', low=10, high=80, step=5)
 
         parameters = {
             'n_estimators': rf_n_estimators,
@@ -611,10 +615,17 @@ class OptimizationManager:
         self.rf_trainer.set_temp_storage(self.temp_storage)
 
     def optimizers_mapper(self, objectives: list[str], layer: int):
-        optimizers = [
-            OptimizersFactory.create_optimizer_object(objective, self.rf_trainer, self.temp_storage, layer)
-            for objective in objectives
-        ]
+
+        if layer == 1:
+            optimizers = [
+                OptimizersFactory.create_optimizer_object(objective, self.rf_trainer, self.temp_storage, layer)
+                for objective in objectives
+            ]
+        else:
+            optimizers = [
+                OptimizersFactory.create_optimizer_object(objective, self.svm_trainer, self.temp_storage, layer)
+                for objective in objectives
+            ]
 
         return optimizers
 
